@@ -6,16 +6,16 @@ const CategorySelectionScreen = ({ navigation }) => {
   const [selectedCategories, setSelectedCategories] = useState([]);
 
   const categories = [
-    { id: 1, name: 'Electrónica', icon: 'laptop' },
-    { id: 2, name: 'Ropa', icon: 'tshirt' },
-    { id: 3, name: 'Hogar', icon: 'home' },
-    { id: 4, name: 'Deportes', icon: 'running' },
-    { id: 5, name: 'Juguetes', icon: 'gamepad' },
-    { id: 6, name: 'Libros', icon: 'book' },
-    { id: 7, name: 'Jardín', icon: 'leaf' },
-    { id: 8, name: 'Mascotas', icon: 'paw' },
-    { id: 9, name: 'Belleza', icon: 'spa' },
-    { id: 10, name: 'Alimentos', icon: 'utensils' },
+    { id: 1, name: 'Procesadores', icon: 'microchip' },
+    { id: 2, name: 'Tarjetas Gráficas', icon: 'tv' },
+    { id: 3, name: 'Memoria RAM', icon: 'memory' },
+    { id: 4, name: 'Almacenamiento', icon: 'hdd' },
+    { id: 5, name: 'Placas Base', icon: 'server' },
+    { id: 6, name: 'Fuentes de Poder', icon: 'plug' },
+    { id: 7, name: 'Periféricos', icon: 'keyboard' },
+    { id: 8, name: 'Laptops', icon: 'laptop' },
+    { id: 9, name: 'Smartphones', icon: 'mobile-alt' },
+    { id: 10, name: 'Monitores', icon: 'desktop' },
   ];
 
   const toggleCategory = (categoryId) => {

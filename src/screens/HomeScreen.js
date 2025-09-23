@@ -4,57 +4,59 @@ import { FontAwesome5 } from '@expo/vector-icons';
 
 const HomeScreen = ({ navigation }) => {
   const categories = [
-    { id: 1, name: 'Electrónica', icon: 'laptop' },
-    { id: 2, name: 'Ropa', icon: 'tshirt' },
-    { id: 3, name: 'Hogar', icon: 'home' },
-    { id: 4, name: 'Deportes', icon: 'running' },
+    { id: 1, name: 'Procesadores', icon: 'microchip' },
+    { id: 2, name: 'Tarjetas Gráficas', icon: 'tv' },
+    { id: 3, name: 'Memoria RAM', icon: 'memory' },
+    { id: 4, name: 'Almacenamiento', icon: 'hdd' },
+    { id: 5, name: 'Placas Base', icon: 'server' },
+    { id: 6, name: 'Periféricos', icon: 'keyboard' },
   ];
 
   const featuredProducts = [
     {
       id: 1,
-      name: 'Smartphone XYZ',
-      price: '599.99',
-      image: 'https://via.placeholder.com/150',
-      discount: '20%',
-    },
-    {
-      id: 2,
-      name: 'Laptop Pro',
-      price: '999.99',
+      name: 'AMD Ryzen 9 5900X',
+      price: '549.99',
       image: 'https://via.placeholder.com/150',
       discount: '15%',
     },
     {
-      id: 3,
-      name: 'Auriculares Wireless',
-      price: '89.99',
+      id: 2,
+      name: 'NVIDIA RTX 4080',
+      price: '1199.99',
       image: 'https://via.placeholder.com/150',
-      discount: '30%',
+      discount: '10%',
+    },
+    {
+      id: 3,
+      name: 'Corsair 32GB DDR5',
+      price: '189.99',
+      image: 'https://via.placeholder.com/150',
+      discount: '20%',
     },
   ];
 
   const recommendedProducts = [
     {
       id: 4,
-      name: 'Smart TV 55"',
-      price: '699.99',
+      name: 'ASUS ROG STRIX B550-F',
+      price: '179.99',
       image: 'https://via.placeholder.com/150',
-      rating: 4.5,
+      rating: 4.7,
     },
     {
       id: 5,
-      name: 'Tablet Ultra',
-      price: '299.99',
+      name: 'Samsung 2TB NVMe SSD',
+      price: '199.99',
       image: 'https://via.placeholder.com/150',
-      rating: 4.8,
+      rating: 4.9,
     },
     {
       id: 6,
-      name: 'Cámara Digital',
-      price: '449.99',
+      name: 'Corsair RM850x PSU',
+      price: '149.99',
       image: 'https://via.placeholder.com/150',
-      rating: 4.3,
+      rating: 4.8,
     },
   ];
 
@@ -84,7 +86,11 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.sectionTitle}>Ofertas destacadas</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
           {featuredProducts.map((product) => (
-            <TouchableOpacity key={product.id} style={styles.productCard}>
+            <TouchableOpacity 
+              key={product.id} 
+              style={styles.productCard}
+              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+            >
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>{product.discount}</Text>
               </View>
@@ -101,7 +107,11 @@ const HomeScreen = ({ navigation }) => {
         <Text style={styles.sectionTitle}>Recomendados para ti</Text>
         <View style={styles.recommendedGrid}>
           {recommendedProducts.map((product) => (
-            <TouchableOpacity key={product.id} style={styles.recommendedCard}>
+            <TouchableOpacity 
+              key={product.id} 
+              style={styles.recommendedCard}
+              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+            >
               <Image source={{ uri: product.image }} style={styles.productImage} />
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>${product.price}</Text>

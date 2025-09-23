@@ -6,8 +6,9 @@ import { FontAwesome5 } from '@expo/vector-icons';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
-import CategorySelectionScreen from '../screens/auth/CategorySelectionScreen';
 import HomeScreen from '../screens/HomeScreen';
+import CategorySelectionScreen from '../screens/auth/CategorySelectionScreen';
+import ProductDetailScreen from '../screens/ProductDetailScreen';
 
 const Stack = createStackNavigator();
 
@@ -33,6 +34,18 @@ const AppNavigator = () => {
             headerRight: () => (
               <TouchableOpacity style={{ marginRight: 15 }}>
                 <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
+              </TouchableOpacity>
+            ),
+          }}
+        />
+        <Stack.Screen
+          name="ProductDetail"
+          component={ProductDetailScreen}
+          options={{
+            title: 'Detalle del Producto',
+            headerRight: () => (
+              <TouchableOpacity style={{ marginRight: 15 }}>
+                <FontAwesome5 name="shopping-cart" size={20} color="#000" />
               </TouchableOpacity>
             ),
           }}
