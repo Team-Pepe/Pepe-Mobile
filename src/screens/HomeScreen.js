@@ -17,21 +17,21 @@ const HomeScreen = ({ navigation }) => {
       id: 1,
       name: 'AMD Ryzen 9 5900X',
       price: '549.99',
-      image: 'https://via.placeholder.com/150',
+      image: require('../../assets/pepe.jpg'),
       discount: '15%',
     },
     {
       id: 2,
       name: 'NVIDIA RTX 4080',
       price: '1199.99',
-      image: 'https://via.placeholder.com/150',
+      image: require('../../assets/pepe.jpg'),
       discount: '10%',
     },
     {
       id: 3,
       name: 'Corsair 32GB DDR5',
       price: '189.99',
-      image: 'https://via.placeholder.com/150',
+      image: require('../../assets/pepe.jpg'),
       discount: '20%',
     },
   ];
@@ -41,21 +41,21 @@ const HomeScreen = ({ navigation }) => {
       id: 4,
       name: 'ASUS ROG STRIX B550-F',
       price: '179.99',
-      image: 'https://via.placeholder.com/150',
+      image: require('../../assets/pepe.jpg'),
       rating: 4.7,
     },
     {
       id: 5,
       name: 'Samsung 2TB NVMe SSD',
       price: '199.99',
-      image: 'https://via.placeholder.com/150',
+      image: require('../../assets/pepe.jpg'),
       rating: 4.9,
     },
     {
       id: 6,
       name: 'Corsair RM850x PSU',
       price: '149.99',
-      image: 'https://via.placeholder.com/150',
+      image: require('../../assets/pepe.jpg'),
       rating: 4.8,
     },
   ];
@@ -94,7 +94,10 @@ const HomeScreen = ({ navigation }) => {
               <View style={styles.discountBadge}>
                 <Text style={styles.discountText}>{product.discount}</Text>
               </View>
-              <Image source={{ uri: product.image }} style={styles.productImage} />
+              <Image 
+                source={product.image} // Quitar el {uri: }
+                style={styles.productImage} 
+              />
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>${product.price}</Text>
             </TouchableOpacity>
@@ -112,7 +115,10 @@ const HomeScreen = ({ navigation }) => {
               style={styles.recommendedCard}
               onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
             >
-              <Image source={{ uri: product.image }} style={styles.productImage} />
+              <Image 
+                source={product.image} // Quitar el {uri: }
+                style={styles.productImage}
+              />
               <Text style={styles.productName}>{product.name}</Text>
               <Text style={styles.productPrice}>${product.price}</Text>
               <View style={styles.ratingContainer}>
