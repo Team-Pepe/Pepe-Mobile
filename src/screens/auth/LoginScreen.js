@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { AuthService } from '../../services/auth.service';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -9,19 +9,19 @@ const LoginScreen = ({ navigation }) => {
 
   const handleLogin = async () => {
     try {
-      const users = await AsyncStorage.getItem('users');
-      const parsedUsers = users ? JSON.parse(users) : [];
+      const { data, error } = await AuthService.signIn({ email, password });
       
-      const user = parsedUsers.find(u => u.email === email && u.password === password);
-      
-      if (user) {
-        await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+      if (error) {
+        Alert.alert('Error', error);
+        return;
+      }
+
+      if (data.user) {
         navigation.replace('Home');
-      } else {
-        alert('Credenciales inválidas');
       }
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
+      Alert.alert('Error', 'Ocurrió un error al iniciar sesión');
     }
   };
 

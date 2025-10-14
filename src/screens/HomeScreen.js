@@ -1,8 +1,32 @@
-import React from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image } from 'react-native';
+import React, { useEffect, useState } from 'react';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { AuthService } from '../services/auth.service';
 
 const HomeScreen = ({ navigation }) => {
+  const [user, setUser] = useState(null);
+
+  useEffect(() => {
+    checkUser();
+  }, []);
+
+  const checkUser = async () => {
+    const { user: currentUser, error } = await AuthService.getCurrentUser();
+    if (error || !currentUser) {
+      navigation.replace('Login');
+    } else {
+      setUser(currentUser);
+    }
+  };
+
+  const handleLogout = async () => {
+    const { error } = await AuthService.signOut();
+    if (error) {
+      Alert.alert('Error', error);
+    } else {
+      navigation.replace('Login');
+    }
+  };
   const categories = [
     { id: 1, name: 'Procesadores', icon: 'microchip' },
     { id: 2, name: 'Tarjetas Gráficas', icon: 'tv' },

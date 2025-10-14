@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { AuthService } from '../../services/auth.service';
 
 const RegisterScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
@@ -9,30 +9,25 @@ const RegisterScreen = ({ navigation }) => {
   const [confirmPassword, setConfirmPassword] = useState('');
 
   const handleRegister = async () => {
-    if (password !== confirmPassword) {
-      alert('Las contraseñas no coinciden');
-      return;
-    }
-
     try {
-      const users = await AsyncStorage.getItem('users');
-      const parsedUsers = users ? JSON.parse(users) : [];
-      
-      const userExists = parsedUsers.some(user => user.email === email);
-      
-      if (userExists) {
-        alert('El usuario ya existe');
+      if (password !== confirmPassword) {
+        Alert.alert('Error', 'Las contraseñas no coinciden');
         return;
       }
 
-      const newUser = { email, password };
-      await AsyncStorage.setItem('users', JSON.stringify([...parsedUsers, newUser]));
-      await AsyncStorage.setItem('currentUser', JSON.stringify(newUser));
+      const { data, error } = await AuthService.signUp({ email, password });
       
-      alert('Registro exitoso');
-      navigation.replace('CategorySelection');
+      if (error) {
+        Alert.alert('Error', error);
+        return;
+      }
+
+      if (data.user) {
+        navigation.replace('CategorySelection');
+      }
     } catch (error) {
       console.error('Error al registrar:', error);
+      Alert.alert('Error', 'Ocurrió un error al registrar el usuario');
     }
   };
 
