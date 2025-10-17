@@ -87,43 +87,43 @@ const RegisterScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    justifyContent: 'center',
-    alignItems: 'center',
+    backgroundColor: '#2c2c2c',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    justifyContent: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
+    color: '#ffffff',
     marginBottom: 20,
+    textAlign: 'center',
   },
   input: {
-    width: '100%',
-    height: 50,
-    backgroundColor: 'white',
+    backgroundColor: '#1f1f1f',
+    color: '#ffffff',
     borderRadius: 10,
     paddingHorizontal: 15,
+    height: 50,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#3a3a3a',
   },
   button: {
-    width: '100%',
-    height: 50,
     backgroundColor: '#007AFF',
     borderRadius: 10,
+    height: 50,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
   },
   buttonText: {
-    color: 'white',
-    fontSize: 16,
+    color: '#fff',
     fontWeight: 'bold',
   },
   linkText: {
-    color: '#007AFF',
+    color: '#ffffffcc',
     marginTop: 15,
+    textAlign: 'center',
   },
   socialButtonsContainer: {
     width: '100%',
@@ -133,10 +133,10 @@ const styles = StyleSheet.create({
   socialButton: {
     width: '100%',
     height: 50,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#333333', // botón social oscuro
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#3a3a3a',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -151,7 +151,7 @@ const styles = StyleSheet.create({
     marginRight: 50, // Para compensar el ancho del iconContainer y centrar el texto
   },
   socialButtonText: {
-    color: '#333',
+    color: '#ffffff', // texto blanco en botones sociales
     fontSize: 16,
     fontWeight: '500',
   },

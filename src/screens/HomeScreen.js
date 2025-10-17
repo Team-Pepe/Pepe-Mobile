@@ -160,12 +160,12 @@ const HomeScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#2c2c2c', // fondo oscuro
   },
   searchBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f', // barra de búsqueda oscura
     margin: 15,
     padding: 10,
     borderRadius: 8,
@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   },
   searchText: {
     marginLeft: 10,
-    color: '#666',
+    color: '#bdbdbd',
   },
   categoriesContainer: {
     marginVertical: 10,
@@ -183,13 +183,14 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
     marginHorizontal: 15,
     marginBottom: 10,
+    color: '#ffffff',
   },
   categoriesList: {
     paddingHorizontal: 10,
   },
   categoryItem: {
     alignItems: 'center',
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f', // tarjeta categoría oscura
     padding: 15,
     marginHorizontal: 5,
     borderRadius: 8,
@@ -199,12 +200,13 @@ const styles = StyleSheet.create({
   categoryText: {
     marginTop: 5,
     fontSize: 12,
+    color: '#ffffff',
   },
   section: {
     marginVertical: 15,
   },
   productCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f', // tarjeta producto oscura
     borderRadius: 8,
     padding: 10,
     marginHorizontal: 8,
@@ -232,10 +234,12 @@ const styles = StyleSheet.create({
     height: 120,
     borderRadius: 8,
     marginBottom: 8,
+    backgroundColor: '#000000',
   },
   productName: {
     fontSize: 14,
     marginBottom: 4,
+    color: '#ffffff',
   },
   productPrice: {
     fontSize: 16,
@@ -249,7 +253,7 @@ const styles = StyleSheet.create({
     paddingHorizontal: 15,
   },
   recommendedCard: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f',
     borderRadius: 8,
     padding: 10,
     marginBottom: 15,
@@ -264,7 +268,7 @@ const styles = StyleSheet.create({
   ratingText: {
     marginLeft: 4,
     fontSize: 12,
-    color: '#666',
+    color: '#bdbdbd',
   },
 });
 

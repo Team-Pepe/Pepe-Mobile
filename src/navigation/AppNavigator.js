@@ -15,7 +15,14 @@ const Stack = createStackNavigator();
 const AppNavigator = () => {
   return (
     <NavigationContainer>
-      <Stack.Navigator initialRouteName="Login">
+      <Stack.Navigator
+        initialRouteName="Login"
+        screenOptions={{
+          headerStyle: { backgroundColor: '#2c2c2c' }, // fondo gris oscuro en header
+          headerTintColor: '#ffffff', // color de íconos y back
+          headerTitleStyle: { color: '#ffffff' }, // color del título
+        }}
+      >
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
         <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
         <Stack.Screen 
@@ -45,7 +52,7 @@ const AppNavigator = () => {
             title: 'Detalle del Producto',
             headerRight: () => (
               <TouchableOpacity style={{ marginRight: 15 }}>
-                <FontAwesome5 name="shopping-cart" size={20} color="#000" />
+                <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
               </TouchableOpacity>
             ),
           }}
