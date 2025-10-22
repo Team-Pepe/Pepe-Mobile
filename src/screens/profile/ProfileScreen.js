@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 
 const ProfileScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);

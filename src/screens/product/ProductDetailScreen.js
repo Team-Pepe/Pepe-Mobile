@@ -20,7 +20,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
     name: 'AMD Ryzen 9 5900X',
     price: '549.99',
     stock: 15,
-    images: [require('../../assets/pepe.jpg')], // Cambiado aquí
+    images: [require('../../../assets/pepe.jpg')], // Cambiado aquí
     description: 'Procesador de escritorio desbloqueado de 12 núcleos y 24 hilos',
     specifications: {
       'Núcleos': '12',
