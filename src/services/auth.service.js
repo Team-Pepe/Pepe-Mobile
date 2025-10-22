@@ -65,12 +65,26 @@ export const AuthService = {
     }
   },
 
-  // Limpiar sesión y tokens
+  // Limpiar sesión y tokens de forma inteligente
   async clearSession() {
     try {
-      await supabase.auth.signOut();
+      // Verificar si hay una sesión activa antes de intentar limpiarla
+      const { data: { session } } = await supabase.auth.getSession();
+      
+      if (session) {
+        // Solo hacer signOut si hay una sesión activa
+        await supabase.auth.signOut();
+      }
+      
       return { success: true };
     } catch (error) {
+      // Manejar silenciosamente errores de refresh token
+      if (error.message?.includes('Invalid Refresh Token') || 
+          error.message?.includes('Refresh Token Not Found')) {
+        console.log('Token inválido detectado, continuando sin error...');
+        return { success: true }; // Considerar como éxito
+      }
+      
       console.log('Error clearing session:', error);
       return { success: false, error: error.message };
     }
