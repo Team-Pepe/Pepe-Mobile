@@ -72,7 +72,7 @@ const TabNavigator = () => {
         component={HomeScreen} 
         options={{
           title: 'Inicio',
-          headerTitle: 'Marketplace',
+          headerTitle: 'PepePlace',
           headerRight: () => (
             <TouchableOpacity style={{ marginRight: 15 }}>
               <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
