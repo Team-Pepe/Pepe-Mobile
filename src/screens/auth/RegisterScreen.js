@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Modal, FlatList } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
 
@@ -12,14 +12,33 @@ const RegisterScreen = ({ navigation }) => {
     lastName: '',
     phone: '',
     doc: '', // cédula
-    birthDate: ''
+    birthDate: '',
+    birthDay: '',
+    birthMonth: '',
+    birthYear: ''
   });
+  
+  // Estados para los modales de selección de fecha
+  const [showDayPicker, setShowDayPicker] = useState(false);
+  const [showMonthPicker, setShowMonthPicker] = useState(false);
+  const [showYearPicker, setShowYearPicker] = useState(false);
 
   const updateFormData = (field, value) => {
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value
-    }));
+    };
+    
+    // Si se actualiza algún componente de la fecha, actualizar birthDate
+    if (field === 'birthDay' || field === 'birthMonth' || field === 'birthYear') {
+      const { birthDay, birthMonth, birthYear } = newFormData;
+      if (birthDay && birthMonth && birthYear) {
+        // Formato YYYY-MM-DD
+        newFormData.birthDate = `${birthYear}-${birthMonth.padStart(2, '0')}-${birthDay.padStart(2, '0')}`;
+      }
+    }
+    
+    setFormData(newFormData);
   };
 
   const validateForm = () => {
@@ -139,7 +158,7 @@ const RegisterScreen = ({ navigation }) => {
 
   return (
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>Registro</Text>
+      <Text style={styles.title}>Crear Cuenta</Text>
       
       {/* Email - Campo importante en fila completa */}
       <TextInput
@@ -193,13 +212,158 @@ const RegisterScreen = ({ navigation }) => {
         />
       </View>
       
-      <TextInput
-        style={styles.inputHalfSmall}
-        placeholder="Fecha de nacimiento (YYYY-MM-DD)"
-        placeholderTextColor="#999"
-        value={formData.birthDate}
-        onChangeText={(value) => updateFormData('birthDate', value)}
-      />
+      <Text style={styles.dateLabel}>Fecha de nacimiento</Text>
+      <View style={styles.dateRow}>
+        {/* Selector de Día */}
+        <TouchableOpacity 
+          style={styles.pickerContainer}
+          onPress={() => setShowDayPicker(true)}
+        >
+          <Text style={[styles.pickerText, {color: formData.birthDay ? '#ffffff' : '#999'}]}>
+            {formData.birthDay || 'Día'}
+          </Text>
+        </TouchableOpacity>
+        
+        {/* Selector de Mes */}
+        <TouchableOpacity 
+          style={styles.pickerContainer}
+          onPress={() => setShowMonthPicker(true)}
+        >
+          <Text style={[styles.pickerText, {color: formData.birthMonth ? '#ffffff' : '#999'}]}>
+            {formData.birthMonth ? 
+              ['Enero', 'Febrero', 'Marzo', 'Abril', 'Mayo', 'Junio', 'Julio', 'Agosto', 'Septiembre', 'Octubre', 'Noviembre', 'Diciembre'][parseInt(formData.birthMonth)-1] : 
+              'Mes'}
+          </Text>
+        </TouchableOpacity>
+        
+        {/* Selector de Año */}
+        <TouchableOpacity 
+          style={styles.pickerContainer}
+          onPress={() => setShowYearPicker(true)}
+        >
+          <Text style={[styles.pickerText, {color: formData.birthYear ? '#ffffff' : '#999'}]}>
+            {formData.birthYear || 'Año'}
+          </Text>
+        </TouchableOpacity>
+      </View>
+
+      {/* Modal para seleccionar día */}
+      <Modal
+        visible={showDayPicker}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecciona el día</Text>
+            <FlatList
+              data={Array.from({length: 31}, (_, i) => String(i + 1))}
+              contentContainerStyle={styles.flatListContent}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={styles.modalItemTouchable}
+                  onPress={() => {
+                    updateFormData('birthDay', item);
+                    setShowDayPicker(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{item}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item}
+            />
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowDayPicker(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Modal para seleccionar mes */}
+      <Modal
+        visible={showMonthPicker}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecciona el mes</Text>
+            <FlatList
+              data={[
+                {name: 'Enero', value: '01'},
+                {name: 'Febrero', value: '02'},
+                {name: 'Marzo', value: '03'},
+                {name: 'Abril', value: '04'},
+                {name: 'Mayo', value: '05'},
+                {name: 'Junio', value: '06'},
+                {name: 'Julio', value: '07'},
+                {name: 'Agosto', value: '08'},
+                {name: 'Septiembre', value: '09'},
+                {name: 'Octubre', value: '10'},
+                {name: 'Noviembre', value: '11'},
+                {name: 'Diciembre', value: '12'}
+              ]}
+              contentContainerStyle={styles.flatListContent}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={styles.modalItemTouchable}
+                  onPress={() => {
+                    updateFormData('birthMonth', item.value);
+                    setShowMonthPicker(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{item.name}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item.value}
+            />
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowMonthPicker(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
+      
+      {/* Modal para seleccionar año */}
+      <Modal
+        visible={showYearPicker}
+        transparent={true}
+        animationType="slide"
+      >
+        <View style={styles.modalContainer}>
+          <View style={styles.modalContent}>
+            <Text style={styles.modalTitle}>Selecciona el año</Text>
+            <FlatList
+              data={Array.from({length: 100}, (_, i) => String(new Date().getFullYear() - i))}
+              contentContainerStyle={styles.flatListContent}
+              renderItem={({item}) => (
+                <TouchableOpacity
+                  style={styles.modalItemTouchable}
+                  onPress={() => {
+                    updateFormData('birthYear', item);
+                    setShowYearPicker(false);
+                  }}
+                >
+                  <Text style={styles.modalItemText}>{item}</Text>
+                </TouchableOpacity>
+              )}
+              keyExtractor={item => item}
+            />
+            <TouchableOpacity
+              style={styles.modalCloseButton}
+              onPress={() => setShowYearPicker(false)}
+            >
+              <Text style={styles.modalCloseButtonText}>Cancelar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
       
       {/* Contraseñas - Campos importantes en filas completas */}
       <TextInput
@@ -352,6 +516,75 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
+  },
+  modalContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: 'rgba(0, 0, 0, 0.5)',
+  },
+  modalContent: {
+    width: '90%',
+    maxHeight: '70%',
+    backgroundColor: '#1b1b1b',
+    borderRadius: 12,
+    padding: 12,
+  },
+  modalTitle: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+    marginBottom: 15,
+    textAlign: 'center',
+  },
+  dateLabel: {
+    color: '#ffffff',
+    marginBottom: 8,
+    fontSize: 14,
+  },
+  dateRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
+  pickerContainer: {
+    backgroundColor: '#1f1f1f',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+    borderRadius: 10,
+    height: 50,
+    width: '32%',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  pickerText: {
+    fontSize: 14,
+    color: '#ffffff',
+  },
+  flatListContent: {
+    paddingVertical: 6,
+  },
+  modalItemTouchable: {
+    paddingVertical: 12,
+    paddingHorizontal: 10,
+    borderRadius: 8,
+    marginVertical: 6,
+    backgroundColor: '#232323',
+  },
+  modalItemText: {
+    color: '#ffffff',
+    fontSize: 16,
+  },
+  modalCloseButton: {
+    marginTop: 12,
+    padding: 12,
+    backgroundColor: '#333333',
+    borderRadius: 8,
+    alignItems: 'center',
+  },
+  modalCloseButtonText: {
+    color: '#ffffff',
+    fontSize: 16,
   },
 });
 
