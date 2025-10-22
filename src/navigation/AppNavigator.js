@@ -46,10 +46,8 @@ const TabNavigator = () => {
         tabBarStyle: {
           backgroundColor: '#1f1f1f',
           borderTopColor: '#333333',
-          paddingBottom: 5,
           paddingTop: 5,
-          height: 60,
-          // Protección para evitar que el menú quede tapado por elementos del teléfono
+          height: Platform.OS === 'ios' ? 85 : 95,
           paddingBottom: Platform.OS === 'ios' ? 25 : 10,
           elevation: 8,
           shadowOpacity: 0.3,
