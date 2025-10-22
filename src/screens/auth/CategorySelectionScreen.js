@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView} from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-
+import { SafeAreaView } from 'react-native-safe-area-context';
 const CategorySelectionScreen = ({ navigation }) => {
   const [selectedCategories, setSelectedCategories] = useState([]);
 
@@ -33,12 +33,13 @@ const CategorySelectionScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>¿Qué te interesa?</Text>
-      <Text style={styles.subtitle}>Selecciona las categorías que más te gusten</Text>
-      
-      <ScrollView style={styles.categoriesContainer}>
-        <View style={styles.grid}>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={styles.container}>
+        <Text style={styles.title}>¿Qué te interesa?</Text>
+        <Text style={styles.subtitle}>Selecciona las categorías que más te gusten</Text>
+        
+        <ScrollView style={styles.categoriesContainer}>
+          <View style={styles.grid}>
           {categories.map((category) => (
             <TouchableOpacity
               key={category.id}
@@ -75,14 +76,18 @@ const CategorySelectionScreen = ({ navigation }) => {
           Continuar
         </Text>
       </TouchableOpacity>
-    </View>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
-  container: {
+  safeArea: {
     flex: 1,
     backgroundColor: '#2c2c2c',
+  },
+  container: {
+    flex: 1,
     padding: 20,
     justifyContent: 'center',
   },
