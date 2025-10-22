@@ -141,33 +141,7 @@ const RegisterScreen = ({ navigation }) => {
     <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
       <Text style={styles.title}>Registro</Text>
       
-      <TextInput
-        style={styles.input}
-        placeholder="Nombres"
-        placeholderTextColor="#999"
-        value={formData.firstName}
-        onChangeText={(value) => updateFormData('firstName', value)}
-        autoCapitalize="words"
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Apellidos"
-        placeholderTextColor="#999"
-        value={formData.lastName}
-        onChangeText={(value) => updateFormData('lastName', value)}
-        autoCapitalize="words"
-      />
-      
-      <TextInput
-        style={styles.input}
-        placeholder="Cédula"
-        placeholderTextColor="#999"
-        value={formData.doc}
-        onChangeText={(value) => updateFormData('doc', value)}
-        keyboardType="numeric"
-      />
-      
+      {/* Email - Campo importante en fila completa */}
       <TextInput
         style={styles.input}
         placeholder="Email"
@@ -177,24 +151,57 @@ const RegisterScreen = ({ navigation }) => {
         keyboardType="email-address"
         autoCapitalize="none"
       />
+
+      {/* Datos personales en dos columnas */}
+      <View style={styles.row}>
+        <TextInput
+          style={styles.inputHalf}
+          placeholder="Nombres"
+          placeholderTextColor="#999"
+          value={formData.firstName}
+          onChangeText={(value) => updateFormData('firstName', value)}
+          autoCapitalize="words"
+        />
+        
+        <TextInput
+          style={styles.inputHalf}
+          placeholder="Apellidos"
+          placeholderTextColor="#999"
+          value={formData.lastName}
+          onChangeText={(value) => updateFormData('lastName', value)}
+          autoCapitalize="words"
+        />
+      </View>
+      
+      <View style={styles.row}>
+        <TextInput
+          style={styles.inputHalf}
+          placeholder="Cédula"
+          placeholderTextColor="#999"
+          value={formData.doc}
+          onChangeText={(value) => updateFormData('doc', value)}
+          keyboardType="numeric"
+        />
+        
+        <TextInput
+          style={styles.inputHalf}
+          placeholder="Teléfono"
+          placeholderTextColor="#999"
+          value={formData.phone}
+          onChangeText={(value) => updateFormData('phone', value)}
+          keyboardType="phone-pad"
+        />
+      </View>
       
       <TextInput
-        style={styles.input}
-        placeholder="Teléfono"
-        placeholderTextColor="#999"
-        value={formData.phone}
-        onChangeText={(value) => updateFormData('phone', value)}
-        keyboardType="phone-pad"
-      />
-      
-      <TextInput
-        style={styles.input}
+        style={styles.inputHalfSmall}
         placeholder="Fecha de nacimiento (YYYY-MM-DD)"
         placeholderTextColor="#999"
         value={formData.birthDate}
         onChangeText={(value) => updateFormData('birthDate', value)}
       />
       
+      {/* Contraseñas - Campos importantes en filas completas */}
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
@@ -260,15 +267,42 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     textAlign: 'center',
   },
+  row: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    marginBottom: 15,
+  },
   input: {
     backgroundColor: '#1f1f1f',
     color: '#ffffff',
     borderRadius: 10,
     paddingHorizontal: 15,
-    height: 50,
+    height: 65,
     marginBottom: 15,
     borderWidth: 1,
     borderColor: '#3a3a3a',
+  },
+  inputHalf: {
+    backgroundColor: '#1f1f1f',
+    color: '#ffffff',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    height: 65,
+    width: '48%',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  inputHalfSmall: {
+    backgroundColor: '#1f1f1f',
+    color: '#ffffff',
+    borderRadius: 10,
+    paddingHorizontal: 15,
+    height: 65,
+    width: '100%',
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+    fontSize: 12,
+    marginBottom: 15,
   },
   button: {
     backgroundColor: '#007AFF',

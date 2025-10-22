@@ -14,7 +14,13 @@ const LoginScreen = ({ navigation }) => {
       const { data, error } = await AuthService.signIn({ email, password });
       
       if (error) {
-        Alert.alert('Error', error);
+        // Verificar si el error es de autenticación (contraseña o correo)
+        if (error.includes('password') || error.includes('credentials') || error.includes('Invalid') || 
+            error.includes('email') || error.includes('user') || error.includes('not found')) {
+          Alert.alert('Error de acceso', 'Contraseña o correo incorrecto');
+        } else {
+          Alert.alert('Error', error);
+        }
         setLoading(false);
         return;
       }
