@@ -1,27 +1,33 @@
 import React, { useState } from 'react';
-import { View, TextInput, TouchableOpacity, Text, StyleSheet } from 'react-native';
-import AsyncStorage from '@react-native-async-storage/async-storage';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
+import { AuthService } from '../../services/auth.service';
 
 const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false); // añadido
 
   const handleLogin = async () => {
+    setLoading(true); // mostrar loader
     try {
-      const users = await AsyncStorage.getItem('users');
-      const parsedUsers = users ? JSON.parse(users) : [];
+      const { data, error } = await AuthService.signIn({ email, password });
       
-      const user = parsedUsers.find(u => u.email === email && u.password === password);
-      
-      if (user) {
-        await AsyncStorage.setItem('currentUser', JSON.stringify(user));
+      if (error) {
+        Alert.alert('Error', error);
+        setLoading(false);
+        return;
+      }
+
+      if (data.user) {
         navigation.replace('Home');
-      } else {
-        alert('Credenciales inválidas');
+        return;
       }
     } catch (error) {
       console.error('Error al iniciar sesión:', error);
+      Alert.alert('Error', 'Ocurrió un error al iniciar sesión');
+    } finally {
+      setLoading(false); // ocultar loader si la pantalla no fue reemplazada
     }
   };
 
@@ -31,6 +37,7 @@ const LoginScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Email"
+        placeholderTextColor="#bdbdbd"
         value={email}
         onChangeText={setEmail}
         keyboardType="email-address"
@@ -39,12 +46,21 @@ const LoginScreen = ({ navigation }) => {
       <TextInput
         style={styles.input}
         placeholder="Contraseña"
+        placeholderTextColor="#bdbdbd"
         value={password}
         onChangeText={setPassword}
         secureTextEntry
       />
-      <TouchableOpacity style={styles.button} onPress={handleLogin}>
-        <Text style={styles.buttonText}>Iniciar Sesión</Text>
+      <TouchableOpacity
+        style={[styles.button, loading && styles.buttonDisabled]}
+        onPress={handleLogin}
+        disabled={loading} // desactivar mientras carga
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>Iniciar Sesión</Text>
+        )}
       </TouchableOpacity>
       <View style={styles.socialButtonsContainer}>
         <TouchableOpacity style={styles.socialButton} onPress={() => alert('Login con Google - Próximamente')}>
@@ -77,31 +93,36 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     padding: 20,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#2c2c2c', // fondo gris oscuro
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 20,
+    color: '#ffffff', // texto en blanco para contraste
   },
   input: {
     width: '100%',
     height: 50,
-    backgroundColor: 'white',
+    backgroundColor: '#1f1f1f', // input más oscuro
     borderRadius: 10,
     paddingHorizontal: 15,
     marginBottom: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#3a3a3a',
+    color: '#ffffff', // texto del input en blanco
   },
   button: {
     width: '100%',
     height: 50,
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // mantener azul para el botón
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     marginTop: 10,
+  },
+  buttonDisabled: {
+    opacity: 0.8, // feedback visual cuando está deshabilitado
   },
   buttonText: {
     color: 'white',
@@ -109,7 +130,7 @@ const styles = StyleSheet.create({
     fontWeight: 'bold',
   },
   linkText: {
-    color: '#007AFF',
+    color: '#ffffffcc', // enlace en blanco con opacidad
     marginTop: 15,
   },
   socialButtonsContainer: {
@@ -120,10 +141,10 @@ const styles = StyleSheet.create({
   socialButton: {
     width: '100%',
     height: 50,
-    backgroundColor: '#ffffff',
+    backgroundColor: '#333333', // botón social oscuro
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#3a3a3a',
     flexDirection: 'row',
     alignItems: 'center',
   },
@@ -135,10 +156,10 @@ const styles = StyleSheet.create({
   textContainer: {
     flex: 1,
     alignItems: 'center',
-    marginRight: 50, // Para compensar el ancho del iconContainer y centrar el texto
+    marginRight: 50,
   },
   socialButtonText: {
-    color: '#333',
+    color: '#ffffff', // texto blanco en botones sociales
     fontSize: 16,
     fontWeight: '500',
   },

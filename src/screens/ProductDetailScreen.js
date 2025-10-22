@@ -93,6 +93,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
         <TextInput
           style={styles.reviewInput}
           placeholder="Escribe tu opinión..."
+          placeholderTextColor="#bdbdbd" // añadido
           multiline
           value={review}
           onChangeText={setReview}
@@ -162,23 +163,24 @@ const ProductDetailScreen = ({ route, navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#2c2c2c', // fondo oscuro
   },
   image: {
     width: '100%',
     height: 300,
     resizeMode: 'contain',
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f', // fondo de la imagen en tarjeta oscura
   },
   infoContainer: {
     padding: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f',
     marginBottom: 10,
   },
   name: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#ffffff',
   },
   price: {
     fontSize: 22,
@@ -193,12 +195,12 @@ const styles = StyleSheet.create({
   },
   description: {
     fontSize: 16,
-    color: '#666',
+    color: '#bdbdbd',
     marginTop: 15,
     lineHeight: 24,
   },
   buyButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#007AFF', // botón azul
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'center',
@@ -207,14 +209,14 @@ const styles = StyleSheet.create({
     marginVertical: 10,
   },
   buyButtonText: {
-    color: '#fff',
+    color: '#ffffff',
     fontSize: 18,
     fontWeight: 'bold',
     marginLeft: 10,
   },
   tabContainer: {
     flexDirection: 'row',
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f',
     marginBottom: 10,
   },
   tab: {
@@ -222,21 +224,21 @@ const styles = StyleSheet.create({
     padding: 15,
     alignItems: 'center',
     borderBottomWidth: 2,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#222',
   },
   selectedTab: {
     borderBottomColor: '#007AFF',
   },
   tabText: {
     fontSize: 16,
-    color: '#666',
+    color: '#bdbdbd',
   },
   selectedTabText: {
     color: '#007AFF',
     fontWeight: 'bold',
   },
   specContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f',
     padding: 15,
   },
   specRow: {
@@ -244,24 +246,25 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingVertical: 10,
     borderBottomWidth: 1,
-    borderBottomColor: '#eee',
+    borderBottomColor: '#222',
   },
   specKey: {
     fontSize: 16,
-    color: '#666',
+    color: '#bdbdbd',
   },
   specValue: {
     fontSize: 16,
     fontWeight: '500',
+    color: '#ffffff',
   },
   reviewsContainer: {
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f',
     padding: 15,
   },
   addReviewContainer: {
     marginBottom: 20,
     padding: 15,
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#111111',
     borderRadius: 10,
   },
   ratingInput: {
@@ -272,12 +275,13 @@ const styles = StyleSheet.create({
     marginRight: 5,
   },
   reviewInput: {
-    backgroundColor: '#fff',
+    backgroundColor: '#474646ff', // gris claro (no blanco)
     borderRadius: 5,
     padding: 10,
     marginVertical: 10,
     minHeight: 100,
     textAlignVertical: 'top',
+    color: '#e6e6e6', // texto en gris claro para contraste
   },
   submitButton: {
     backgroundColor: '#007AFF',
@@ -294,9 +298,10 @@ const styles = StyleSheet.create({
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 10,
+    color: '#ffffff',
   },
   reviewCard: {
-    backgroundColor: '#f8f8f8',
+    backgroundColor: '#111111',
     padding: 15,
     borderRadius: 10,
     marginBottom: 10,
@@ -310,13 +315,14 @@ const styles = StyleSheet.create({
   reviewUser: {
     fontSize: 16,
     fontWeight: 'bold',
+    color: '#ffffff',
   },
   starsContainer: {
     flexDirection: 'row',
   },
   reviewComment: {
     fontSize: 14,
-    color: '#666',
+    color: '#bdbdbd',
     marginVertical: 5,
   },
   reviewDate: {

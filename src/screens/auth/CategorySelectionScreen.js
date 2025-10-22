@@ -51,7 +51,7 @@ const CategorySelectionScreen = ({ navigation }) => {
               <FontAwesome5 
                 name={category.icon} 
                 size={24} 
-                color={selectedCategories.includes(category.id) ? '#fff' : '#333'} 
+                color={selectedCategories.includes(category.id) ? '#fff' : '#007AFF'} 
               />
               <Text style={[
                 styles.categoryText,
@@ -82,14 +82,16 @@ const CategorySelectionScreen = ({ navigation }) => {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#f5f5f5',
+    backgroundColor: '#2c2c2c',
     padding: 20,
+    justifyContent: 'center',
   },
   title: {
     fontSize: 24,
     fontWeight: 'bold',
     marginBottom: 10,
     textAlign: 'center',
+    color: '#ffffff',
   },
   subtitle: {
     fontSize: 16,
@@ -109,7 +111,7 @@ const styles = StyleSheet.create({
   categoryItem: {
     width: '48%',
     padding: 15,
-    backgroundColor: '#fff',
+    backgroundColor: '#1f1f1f',
     borderRadius: 10,
     marginBottom: 15,
     alignItems: 'center',
@@ -126,25 +128,21 @@ const styles = StyleSheet.create({
   categoryText: {
     marginTop: 8,
     fontSize: 14,
-    color: '#333',
+    color: '#ffffff',
     textAlign: 'center',
   },
   selectedCategoryText: {
     color: '#fff',
   },
   continueButton: {
-    backgroundColor: '#ccc',
-    padding: 15,
-    borderRadius: 10,
-    alignItems: 'center',
-    marginTop: 20,
-  },
-  continueButtonActive: {
     backgroundColor: '#007AFF',
+    padding: 14,
+    borderRadius: 10,
+    marginTop: 15,
+    alignItems: 'center',
   },
   continueButtonText: {
     color: '#fff',
-    fontSize: 16,
     fontWeight: 'bold',
   },
 });
