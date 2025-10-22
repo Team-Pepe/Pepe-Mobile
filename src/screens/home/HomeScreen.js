@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
-import { AuthService } from '../services/auth.service';
+import { AuthService } from '../../services/auth.service';
 
 const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -41,21 +41,21 @@ const HomeScreen = ({ navigation }) => {
       id: 1,
       name: 'AMD Ryzen 9 5900X',
       price: '549.99',
-      image: require('../../assets/pepe.jpg'),
+      image: require('../../../assets/pepe.jpg'),
       discount: '15%',
     },
     {
       id: 2,
       name: 'NVIDIA RTX 4080',
       price: '1199.99',
-      image: require('../../assets/pepe.jpg'),
+      image: require('../../../assets/pepe.jpg'),
       discount: '10%',
     },
     {
       id: 3,
       name: 'Corsair 32GB DDR5',
       price: '189.99',
-      image: require('../../assets/pepe.jpg'),
+      image: require('../../../assets/pepe.jpg'),
       discount: '20%',
     },
   ];
@@ -65,21 +65,21 @@ const HomeScreen = ({ navigation }) => {
       id: 4,
       name: 'ASUS ROG STRIX B550-F',
       price: '179.99',
-      image: require('../../assets/pepe.jpg'),
+      image: require('../../../assets/pepe.jpg'),
       rating: 4.7,
     },
     {
       id: 5,
       name: 'Samsung 2TB NVMe SSD',
       price: '199.99',
-      image: require('../../assets/pepe.jpg'),
+      image: require('../../../assets/pepe.jpg'),
       rating: 4.9,
     },
     {
       id: 6,
       name: 'Corsair RM850x PSU',
       price: '149.99',
-      image: require('../../assets/pepe.jpg'),
+      image: require('../../../assets/pepe.jpg'),
       rating: 4.8,
     },
   ];

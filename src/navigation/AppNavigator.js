@@ -8,13 +8,13 @@ import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
-import HomeScreen from '../screens/HomeScreen';
+import HomeScreen from '../screens/home/HomeScreen';
 import CategorySelectionScreen from '../screens/auth/CategorySelectionScreen';
-import ProductDetailScreen from '../screens/ProductDetailScreen';
-import FavoritesScreen from '../screens/FavoritesScreen';
-import VersusScreen from '../screens/VersusScreen';
-import MyPCScreen from '../screens/MyPCScreen';
-import ProfileScreen from '../screens/ProfileScreen';
+import ProductDetailScreen from '../screens/product/ProductDetailScreen';
+import FavoritesScreen from '../screens/favorites/FavoritesScreen';
+import VersusScreen from '../screens/comparison/VersusScreen';
+import MyPCScreen from '../screens/pc-builder/MyPCScreen';
+import ProfileScreen from '../screens/profile/ProfileScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
