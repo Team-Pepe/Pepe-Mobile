@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, Keyboard, TouchableWithoutFeedback } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
 
@@ -38,7 +38,8 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
+    <TouchableWithoutFeedback onPress={Keyboard.dismiss} accessible={false}>
+      <View style={styles.container}>
       <Text style={styles.title}>Iniciar Sesión</Text>
       <TextInput
         style={styles.input}
@@ -89,7 +90,8 @@ const LoginScreen = ({ navigation }) => {
       <TouchableOpacity onPress={() => navigation.navigate('Register')}>
         <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
       </TouchableOpacity>
-    </View>
+      </View>
+    </TouchableWithoutFeedback>
   );
 };
 
