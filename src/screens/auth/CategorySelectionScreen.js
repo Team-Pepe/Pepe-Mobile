@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, ScrollView} from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, ScrollView, Alert } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 const CategorySelectionScreen = ({ navigation }) => {
@@ -18,6 +18,16 @@ const CategorySelectionScreen = ({ navigation }) => {
     { id: 10, name: 'Monitores', icon: 'desktop' },
   ];
 
+  const showEmailVerificationAlert = () => {
+    Alert.alert(
+      'Verificación de Email',
+      'Por favor, revisa tu correo electrónico y verifica tu cuenta para completar el registro.',
+      [
+        { text: 'Entendido', onPress: () => navigation.replace('Home') }
+      ]
+    );
+  };
+
   const toggleCategory = (categoryId) => {
     setSelectedCategories(prev => {
       if (prev.includes(categoryId)) {
@@ -29,7 +39,7 @@ const CategorySelectionScreen = ({ navigation }) => {
   };
 
   const handleContinue = () => {
-    navigation.replace('Home');
+    showEmailVerificationAlert();
   };
 
   return (

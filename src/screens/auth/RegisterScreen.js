@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Modal, FlatList } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Modal, FlatList, ActivityIndicator } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
 
@@ -22,6 +22,7 @@ const RegisterScreen = ({ navigation }) => {
   const [showDayPicker, setShowDayPicker] = useState(false);
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
+  const [loading, setLoading] = useState(false); // Estado de carga
 
   const updateFormData = (field, value) => {
     const newFormData = {
@@ -97,8 +98,10 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   const handleRegister = async () => {
+    setLoading(true); // Mostrar animación de carga
     try {
       if (!validateForm()) {
+        setLoading(false);
         return;
       }
 
@@ -142,17 +145,18 @@ const RegisterScreen = ({ navigation }) => {
         }
         
         Alert.alert('Error', errorMessage);
+        setLoading(false);
         return;
       }
 
       // Si llegamos aquí, ambas operaciones fueron exitosas
-      Alert.alert('Éxito', 'Usuario registrado correctamente', [
-        { text: 'OK', onPress: () => navigation.replace('CategorySelection') }
-      ]);
+      // Navegar directamente sin mostrar alerta de éxito
+      navigation.replace('CategorySelection');
       
     } catch (error) {
       console.error('Error al registrar:', error);
       Alert.alert('Error', 'Ocurrió un error inesperado al registrar el usuario');
+      setLoading(false);
     }
   };
 
@@ -384,8 +388,16 @@ const RegisterScreen = ({ navigation }) => {
         secureTextEntry
       />
       
-      <TouchableOpacity style={styles.button} onPress={handleRegister}>
-        <Text style={styles.buttonText}>Registrarse</Text>
+      <TouchableOpacity 
+        style={[styles.button, loading && styles.buttonDisabled]} 
+        onPress={handleRegister}
+        disabled={loading}
+      >
+        {loading ? (
+          <ActivityIndicator size="small" color="#ffffff" />
+        ) : (
+          <Text style={styles.buttonText}>Registrarse</Text>
+        )}
       </TouchableOpacity>
       
       <View style={styles.socialButtonsContainer}>
@@ -476,6 +488,9 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     marginTop: 20,
     marginBottom: 20,
+  },
+  buttonDisabled: {
+    opacity: 0.8, // feedback visual cuando está deshabilitado
   },
   buttonText: {
     color: '#fff',
