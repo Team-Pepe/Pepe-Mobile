@@ -15,6 +15,7 @@ import FavoritesScreen from '../screens/favorites/FavoritesScreen';
 import VersusScreen from '../screens/comparison/VersusScreen';
 import MyPCScreen from '../screens/pc-builder/MyPCScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import SellProductScreen from '../screens/profile/SellProductScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -149,6 +150,13 @@ const AppNavigator = () => {
                 <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
               </TouchableOpacity>
             ),
+          }}
+        />
+        <Stack.Screen
+          name="SellProduct"
+          component={SellProductScreen}
+          options={{
+            title: 'Vender Producto',
           }}
         />
       </Stack.Navigator>

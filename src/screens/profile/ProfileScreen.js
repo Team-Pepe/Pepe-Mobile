@@ -46,11 +46,16 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.menuText}>Mis Pedidos</Text>
         </TouchableOpacity>
         
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('SellProduct')}>
+          <FontAwesome5 name="tags" size={20} color="#007AFF" />
+          <Text style={styles.menuText}>Vender</Text>
+        </TouchableOpacity>
+
         <TouchableOpacity style={styles.menuItem}>
           <FontAwesome5 name="cog" size={20} color="#007AFF" />
           <Text style={styles.menuText}>Configuración</Text>
         </TouchableOpacity>
-        
+
         <TouchableOpacity style={styles.menuItem} onPress={handleLogout}>
           <FontAwesome5 name="sign-out-alt" size={20} color="#FF3B30" />
           <Text style={[styles.menuText, { color: '#FF3B30' }]}>Cerrar Sesión</Text>
