@@ -46,9 +46,9 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.menuText}>Mis Pedidos</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('SellProduct')}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyProducts')}>
           <FontAwesome5 name="tags" size={20} color="#007AFF" />
-          <Text style={styles.menuText}>Vender</Text>
+          <Text style={styles.menuText}>Mis Productos</Text>
         </TouchableOpacity>
 
         <TouchableOpacity style={styles.menuItem}>

@@ -59,7 +59,7 @@ const RegisterScreen = ({ navigation }) => {
       Alert.alert('Error', 'La contraseña debe tener al menos 6 caracteres');
       return false;
     }
-
+ 
     // Validar formato de email
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
     if (!emailRegex.test(email)) {
