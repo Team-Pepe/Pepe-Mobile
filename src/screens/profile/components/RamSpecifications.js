@@ -14,7 +14,51 @@ const RamSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const newSpecs = { ...specifications, [field]: value };
+    // Validar y limpiar valores numéricos
+    let processedValue = value;
+    
+    // Campos numéricos enteros con límites específicos
+    if (['capacity_gb', 'frequency_mhz', 'modules'].includes(field)) {
+      // Remover caracteres no numéricos
+      processedValue = value.replace(/[^0-9]/g, '');
+      
+      // Aplicar límites específicos por campo
+      const numValue = parseInt(processedValue) || 0;
+      switch(field) {
+        case 'capacity_gb':
+          processedValue = Math.min(numValue, 1024).toString(); // Máximo 1TB RAM
+          break;
+        case 'frequency_mhz':
+          processedValue = Math.min(numValue, 10000).toString(); // Máximo 10000 MHz
+          break;
+        case 'modules':
+          processedValue = Math.min(numValue, 16).toString(); // Máximo 16 módulos
+          break;
+      }
+    }
+    
+    // Campos decimales (voltaje)
+    if (field === 'voltage') {
+      // Permitir solo números y un punto decimal
+      processedValue = value.replace(/[^0-9.]/g, '');
+      
+      // Asegurar solo un punto decimal
+      const parts = processedValue.split('.');
+      if (parts.length > 2) {
+        processedValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      // Limitar a 2 decimales y valor máximo
+      const numValue = parseFloat(processedValue) || 0;
+      if (numValue > 5) { // Máximo 5V
+        processedValue = '5.00';
+      } else if (processedValue.includes('.')) {
+        const [integer, decimal] = processedValue.split('.');
+        processedValue = integer + '.' + (decimal || '').substring(0, 2);
+      }
+    }
+    
+    const newSpecs = { ...specifications, [field]: processedValue };
     setSpecifications(newSpecs);
     if (onChange) {
       onChange(newSpecs);

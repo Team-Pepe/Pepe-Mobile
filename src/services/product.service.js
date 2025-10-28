@@ -58,41 +58,42 @@ class ProductService {
   // Guardar especificaciones del producto en la tabla correspondiente
   static async saveProductSpecifications(productId, categoryId, specifications) {
     try {
-      // Obtener el nombre de la categoría para determinar la tabla de especificaciones
-      const { data: categoryData, error: categoryError } = await supabase
-        .from('categories')
-        .select('name')
-        .eq('id', categoryId)
-        .single();
-
-      if (categoryError) {
-        console.error('Error obteniendo categoría:', categoryError);
-        throw categoryError;
-      }
-
-      // Mapear nombre de categoría a tabla de especificaciones
-      const specificationTableMap = {
-        'cpu': 'cpu_specifications',
-        'gpu': 'gpu_specifications',
-        'ram': 'ram_specifications',
-        'storage': 'storage_specifications',
-        'motherboard': 'motherboard_specifications',
-        'psu': 'psu_specifications',
-        'cooler': 'cooler_specifications',
-        'case': 'case_specifications',
-        'monitor': 'monitor_specifications',
-        'laptop': 'laptop_specifications',
-        'phone': 'phone_specifications',
-        'peripheral': 'peripheral_specifications',
-        'cable': 'cable_specifications',
-        'other': 'other_specifications'
+      // Mapeo de categorías a tablas de especificaciones
+      const categoryTableMap = {
+        1: 'cpu_specifications',
+        2: 'gpu_specifications', 
+        3: 'ram_specifications',
+        4: 'motherboard_specifications',
+        5: 'storage_specifications',
+        6: 'psu_specifications',
+        7: 'case_specifications',
+        8: 'cooler_specifications',
+        9: 'monitor_specifications',
+        10: 'peripheral_specifications',
+        11: 'cable_specifications',
+        12: 'laptop_specifications',
+        13: 'phone_specifications'
       };
 
-      const tableName = specificationTableMap[categoryData.name.toLowerCase()];
+      const tableName = categoryTableMap[categoryId];
       
       if (!tableName) {
-        console.warn(`No se encontró tabla de especificaciones para la categoría: ${categoryData.name}`);
-        return;
+        // Si no hay tabla específica, usar other_specifications
+        const specData = {
+          product_id: productId,
+          general_specifications: specifications
+        };
+
+        const { data, error } = await supabase
+          .from('other_specifications')
+          .insert([specData]);
+
+        if (error) {
+          console.error('Error guardando especificaciones generales:', error);
+          throw error;
+        }
+
+        return data;
       }
 
       // Preparar los datos de especificaciones con el product_id
@@ -100,6 +101,34 @@ class ProductService {
         product_id: productId,
         ...specifications
       };
+
+      // Limpiar campos vacíos o undefined y convertir números grandes
+      Object.keys(specData).forEach(key => {
+        if (specData[key] === '' || specData[key] === undefined || specData[key] === null) {
+          delete specData[key];
+        } else if (typeof specData[key] === 'number') {
+          // Limitar números muy grandes que pueden causar overflow
+          if (specData[key] > 999999999) {
+            specData[key] = Math.floor(specData[key] / 1000000); // Convertir a millones
+          }
+          // Redondear decimales a máximo 2 decimales
+          if (specData[key] % 1 !== 0) {
+            specData[key] = Math.round(specData[key] * 100) / 100;
+          }
+        } else if (typeof specData[key] === 'string') {
+          // Intentar convertir strings numéricos y aplicar las mismas reglas
+          const numValue = parseFloat(specData[key]);
+          if (!isNaN(numValue)) {
+            if (numValue > 999999999) {
+              specData[key] = Math.floor(numValue / 1000000);
+            } else if (numValue % 1 !== 0) {
+              specData[key] = Math.round(numValue * 100) / 100;
+            } else {
+              specData[key] = numValue;
+            }
+          }
+        }
+      });
 
       // Insertar las especificaciones
       const { data, error } = await supabase
@@ -124,28 +153,39 @@ class ProductService {
       // Generar un nombre único para la imagen
       const timestamp = Date.now();
       const fileName = `${productName.replace(/\s+/g, '_')}_${timestamp}.jpg`;
-      const filePath = `products/${fileName}`;
+      const filePath = `img/${fileName}`;  // Guardar en carpeta 'img'
 
-      // Convertir la URI de la imagen a blob
+      // Leer el archivo como ArrayBuffer para React Native
       const response = await fetch(imageUri);
-      const blob = await response.blob();
+      const arrayBuffer = await response.arrayBuffer();
 
-      // Subir la imagen
+      // Subir la imagen usando ArrayBuffer
       const { data, error } = await supabase.storage
-        .from('product-images')
-        .upload(filePath, blob, {
+        .from('image-producs')
+        .upload(filePath, arrayBuffer, {
           contentType: 'image/jpeg',
           upsert: false
         });
 
       if (error) {
         console.error('Error subiendo imagen:', error);
+        
+        // Manejo específico para errores de RLS
+        if (error.message && error.message.includes('row-level security policy')) {
+          throw new Error('Error de permisos: Las políticas de seguridad de Supabase Storage impiden subir imágenes. Verifica que las políticas RLS estén configuradas correctamente para usuarios autenticados.');
+        }
+        
+        // Manejo específico para errores de bucket no encontrado
+        if (error.message && error.message.includes('Bucket not found')) {
+          throw new Error('Error: El bucket image-producs no existe en Supabase Storage. Verifica la configuración.');
+        }
+        
         throw error;
       }
 
       // Obtener la URL pública de la imagen
       const { data: publicUrlData } = supabase.storage
-        .from('product-images')
+        .from('image-producs')
         .getPublicUrl(filePath);
 
       return publicUrlData.publicUrl;

@@ -14,10 +14,30 @@ const MonitorSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const updatedSpecs = { ...specifications, [field]: value };
-    setSpecifications(updatedSpecs);
+    // Validar y limpiar valores numéricos
+    let processedValue = value;
+    
+    // Campos numéricos enteros con límites específicos
+    if (['refresh_rate_hz', 'response_time_ms'].includes(field)) {
+      // Remover caracteres no numéricos
+      processedValue = value.replace(/[^0-9]/g, '');
+      
+      // Aplicar límites específicos por campo
+      const numValue = parseInt(processedValue) || 0;
+      switch(field) {
+        case 'refresh_rate_hz':
+          processedValue = Math.min(numValue, 1000).toString(); // Máximo 1000Hz
+          break;
+        case 'response_time_ms':
+          processedValue = Math.min(numValue, 100).toString(); // Máximo 100ms
+          break;
+      }
+    }
+    
+    const newSpecs = { ...specifications, [field]: processedValue };
+    setSpecifications(newSpecs);
     if (onChange) {
-      onChange(updatedSpecs);
+      onChange(newSpecs);
     }
   };
 

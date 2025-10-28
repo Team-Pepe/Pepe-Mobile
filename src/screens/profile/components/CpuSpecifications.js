@@ -15,7 +15,55 @@ const CpuSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const newSpecs = { ...specifications, [field]: value };
+    // Validar y limpiar valores numéricos
+    let processedValue = value;
+    
+    // Campos numéricos enteros con límites específicos
+    if (['cores', 'threads', 'cache_l3', 'tdp', 'fabrication_technology_nm'].includes(field)) {
+      // Remover caracteres no numéricos
+      processedValue = value.replace(/[^0-9]/g, '');
+      
+      // Aplicar límites específicos por campo
+      const numValue = parseInt(processedValue) || 0;
+      switch(field) {
+        case 'cores':
+        case 'threads':
+          processedValue = Math.min(numValue, 128).toString(); // Máximo 128 cores/threads
+          break;
+        case 'cache_l3':
+          processedValue = Math.min(numValue, 512).toString(); // Máximo 512MB cache
+          break;
+        case 'tdp':
+          processedValue = Math.min(numValue, 1000).toString(); // Máximo 1000W TDP
+          break;
+        case 'fabrication_technology_nm':
+          processedValue = Math.min(numValue, 1000).toString(); // Máximo 1000nm
+          break;
+      }
+    }
+    
+    // Campos decimales (frecuencias)
+    if (['base_frequency_ghz', 'boost_frequency_ghz'].includes(field)) {
+      // Permitir solo números y un punto decimal
+      processedValue = value.replace(/[^0-9.]/g, '');
+      
+      // Asegurar solo un punto decimal
+      const parts = processedValue.split('.');
+      if (parts.length > 2) {
+        processedValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      // Limitar a 2 decimales y valor máximo
+      const numValue = parseFloat(processedValue) || 0;
+      if (numValue > 10) { // Máximo 10 GHz
+        processedValue = '10.00';
+      } else if (processedValue.includes('.')) {
+        const [integer, decimal] = processedValue.split('.');
+        processedValue = integer + '.' + (decimal || '').substring(0, 2);
+      }
+    }
+    
+    const newSpecs = { ...specifications, [field]: processedValue };
     setSpecifications(newSpecs);
     if (onChange) {
       onChange(newSpecs);

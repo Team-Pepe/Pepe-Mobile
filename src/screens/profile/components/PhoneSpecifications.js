@@ -15,10 +15,23 @@ const PhoneSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const updatedSpecs = { ...specifications, [field]: value };
-    setSpecifications(updatedSpecs);
+    // Validar y limpiar valores numéricos
+    let processedValue = value;
+    
+    // Campos numéricos enteros con límites específicos
+    if (field === 'battery_mah') {
+      // Remover caracteres no numéricos
+      processedValue = value.replace(/[^0-9]/g, '');
+      
+      // Aplicar límite específico
+      const numValue = parseInt(processedValue) || 0;
+      processedValue = Math.min(numValue, 50000).toString(); // Máximo 50,000 mAh
+    }
+    
+    const newSpecs = { ...specifications, [field]: processedValue };
+    setSpecifications(newSpecs);
     if (onChange) {
-      onChange(updatedSpecs);
+      onChange(newSpecs);
     }
   };
 
