@@ -46,6 +46,7 @@ const PhoneSpecifications = ({ onChange }) => {
           value={specifications.screen_inches}
           onChangeText={(value) => handleChange('screen_inches', value)}
           placeholder="Ej: 6.7"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -57,6 +58,7 @@ const PhoneSpecifications = ({ onChange }) => {
           value={specifications.resolution}
           onChangeText={(value) => handleChange('resolution', value)}
           placeholder="Ej: 2778x1284"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -67,6 +69,7 @@ const PhoneSpecifications = ({ onChange }) => {
           value={specifications.processor}
           onChangeText={(value) => handleChange('processor', value)}
           placeholder="Ej: Apple A17 Pro, Snapdragon 8 Gen 3"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -77,6 +80,7 @@ const PhoneSpecifications = ({ onChange }) => {
           value={specifications.ram_gb}
           onChangeText={(value) => handleChange('ram_gb', value)}
           placeholder="Ej: 8"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -87,14 +91,15 @@ const PhoneSpecifications = ({ onChange }) => {
           selectedValue={specifications.storage_gb}
           onValueChange={(value) => handleChange('storage_gb', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar capacidad..." value="" />
-          <Picker.Item label="64 GB" value="64" />
-          <Picker.Item label="128 GB" value="128" />
-          <Picker.Item label="256 GB" value="256" />
-          <Picker.Item label="512 GB" value="512" />
-          <Picker.Item label="1 TB" value="1024" />
-          <Picker.Item label="2 TB" value="2048" />
+          <Picker.Item label="Seleccionar capacidad..." value="" color="#999" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="64 GB" value="64" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="128 GB" value="128" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="256 GB" value="256" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="512 GB" value="512" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="1 TB" value="1024" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="2 TB" value="2048" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
         </Picker>
       </View>
 
@@ -105,6 +110,7 @@ const PhoneSpecifications = ({ onChange }) => {
           value={specifications.main_camera_mp}
           onChangeText={(value) => handleChange('main_camera_mp', value)}
           placeholder="Ej: 48MP + 12MP + 12MP"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -115,6 +121,7 @@ const PhoneSpecifications = ({ onChange }) => {
           value={specifications.battery_mah}
           onChangeText={(value) => handleChange('battery_mah', value)}
           placeholder="Ej: 4422"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -125,18 +132,19 @@ const PhoneSpecifications = ({ onChange }) => {
           selectedValue={specifications.operating_system}
           onValueChange={(value) => handleChange('operating_system', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar SO..." value="" />
-          <Picker.Item label="iOS 17" value="iOS 17" />
-          <Picker.Item label="iOS 16" value="iOS 16" />
-          <Picker.Item label="Android 14" value="Android 14" />
-          <Picker.Item label="Android 13" value="Android 13" />
-          <Picker.Item label="Android 12" value="Android 12" />
-          <Picker.Item label="HarmonyOS" value="HarmonyOS" />
-          <Picker.Item label="One UI" value="One UI" />
-          <Picker.Item label="MIUI" value="MIUI" />
-          <Picker.Item label="ColorOS" value="ColorOS" />
-          <Picker.Item label="OxygenOS" value="OxygenOS" />
+          <Picker.Item label="Seleccionar SO..." value="" color="#999" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="iOS 17" value="iOS 17" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="iOS 16" value="iOS 16" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="Android 14" value="Android 14" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="Android 13" value="Android 13" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="Android 12" value="Android 12" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="HarmonyOS" value="HarmonyOS" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="One UI" value="One UI" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="MIUI" value="MIUI" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="ColorOS" value="ColorOS" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
+          <Picker.Item label="OxygenOS" value="OxygenOS" color="#ffffff" style={{backgroundColor: '#2c2c2c'}} />
         </Picker>
       </View>
     </View>
@@ -146,15 +154,17 @@ const PhoneSpecifications = ({ onChange }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#1a1a1a',
     borderRadius: 8,
     marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333',
+    color: '#ffffff',
   },
   inputGroup: {
     marginBottom: 16,
@@ -163,21 +173,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#555',
+    color: '#ffffff',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#4a4a4a',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
   },
   picker: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#4a4a4a',
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
   },
 });
 

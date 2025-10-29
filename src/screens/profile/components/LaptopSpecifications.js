@@ -34,6 +34,7 @@ const LaptopSpecifications = ({ onChange }) => {
           value={specifications.processor}
           onChangeText={(value) => handleChange('processor', value)}
           placeholder="Ej: Intel Core i7-12700H"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -44,6 +45,7 @@ const LaptopSpecifications = ({ onChange }) => {
           value={specifications.ram_gb}
           onChangeText={(value) => handleChange('ram_gb', value)}
           placeholder="Ej: 16"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -55,6 +57,7 @@ const LaptopSpecifications = ({ onChange }) => {
           value={specifications.storage}
           onChangeText={(value) => handleChange('storage', value)}
           placeholder="Ej: 512GB SSD NVMe"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -65,6 +68,7 @@ const LaptopSpecifications = ({ onChange }) => {
           value={specifications.screen_inches}
           onChangeText={(value) => handleChange('screen_inches', value)}
           placeholder="Ej: 15.6"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -75,13 +79,14 @@ const LaptopSpecifications = ({ onChange }) => {
           selectedValue={specifications.resolution}
           onValueChange={(value) => handleChange('resolution', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar resolución..." value="" />
-          <Picker.Item label="1920x1080 (Full HD)" value="1920x1080" />
-          <Picker.Item label="2560x1440 (2K/QHD)" value="2560x1440" />
-          <Picker.Item label="3840x2160 (4K/UHD)" value="3840x2160" />
-          <Picker.Item label="1366x768 (HD)" value="1366x768" />
-          <Picker.Item label="2880x1800 (Retina)" value="2880x1800" />
+          <Picker.Item label="Seleccionar resolución..." value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="1920x1080 (Full HD)" value="1920x1080" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="2560x1440 (2K/QHD)" value="2560x1440" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="3840x2160 (4K/UHD)" value="3840x2160" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="1366x768 (HD)" value="1366x768" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="2880x1800 (Retina)" value="2880x1800" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
         </Picker>
       </View>
 
@@ -92,6 +97,7 @@ const LaptopSpecifications = ({ onChange }) => {
           value={specifications.graphics_card}
           onChangeText={(value) => handleChange('graphics_card', value)}
           placeholder="Ej: NVIDIA RTX 4060 8GB"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -102,6 +108,7 @@ const LaptopSpecifications = ({ onChange }) => {
           value={specifications.weight_kg}
           onChangeText={(value) => handleChange('weight_kg', value)}
           placeholder="Ej: 2.1"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -113,6 +120,7 @@ const LaptopSpecifications = ({ onChange }) => {
           value={specifications.battery_wh}
           onChangeText={(value) => handleChange('battery_wh', value)}
           placeholder="Ej: 80"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -123,16 +131,17 @@ const LaptopSpecifications = ({ onChange }) => {
           selectedValue={specifications.operating_system}
           onValueChange={(value) => handleChange('operating_system', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar SO..." value="" />
-          <Picker.Item label="Windows 11 Home" value="Windows 11 Home" />
-          <Picker.Item label="Windows 11 Pro" value="Windows 11 Pro" />
-          <Picker.Item label="Windows 10 Home" value="Windows 10 Home" />
-          <Picker.Item label="Windows 10 Pro" value="Windows 10 Pro" />
-          <Picker.Item label="macOS" value="macOS" />
-          <Picker.Item label="Ubuntu Linux" value="Ubuntu Linux" />
-          <Picker.Item label="Chrome OS" value="Chrome OS" />
-          <Picker.Item label="Sin SO" value="No OS" />
+          <Picker.Item label="Seleccionar SO..." value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Windows 11 Home" value="Windows 11 Home" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Windows 11 Pro" value="Windows 11 Pro" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Windows 10 Home" value="Windows 10 Home" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Windows 10 Pro" value="Windows 10 Pro" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="macOS" value="macOS" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Ubuntu Linux" value="Ubuntu Linux" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Chrome OS" value="Chrome OS" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Sin SO" value="No OS" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
         </Picker>
       </View>
     </View>
@@ -142,15 +151,17 @@ const LaptopSpecifications = ({ onChange }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#1a1a1a',
     borderRadius: 8,
     marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333',
+    color: '#ffffff',
   },
   inputGroup: {
     marginBottom: 16,
@@ -159,21 +170,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#555',
+    color: '#ffffff',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#4a4a4a',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
   },
   picker: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#4a4a4a',
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
   },
 });
 
