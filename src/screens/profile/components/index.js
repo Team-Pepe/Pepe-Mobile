@@ -31,76 +31,65 @@ import CableSpecifications from './CableSpecifications';
 import OtherSpecifications from './OtherSpecifications';
 
 // Mapeo de nombres de categorías a componentes
-export const getSpecificationComponent = (categoryName) => {
-  const componentMap = {
-    // Componentes originales
-    'cpu': CpuSpecifications,
-    'gpu': GpuSpecifications,
-    'ram': RamSpecifications,
-    'storage': StorageSpecifications,
-    'motherboard': MotherboardSpecifications,
-    'psu': PsuSpecifications,
-    
-    // Nuevos componentes
-    'cooler': CoolerSpecifications,
-    'case': CaseSpecifications,
-    'monitor': MonitorSpecifications,
-    'laptop': LaptopSpecifications,
-    'phone': PhoneSpecifications,
-    'peripheral': PeripheralSpecifications,
-    'cable': CableSpecifications,
-    'other': OtherSpecifications,
-    
-    // Mapeos en español - componentes originales
-    'procesador': CpuSpecifications,
-    'procesadores': CpuSpecifications,
-    'tarjeta gráfica': GpuSpecifications,
-    'tarjetas gráficas': GpuSpecifications,
-    'memoria ram': RamSpecifications,
-    'memoria': RamSpecifications,
-    'almacenamiento': StorageSpecifications,
-    'placa base': MotherboardSpecifications,
-    'placas base': MotherboardSpecifications,
-    'fuente de poder': PsuSpecifications,
-    'fuentes de poder': PsuSpecifications,
-    
-    // Mapeos en español - nuevos componentes
-    'refrigeración': CoolerSpecifications,
-    'refrigeracion': CoolerSpecifications,
-    'enfriamiento': CoolerSpecifications,
-    'gabinete': CaseSpecifications,
-    'gabinetes': CaseSpecifications,
-    'caja': CaseSpecifications,
-    'cajas': CaseSpecifications,
-    'monitores': MonitorSpecifications,
-    'pantalla': MonitorSpecifications,
-    'pantallas': MonitorSpecifications,
-    'laptops': LaptopSpecifications,
-    'portátil': LaptopSpecifications,
-    'portátiles': LaptopSpecifications,
-    'portables': LaptopSpecifications,
-    'teléfono': PhoneSpecifications,
-    'teléfonos': PhoneSpecifications,
-    'telefono': PhoneSpecifications,
-    'telefonos': PhoneSpecifications,
-    'móvil': PhoneSpecifications,
-    'móviles': PhoneSpecifications,
-    'movil': PhoneSpecifications,
-    'moviles': PhoneSpecifications,
-    'periférico': PeripheralSpecifications,
-    'periféricos': PeripheralSpecifications,
-    'periferico': PeripheralSpecifications,
-    'perifericos': PeripheralSpecifications,
-    'accesorio': PeripheralSpecifications,
-    'accesorios': PeripheralSpecifications,
-    'cables': CableSpecifications,
-    'cable': CableSpecifications,
-    'otros': OtherSpecifications,
-    'otro': OtherSpecifications,
-    'general': OtherSpecifications,
-    'generales': OtherSpecifications,
-  };
+// Normaliza el nombre (minúsculas, sin acentos, sin espacios extra)
+const normalizeName = (name) =>
+  (name || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
 
-  const normalizedName = categoryName.toLowerCase();
-  return componentMap[normalizedName] || OtherSpecifications; // Usar OtherSpecifications como fallback
+// Devuelve true si alguno de los patrones coincide en el nombre normalizado
+const matchesAny = (normalized, patterns) =>
+  patterns.some((p) => {
+    if (p instanceof RegExp) return p.test(normalized);
+    return normalized.includes(p);
+  });
+
+export const getSpecificationComponent = (categoryName) => {
+  const n = normalizeName(categoryName);
+
+  // Orden de chequeo pensado para evitar confusiones entre RAM/GPU/Motherboard
+  if (matchesAny(n, [/\bmotherboard\b/, 'placa base', 'placas base'])) {
+    return MotherboardSpecifications;
+  }
+  if (matchesAny(n, [/\bgpu\b/, 'tarjeta grafica', 'tarjetas graficas', 'grafica'])) {
+    return GpuSpecifications;
+  }
+  if (matchesAny(n, [/\bram\b/, 'memoria ram', /^memoria$/])) {
+    return RamSpecifications;
+  }
+  if (matchesAny(n, [/\bcpu\b/, 'procesador', 'procesadores'])) {
+    return CpuSpecifications;
+  }
+  if (matchesAny(n, ['storage', 'almacenamiento'])) {
+    return StorageSpecifications;
+  }
+  if (matchesAny(n, [/\bpsu\b/, 'fuente de poder', 'fuentes de poder'])) {
+    return PsuSpecifications;
+  }
+  if (matchesAny(n, ['cooler', 'refrigeracion', 'refrigeración', 'enfriamiento'])) {
+    return CoolerSpecifications;
+  }
+  if (matchesAny(n, ['case', 'gabinete', 'gabinetes', 'caja', 'cajas'])) {
+    return CaseSpecifications;
+  }
+  if (matchesAny(n, ['monitor', 'monitores', 'pantalla', 'pantallas'])) {
+    return MonitorSpecifications;
+  }
+  if (matchesAny(n, ['laptop', 'laptops', 'portatil', 'portatiles', 'portables'])) {
+    return LaptopSpecifications;
+  }
+  if (matchesAny(n, ['phone', 'telefono', 'telefonos', 'movil', 'moviles'])) {
+    return PhoneSpecifications;
+  }
+  if (matchesAny(n, ['peripheral', 'periferico', 'perifericos', 'accesorio', 'accesorios'])) {
+    return PeripheralSpecifications;
+  }
+  if (matchesAny(n, ['cable', 'cables'])) {
+    return CableSpecifications;
+  }
+
+  return OtherSpecifications;
 };

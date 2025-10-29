@@ -1,5 +1,131 @@
 import { supabase } from '../lib/supabase';
 
+// Campos válidos por tabla de especificaciones (alineado al esquema SQL)
+const validFieldsMap = {
+  cpu_specifications: [
+    'cores', 'threads', 'base_clock_ghz', 'boost_clock_ghz', 'tdp_w', 'socket'
+  ],
+  gpu_specifications: [
+    'vram_gb', 'gpu_chipset', 'length_mm', 'power_consumption_w', 'recommended_psu_w'
+  ],
+  ram_specifications: [
+    'capacity_gb', 'type', 'speed_mhz'
+  ],
+  motherboard_specifications: [
+    'socket', 'chipset', 'form_factor', 'ram_slots', 'ram_type', 'm2_ports', 'sata_ports', 'usb_ports', 'audio', 'network'
+  ],
+  storage_specifications: [
+    'type', 'capacity_gb'
+  ],
+  psu_specifications: [
+    'power_w', 'efficiency_rating', 'modular', 'form_factor'
+  ],
+  case_specifications: [
+    'form_factor', 'max_gpu_length_mm', 'max_cooler_height_mm', 'bays_25', 'bays_35'
+  ],
+  cooler_specifications: [
+    'cooler_type', 'compatible_sockets', 'height_mm', 'rpm_range', 'noise_level_db', 'tdp_w'
+  ],
+  monitor_specifications: [
+    'size_inches', 'resolution', 'refresh_rate_hz', 'panel_type', 'response_time_ms', 'connectors'
+  ],
+  peripheral_specifications: [
+    'type', 'connection'
+  ],
+  cable_specifications: [
+    'type', 'length_m'
+  ],
+  laptop_specifications: [
+    'cpu', 'gpu', 'ram_gb', 'storage_gb', 'screen_size_inches', 'battery_wh'
+  ],
+  phone_specifications: [
+    'cpu', 'ram_gb', 'storage_gb', 'screen_size_inches', 'battery_mah'
+  ],
+  other_specifications: [
+    'general_specifications'
+  ]
+};
+
+// Campos requeridos por tabla (respeta NOT NULL en SQL)
+const requiredFieldsMap = {
+  gpu_specifications: ['vram_gb'],
+  motherboard_specifications: ['socket', 'chipset', 'form_factor', 'ram_slots'],
+  psu_specifications: ['power_w'],
+  ram_specifications: ['capacity_gb', 'type', 'speed_mhz'],
+  storage_specifications: ['type', 'capacity_gb'],
+  cooler_specifications: ['cooler_type']
+};
+
+// Normaliza nombres para coincidencia robusta (minúsculas, sin acentos, espacios únicos)
+function normalizeName(name = '') {
+  return name
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+// Resuelve la tabla por nombre de categoría (incluye sinónimos en español)
+function resolveSpecTableByCategoryName(rawName = '') {
+  const n = normalizeName(rawName);
+
+  // Motherboard
+  if (/\b(mother ?board|placa ?base|placa ?madre|motherboards|placas ?bases|placas ?madres)\b/.test(n)) {
+    return 'motherboard_specifications';
+  }
+  // GPU / Tarjeta gráfica
+  if (/\b(gpu|tarjeta(s)? grafica(s)?|grafica|graficas|video)\b/.test(n)) {
+    return 'gpu_specifications';
+  }
+  // RAM
+  if (/\b(ram|memoria ram|memoria)\b/.test(n)) {
+    return 'ram_specifications';
+  }
+  // CPU
+  if (/\b(cpu|procesador|cpus|procesadores)\b/.test(n)) {
+    return 'cpu_specifications';
+  }
+  // Almacenamiento
+  if (/\b(storage|almacenamiento|disco|ssd|hdd)\b/.test(n)) {
+    return 'storage_specifications';
+  }
+  // Fuente de poder
+  if (/\b(psu|fuente de poder|fuente|power supply)\b/.test(n)) {
+    return 'psu_specifications';
+  }
+  // Refrigeración
+  if (/\b(cooler|disipador|refrigeracion|ventilador|heatsink|liquida)\b/.test(n)) {
+    return 'cooler_specifications';
+  }
+  // Gabinete
+  if (/\b(case|gabinete|torre|chasis)\b/.test(n)) {
+    return 'case_specifications';
+  }
+  // Monitor
+  if (/\b(monitor|pantalla|display)\b/.test(n)) {
+    return 'monitor_specifications';
+  }
+  // Portátil
+  if (/\b(laptop|portatil|notebook)\b/.test(n)) {
+    return 'laptop_specifications';
+  }
+  // Teléfono
+  if (/\b(phone|telefono|smartphone|movil|celular)\b/.test(n)) {
+    return 'phone_specifications';
+  }
+  // Periférico
+  if (/\b(peripheral|periferico|teclado|mouse|raton|audifonos|auriculares)\b/.test(n)) {
+    return 'peripheral_specifications';
+  }
+  // Cable
+  if (/\b(cable|cables)\b/.test(n)) {
+    return 'cable_specifications';
+  }
+  // Fallback
+  return 'other_specifications';
+}
+
 class ProductService {
   // Obtener todas las categorías disponibles
   static async getCategories() {
@@ -58,49 +184,29 @@ class ProductService {
   // Guardar especificaciones del producto en la tabla correspondiente
   static async saveProductSpecifications(productId, categoryId, specifications) {
     try {
-      // Mapeo de categorías a tablas de especificaciones
-      const categoryTableMap = {
-        1: 'cpu_specifications',
-        2: 'gpu_specifications', 
-        3: 'ram_specifications',
-        4: 'motherboard_specifications',
-        5: 'storage_specifications',
-        6: 'psu_specifications',
-        7: 'case_specifications',
-        8: 'cooler_specifications',
-        9: 'monitor_specifications',
-        10: 'peripheral_specifications',
-        11: 'cable_specifications',
-        12: 'laptop_specifications',
-        13: 'phone_specifications'
-      };
+      // 1) Resolver nombre de la categoría en BD y obtener la tabla
+      const { data: categoryRows, error: catErr } = await supabase
+        .from('categories')
+        .select('id, name')
+        .eq('id', categoryId)
+        .limit(1);
 
-      const tableName = categoryTableMap[categoryId];
-      
-      if (!tableName) {
-        // Si no hay tabla específica, usar other_specifications
-        const specData = {
-          product_id: productId,
-          general_specifications: specifications
-        };
-
-        const { data, error } = await supabase
-          .from('other_specifications')
-          .insert([specData]);
-
-        if (error) {
-          console.error('Error guardando especificaciones generales:', error);
-          throw error;
-        }
-
-        return data;
+      if (catErr) {
+        console.error('Error obteniendo categoría para especificaciones:', catErr);
+        throw catErr;
       }
+      const categoryName = categoryRows && categoryRows[0] ? categoryRows[0].name : '';
+      const tableName = resolveSpecTableByCategoryName(categoryName);
 
-      // Preparar los datos de especificaciones con el product_id
-      const specData = {
-        product_id: productId,
-        ...specifications
-      };
+      // 2) Construir y filtrar datos según la tabla
+      const specDataRaw = { product_id: productId, ...specifications };
+      const validFields = validFieldsMap[tableName] || [];
+      const specData = Object.keys(specDataRaw)
+        .filter((key) => key === 'product_id' || validFields.includes(key))
+        .reduce((acc, key) => {
+          acc[key] = specDataRaw[key];
+          return acc;
+        }, {});
 
       // Limpiar campos vacíos o undefined y convertir números grandes
       Object.keys(specData).forEach(key => {
@@ -130,7 +236,14 @@ class ProductService {
         }
       });
 
-      // Insertar las especificaciones
+      // 3) Validar campos obligatorios según tabla
+      const required = requiredFieldsMap[tableName] || [];
+      const missing = required.filter((key) => specData[key] === undefined || specData[key] === null || specData[key] === '');
+      if (missing.length > 0) {
+        throw new Error(`Faltan campos requeridos para ${tableName}: ${missing.join(', ')}`);
+      }
+
+      // 4) Insertar las especificaciones
       const { data, error } = await supabase
         .from(tableName)
         .insert([specData]);
