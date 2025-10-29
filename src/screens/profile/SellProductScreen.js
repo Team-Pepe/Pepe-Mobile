@@ -157,6 +157,18 @@ const SellProductScreen = ({ navigation }) => {
           errorMessage = error.message;
         } else if (error.message.includes('tamaño del ventilador no puede exceder')) {
           errorMessage = error.message;
+        } else if (error.message.includes('número de bahías 3.5" no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('número de bahías 2.5" no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('número de slots de expansión no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('longitud máxima de GPU no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('altura máxima del cooler no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('número de ventiladores incluidos no puede exceder')) {
+          errorMessage = error.message;
         } else if (error.message.includes('Faltan campos requeridos')) {
           errorMessage = error.message;
         } else if (error.message.includes('numeric field overflow')) {

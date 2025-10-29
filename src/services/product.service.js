@@ -23,7 +23,7 @@ const validFieldsMap = {
     'power_w', 'efficiency_certification', 'modular_type', 'form_factor', 'connectors', 'fan_size_mm', 'active_pfc'
   ],
   case_specifications: [
-    'form_factor', 'max_gpu_length_mm', 'max_cooler_height_mm', 'bays_25', 'bays_35'
+    'motherboard_formats', 'bays_35', 'bays_25', 'expansion_slots', 'max_gpu_length_mm', 'max_cooler_height_mm', 'psu_type', 'included_fans', 'material'
   ],
   cooler_specifications: [
     'cooler_type', 'compatible_sockets', 'height_mm', 'rpm_range', 'noise_level_db', 'tdp_w'
@@ -275,6 +275,28 @@ class ProductService {
               }
               if (key === 'fan_size_mm' && numValue > 2147483647) {
                 throw new Error('El tamaño del ventilador no puede exceder 2,147,483,647 mm');
+              }
+            }
+            
+            // Validaciones especiales para Case (evitar overflow en campos integer)
+            if (tableName === 'case_specifications') {
+              if (key === 'bays_35' && numValue > 2147483647) {
+                throw new Error('El número de bahías 3.5" no puede exceder 2,147,483,647');
+              }
+              if (key === 'bays_25' && numValue > 2147483647) {
+                throw new Error('El número de bahías 2.5" no puede exceder 2,147,483,647');
+              }
+              if (key === 'expansion_slots' && numValue > 2147483647) {
+                throw new Error('El número de slots de expansión no puede exceder 2,147,483,647');
+              }
+              if (key === 'max_gpu_length_mm' && numValue > 2147483647) {
+                throw new Error('La longitud máxima de GPU no puede exceder 2,147,483,647 mm');
+              }
+              if (key === 'max_cooler_height_mm' && numValue > 2147483647) {
+                throw new Error('La altura máxima del cooler no puede exceder 2,147,483,647 mm');
+              }
+              if (key === 'included_fans' && numValue > 2147483647) {
+                throw new Error('El número de ventiladores incluidos no puede exceder 2,147,483,647');
               }
             }
             

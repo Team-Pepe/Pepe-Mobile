@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const CaseSpecifications = ({ onChange }) => {
@@ -16,7 +16,49 @@ const CaseSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const updatedSpecs = { ...specifications, [field]: value };
+    let processedValue = value;
+    
+    // Validación para campos numéricos
+    if (['bays_35', 'bays_25', 'expansion_slots', 'max_gpu_length_mm', 'max_cooler_height_mm', 'included_fans'].includes(field)) {
+      // Permitir solo números
+      processedValue = value.replace(/[^0-9]/g, '');
+      
+      const numValue = parseInt(processedValue) || 0;
+      
+      // Validación de overflow (límite de integer en PostgreSQL)
+      if (numValue > 2147483647) {
+        let fieldName = '';
+        switch(field) {
+          case 'bays_35': fieldName = 'bahías 3.5"'; break;
+          case 'bays_25': fieldName = 'bahías 2.5"'; break;
+          case 'expansion_slots': fieldName = 'slots de expansión'; break;
+          case 'max_gpu_length_mm': fieldName = 'longitud máxima de GPU'; break;
+          case 'max_cooler_height_mm': fieldName = 'altura máxima del cooler'; break;
+          case 'included_fans': fieldName = 'ventiladores incluidos'; break;
+        }
+        Alert.alert('Valor muy alto', `El número de ${fieldName} no puede exceder 2,147,483,647`);
+        return; // No actualizar si excede el límite
+      }
+      
+      // Validación de límites prácticos
+      if (field === 'bays_35' && numValue > 20) {
+        Alert.alert('Valor inusual', 'El número de bahías 3.5" parece muy alto. ¿Estás seguro?');
+      } else if (field === 'bays_25' && numValue > 50) {
+        Alert.alert('Valor inusual', 'El número de bahías 2.5" parece muy alto. ¿Estás seguro?');
+      } else if (field === 'expansion_slots' && numValue > 20) {
+        Alert.alert('Valor inusual', 'El número de slots de expansión parece muy alto. ¿Estás seguro?');
+      } else if (field === 'max_gpu_length_mm' && numValue > 1000) {
+        Alert.alert('Valor inusual', 'La longitud máxima de GPU parece muy alta. ¿Estás seguro?');
+      } else if (field === 'max_cooler_height_mm' && numValue > 500) {
+        Alert.alert('Valor inusual', 'La altura máxima del cooler parece muy alta. ¿Estás seguro?');
+      } else if (field === 'included_fans' && numValue > 20) {
+        Alert.alert('Valor inusual', 'El número de ventiladores incluidos parece muy alto. ¿Estás seguro?');
+      }
+      
+      processedValue = numValue.toString();
+    }
+    
+    const updatedSpecs = { ...specifications, [field]: processedValue };
     setSpecifications(updatedSpecs);
     if (onChange) {
       onChange(updatedSpecs);
