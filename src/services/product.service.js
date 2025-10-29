@@ -17,7 +17,7 @@ const validFieldsMap = {
     'socket', 'chipset', 'form_factor', 'ram_slots', 'ram_type', 'm2_ports', 'sata_ports', 'usb_ports', 'audio', 'network'
   ],
   storage_specifications: [
-    'type', 'capacity_gb'
+    'type', 'capacity_gb', 'interface', 'read_speed_mbs', 'write_speed_mbs', 'form_factor', 'nand_type', 'tbw'
   ],
   psu_specifications: [
     'power_w', 'efficiency_rating', 'modular', 'form_factor'
@@ -249,6 +249,22 @@ class ProductService {
               }
               if (key === 'modules' && numValue > 2147483647) {
                 throw new Error('El número de módulos de RAM no puede exceder 2,147,483,647');
+              }
+            }
+            
+            // Validaciones especiales para Storage (evitar overflow en campos integer)
+            if (tableName === 'storage_specifications') {
+              if (key === 'capacity_gb' && numValue > 2147483647) {
+                throw new Error('La capacidad de almacenamiento no puede exceder 2,147,483,647 GB');
+              }
+              if (key === 'read_speed_mbs' && numValue > 2147483647) {
+                throw new Error('La velocidad de lectura no puede exceder 2,147,483,647 MB/s');
+              }
+              if (key === 'write_speed_mbs' && numValue > 2147483647) {
+                throw new Error('La velocidad de escritura no puede exceder 2,147,483,647 MB/s');
+              }
+              if (key === 'tbw' && numValue > 2147483647) {
+                throw new Error('El TBW no puede exceder 2,147,483,647');
               }
             }
             

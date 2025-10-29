@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const StorageSpecifications = ({ onChange }) => {
@@ -15,6 +15,40 @@ const StorageSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
+    // Validaciones para campos numéricos
+    if (['capacity_gb', 'read_speed_mbs', 'write_speed_mbs', 'tbw'].includes(field)) {
+      const numValue = parseFloat(value);
+      
+      // Validar overflow de integer
+      if (numValue > 2147483647) {
+        switch (field) {
+          case 'capacity_gb':
+            Alert.alert('Error', 'La capacidad no puede exceder 2,147,483,647 GB');
+            return;
+          case 'read_speed_mbs':
+            Alert.alert('Error', 'La velocidad de lectura no puede exceder 2,147,483,647 MB/s');
+            return;
+          case 'write_speed_mbs':
+            Alert.alert('Error', 'La velocidad de escritura no puede exceder 2,147,483,647 MB/s');
+            return;
+          case 'tbw':
+            Alert.alert('Error', 'El TBW no puede exceder 2,147,483,647');
+            return;
+        }
+      }
+      
+      // Validaciones prácticas
+      if (field === 'capacity_gb' && numValue > 100000) {
+        Alert.alert('Advertencia', 'La capacidad parece muy alta. ¿Está seguro?');
+      }
+      if ((field === 'read_speed_mbs' || field === 'write_speed_mbs') && numValue > 50000) {
+        Alert.alert('Advertencia', 'La velocidad parece muy alta para almacenamiento actual.');
+      }
+      if (field === 'tbw' && numValue > 10000) {
+        Alert.alert('Advertencia', 'El TBW parece muy alto para almacenamiento típico.');
+      }
+    }
+    
     const newSpecs = { ...specifications, [field]: value };
     setSpecifications(newSpecs);
     if (onChange) {

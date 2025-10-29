@@ -145,6 +145,14 @@ const SellProductScreen = ({ navigation }) => {
           errorMessage = error.message;
         } else if (error.message.includes('número de módulos de RAM no puede exceder')) {
           errorMessage = error.message;
+        } else if (error.message.includes('capacidad de almacenamiento no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('velocidad de lectura no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('velocidad de escritura no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('TBW no puede exceder')) {
+          errorMessage = error.message;
         } else if (error.message.includes('Faltan campos requeridos')) {
           errorMessage = error.message;
         } else if (error.message.includes('numeric field overflow')) {
