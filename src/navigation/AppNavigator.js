@@ -125,7 +125,15 @@ const AppNavigator = () => {
           }}
         >
         <Stack.Screen name="Login" component={LoginScreen} options={{ headerShown: false }} />
-        <Stack.Screen name="Register" component={RegisterScreen} options={{ headerShown: false }} />
+        <Stack.Screen 
+          name="Register" 
+          component={RegisterScreen} 
+          options={{
+            title: 'Registrarse',
+            headerStyle: { backgroundColor: '#2c2c2c' },
+            headerTintColor: '#ffffff',
+          }}
+        />
         <Stack.Screen 
           name="CategorySelection" 
           component={CategorySelectionScreen} 

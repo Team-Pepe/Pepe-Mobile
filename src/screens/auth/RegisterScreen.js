@@ -1,9 +1,10 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Modal, FlatList, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ScrollView, Modal, FlatList, ActivityIndicator, Keyboard } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
 
 const RegisterScreen = ({ navigation }) => {
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -23,6 +24,26 @@ const RegisterScreen = ({ navigation }) => {
   const [showMonthPicker, setShowMonthPicker] = useState(false);
   const [showYearPicker, setShowYearPicker] = useState(false);
   const [loading, setLoading] = useState(false); // Estado de carga
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardOffset(e.endCoordinates.height);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardOffset(0);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   const updateFormData = (field, value) => {
     const newFormData = {
@@ -161,8 +182,13 @@ const RegisterScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.contentContainer}>
-      <Text style={styles.title}>Crear Cuenta</Text>
+    <View style={[styles.container, { paddingBottom: keyboardOffset }]}>
+      <ScrollView 
+        contentContainerStyle={styles.contentContainer}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
+        <Text style={styles.title}>Crear Cuenta</Text>
       
       {/* Email - Campo importante en fila completa */}
       <TextInput
@@ -423,6 +449,7 @@ const RegisterScreen = ({ navigation }) => {
         <Text style={styles.linkText}>¿Ya tienes cuenta? Inicia sesión</Text>
       </TouchableOpacity>
     </ScrollView>
+    </View>
   );
 };
 
