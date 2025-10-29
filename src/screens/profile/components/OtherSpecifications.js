@@ -90,22 +90,7 @@ const OtherSpecifications = ({ onChange }) => {
         </View>
       </View>
 
-      <View style={styles.inputGroup}>
-        <Text style={styles.label}>Especificaciones Completas (JSON)</Text>
-        <Text style={styles.helpText}>
-          Puedes editar directamente el JSON o usar los campos rápidos arriba.
-          Ejemplo: {`{"marca": "Ejemplo", "modelo": "ABC123", "garantia": "2 años"}`}
-        </Text>
-        <TextInput
-          style={styles.jsonInput}
-          value={jsonInput}
-          onChangeText={handleJsonChange}
-          placeholder='{"especificacion": "valor", "otra_especificacion": "otro_valor"}'
-          placeholderTextColor="#999"
-          multiline
-          numberOfLines={8}
-        />
-      </View>
+
 
       <View style={styles.previewContainer}>
         <Text style={styles.previewTitle}>Especificaciones Guardadas:</Text>
