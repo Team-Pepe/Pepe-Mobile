@@ -68,6 +68,7 @@ const MonitorSpecifications = ({ onChange }) => {
           value={specifications.screen_inches}
           onChangeText={(value) => handleChange('screen_inches', value)}
           placeholder="Ej: 27"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -78,14 +79,15 @@ const MonitorSpecifications = ({ onChange }) => {
           selectedValue={specifications.resolution}
           onValueChange={(value) => handleChange('resolution', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar resolución..." value="" />
-          <Picker.Item label="1920x1080 (Full HD)" value="1920x1080" />
-          <Picker.Item label="2560x1440 (2K/QHD)" value="2560x1440" />
-          <Picker.Item label="3840x2160 (4K/UHD)" value="3840x2160" />
-          <Picker.Item label="1366x768 (HD)" value="1366x768" />
-          <Picker.Item label="3440x1440 (Ultrawide QHD)" value="3440x1440" />
-          <Picker.Item label="2560x1080 (Ultrawide FHD)" value="2560x1080" />
+          <Picker.Item label="Seleccionar resolución..." value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="1920x1080 (Full HD)" value="1920x1080" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="2560x1440 (2K/QHD)" value="2560x1440" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="3840x2160 (4K/UHD)" value="3840x2160" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="1366x768 (HD)" value="1366x768" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="3440x1440 (Ultrawide QHD)" value="3440x1440" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="2560x1080 (Ultrawide FHD)" value="2560x1080" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
         </Picker>
       </View>
 
@@ -96,6 +98,7 @@ const MonitorSpecifications = ({ onChange }) => {
           value={specifications.refresh_rate_hz}
           onChangeText={(value) => handleChange('refresh_rate_hz', value)}
           placeholder="Ej: 144"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -106,13 +109,14 @@ const MonitorSpecifications = ({ onChange }) => {
           selectedValue={specifications.panel_type}
           onValueChange={(value) => handleChange('panel_type', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar tipo..." value="" />
-          <Picker.Item label="IPS" value="IPS" />
-          <Picker.Item label="TN" value="TN" />
-          <Picker.Item label="VA" value="VA" />
-          <Picker.Item label="OLED" value="OLED" />
-          <Picker.Item label="QLED" value="QLED" />
+          <Picker.Item label="Seleccionar tipo..." value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="IPS" value="IPS" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="TN" value="TN" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="VA" value="VA" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="OLED" value="OLED" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="QLED" value="QLED" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
         </Picker>
       </View>
 
@@ -123,6 +127,7 @@ const MonitorSpecifications = ({ onChange }) => {
           value={specifications.response_time_ms}
           onChangeText={(value) => handleChange('response_time_ms', value)}
           placeholder="Ej: 1"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -140,12 +145,12 @@ const MonitorSpecifications = ({ onChange }) => {
       </View>
 
       <View style={styles.switchGroup}>
-        <Text style={styles.label}>Monitor Curvo</Text>
+        <Text style={styles.label}>Pantalla Curva</Text>
         <Switch
           value={specifications.curved}
           onValueChange={() => toggleBoolean('curved')}
-          trackColor={{ false: '#767577', true: '#81b0ff' }}
-          thumbColor={specifications.curved ? '#f5dd4b' : '#f4f3f4'}
+          trackColor={{ false: '#3a3a3a', true: '#007AFF' }}
+          thumbColor={specifications.curved ? '#ffffff' : '#f4f3f4'}
         />
       </View>
     </View>
@@ -154,16 +159,19 @@ const MonitorSpecifications = ({ onChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    marginVertical: 8,
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
+    color: '#ffffff',
+    marginBottom: 15,
+    textAlign: 'center',
   },
   inputGroup: {
     marginBottom: 16,
@@ -178,21 +186,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#555',
+    color: '#ffffff',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    height: 45,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
   },
   picker: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
     borderRadius: 8,
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
   },
 });
 

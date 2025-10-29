@@ -191,14 +191,17 @@ const SellProductScreen = ({ navigation }) => {
               selectedValue={categoryId}
               onValueChange={handleCategoryChange}
               style={styles.picker}
-              dropdownIconColor="#ffffff"
+              dropdownIconColor="#007AFF"
+              itemStyle={{ backgroundColor: '#2c2c2c' }}
             >
-              <Picker.Item label="Selecciona una categoría" value="" />
+              <Picker.Item label="Selecciona una categoría" value="" color="#999" />
               {categories.map((category) => (
                 <Picker.Item
                   key={category.id}
                   label={category.name}
                   value={category.id.toString()}
+                  color="#ffffff"
+                  style={{ backgroundColor: '#2c2c2c' }}
                 />
               ))}
             </Picker>

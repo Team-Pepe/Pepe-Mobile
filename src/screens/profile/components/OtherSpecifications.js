@@ -47,11 +47,13 @@ const OtherSpecifications = ({ onChange }) => {
           <TextInput
             style={styles.quickInput}
             placeholder="Marca"
+            placeholderTextColor="#999"
             onChangeText={(value) => addCommonField('marca', value)}
           />
           <TextInput
             style={styles.quickInput}
             placeholder="Modelo"
+            placeholderTextColor="#999"
             onChangeText={(value) => addCommonField('modelo', value)}
           />
         </View>
@@ -60,11 +62,13 @@ const OtherSpecifications = ({ onChange }) => {
           <TextInput
             style={styles.quickInput}
             placeholder="Color"
+            placeholderTextColor="#999"
             onChangeText={(value) => addCommonField('color', value)}
           />
           <TextInput
             style={styles.quickInput}
             placeholder="Peso (kg)"
+            placeholderTextColor="#999"
             keyboardType="numeric"
             onChangeText={(value) => addCommonField('peso_kg', value)}
           />
@@ -74,11 +78,13 @@ const OtherSpecifications = ({ onChange }) => {
           <TextInput
             style={styles.quickInput}
             placeholder="Dimensiones"
+            placeholderTextColor="#999"
             onChangeText={(value) => addCommonField('dimensiones', value)}
           />
           <TextInput
             style={styles.quickInput}
             placeholder="Material"
+            placeholderTextColor="#999"
             onChangeText={(value) => addCommonField('material', value)}
           />
         </View>
@@ -95,6 +101,7 @@ const OtherSpecifications = ({ onChange }) => {
           value={jsonInput}
           onChangeText={handleJsonChange}
           placeholder='{"especificacion": "valor", "otra_especificacion": "otro_valor"}'
+          placeholderTextColor="#999"
           multiline
           numberOfLines={8}
         />
@@ -114,22 +121,25 @@ const OtherSpecifications = ({ onChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    marginVertical: 8,
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
+    marginBottom: 15,
+    color: '#ffffff',
+    textAlign: 'center',
   },
   subtitle: {
     fontSize: 16,
     fontWeight: '600',
     marginBottom: 12,
-    color: '#555',
+    color: '#ffffff',
   },
   quickFieldsContainer: {
     marginBottom: 20,
@@ -141,12 +151,15 @@ const styles = StyleSheet.create({
   },
   quickInput: {
     flex: 1,
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
     borderRadius: 8,
-    padding: 10,
-    fontSize: 14,
-    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    height: 45,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
     marginHorizontal: 4,
   },
   inputGroup: {
@@ -156,40 +169,44 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#555',
+    color: '#ffffff',
   },
   helpText: {
     fontSize: 12,
-    color: '#666',
+    color: '#999',
     marginBottom: 8,
     fontStyle: 'italic',
   },
   jsonInput: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 14,
-    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
     fontFamily: 'monospace',
     textAlignVertical: 'top',
+    minHeight: 120,
   },
   previewContainer: {
-    backgroundColor: '#e9ecef',
+    backgroundColor: '#2c2c2c',
     padding: 12,
     borderRadius: 8,
     marginTop: 8,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
   },
   previewTitle: {
     fontSize: 14,
     fontWeight: '600',
     marginBottom: 8,
-    color: '#495057',
+    color: '#ffffff',
   },
   previewText: {
     fontSize: 12,
     fontFamily: 'monospace',
-    color: '#6c757d',
+    color: '#999',
   },
 });
 

@@ -33,21 +33,22 @@ const CableSpecifications = ({ onChange }) => {
           selectedValue={specifications.cable_type}
           onValueChange={(value) => handleChange('cable_type', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar tipo..." value="" />
-          <Picker.Item label="HDMI" value="HDMI" />
-          <Picker.Item label="DisplayPort" value="DisplayPort" />
-          <Picker.Item label="USB-A" value="USB-A" />
-          <Picker.Item label="USB-C" value="USB-C" />
-          <Picker.Item label="USB-B" value="USB-B" />
-          <Picker.Item label="Ethernet" value="Ethernet" />
-          <Picker.Item label="Audio 3.5mm" value="Audio 3.5mm" />
-          <Picker.Item label="VGA" value="VGA" />
-          <Picker.Item label="DVI" value="DVI" />
-          <Picker.Item label="Thunderbolt" value="Thunderbolt" />
-          <Picker.Item label="SATA" value="SATA" />
-          <Picker.Item label="Alimentación" value="Power" />
-          <Picker.Item label="Coaxial" value="Coaxial" />
+          <Picker.Item label="Seleccionar tipo..." value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="HDMI" value="HDMI" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="DisplayPort" value="DisplayPort" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="USB-A" value="USB-A" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="USB-C" value="USB-C" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="USB-B" value="USB-B" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Ethernet" value="Ethernet" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Audio 3.5mm" value="Audio 3.5mm" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="VGA" value="VGA" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="DVI" value="DVI" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Thunderbolt" value="Thunderbolt" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="SATA" value="SATA" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Alimentación" value="Power" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Coaxial" value="Coaxial" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
         </Picker>
       </View>
 
@@ -58,6 +59,7 @@ const CableSpecifications = ({ onChange }) => {
           value={specifications.length_m}
           onChangeText={(value) => handleChange('length_m', value)}
           placeholder="Ej: 1.5"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -69,6 +71,7 @@ const CableSpecifications = ({ onChange }) => {
           value={specifications.connectors}
           onChangeText={(value) => handleChange('connectors', value)}
           placeholder="Ej: USB-A a USB-C, HDMI Macho a Macho"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -79,6 +82,7 @@ const CableSpecifications = ({ onChange }) => {
           value={specifications.version}
           onChangeText={(value) => handleChange('version', value)}
           placeholder="Ej: HDMI 2.1, USB 3.0, Cat6"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -87,8 +91,8 @@ const CableSpecifications = ({ onChange }) => {
         <Switch
           value={specifications.shielded}
           onValueChange={() => toggleBoolean('shielded')}
-          trackColor={{ false: '#767577', true: '#81b0ff' }}
-          thumbColor={specifications.shielded ? '#f5dd4b' : '#f4f3f4'}
+          trackColor={{ false: '#3a3a3a', true: '#007AFF' }}
+          thumbColor={specifications.shielded ? '#ffffff' : '#f4f3f4'}
         />
       </View>
     </View>
@@ -97,45 +101,47 @@ const CableSpecifications = ({ onChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    marginVertical: 8,
+    backgroundColor: '#1a1a1a',
+    padding: 15,
+    borderRadius: 10,
+    marginVertical: 10,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
-    fontSize: 18,
+    fontSize: 20,
     fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
-  },
-  inputGroup: {
-    marginBottom: 16,
-  },
-  switchGroup: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    alignItems: 'center',
-    marginBottom: 16,
+    color: '#ffffff',
+    marginBottom: 15,
+    textAlign: 'center',
   },
   label: {
-    fontSize: 14,
-    fontWeight: '500',
-    marginBottom: 8,
-    color: '#555',
+    fontSize: 16,
+    color: '#ffffff',
+    marginBottom: 5,
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    borderColor: '#4a4a4a',
+    borderRadius: 5,
+    padding: 10,
+    marginBottom: 15,
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
   },
   picker: {
     borderWidth: 1,
-    borderColor: '#ddd',
-    borderRadius: 8,
-    backgroundColor: '#fff',
+    borderColor: '#4a4a4a',
+    borderRadius: 5,
+    marginBottom: 15,
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
+  },
+  switchContainer: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginBottom: 15,
   },
 });
 

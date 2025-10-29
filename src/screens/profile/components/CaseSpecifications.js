@@ -40,6 +40,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.motherboard_formats.join(', ')}
           onChangeText={handleFormatsChange}
           placeholder="Ej: ATX, Micro-ATX, Mini-ITX"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -50,6 +51,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.bays_35}
           onChangeText={(value) => handleChange('bays_35', value)}
           placeholder="Ej: 2"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -61,6 +63,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.bays_25}
           onChangeText={(value) => handleChange('bays_25', value)}
           placeholder="Ej: 4"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -72,6 +75,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.expansion_slots}
           onChangeText={(value) => handleChange('expansion_slots', value)}
           placeholder="Ej: 7"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -83,6 +87,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.max_gpu_length_mm}
           onChangeText={(value) => handleChange('max_gpu_length_mm', value)}
           placeholder="Ej: 330"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -94,6 +99,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.max_cooler_height_mm}
           onChangeText={(value) => handleChange('max_cooler_height_mm', value)}
           placeholder="Ej: 165"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -104,12 +110,13 @@ const CaseSpecifications = ({ onChange }) => {
           selectedValue={specifications.psu_type}
           onValueChange={(value) => handleChange('psu_type', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar tipo..." value="" />
-          <Picker.Item label="ATX" value="ATX" />
-          <Picker.Item label="SFX" value="SFX" />
-          <Picker.Item label="SFX-L" value="SFX-L" />
-          <Picker.Item label="TFX" value="TFX" />
+          <Picker.Item label="Seleccionar tipo..." value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="ATX" value="ATX" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="SFX" value="SFX" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="SFX-L" value="SFX-L" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="TFX" value="TFX" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
         </Picker>
       </View>
 
@@ -120,6 +127,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.included_fans}
           onChangeText={(value) => handleChange('included_fans', value)}
           placeholder="Ej: 3"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -131,6 +139,7 @@ const CaseSpecifications = ({ onChange }) => {
           value={specifications.material}
           onChangeText={(value) => handleChange('material', value)}
           placeholder="Ej: Acero, Aluminio, Vidrio templado"
+          placeholderTextColor="#999"
         />
       </View>
     </View>
@@ -139,16 +148,19 @@ const CaseSpecifications = ({ onChange }) => {
 
 const styles = StyleSheet.create({
   container: {
-    padding: 16,
-    backgroundColor: '#f8f9fa',
-    borderRadius: 8,
-    marginVertical: 8,
+    marginTop: 20,
+    padding: 15,
+    backgroundColor: '#1a1a1a',
+    borderRadius: 10,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
-    marginBottom: 16,
-    color: '#333',
+    marginBottom: 15,
+    color: '#ffffff',
+    textAlign: 'center',
   },
   inputGroup: {
     marginBottom: 16,
@@ -157,21 +169,25 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#555',
+    color: '#ffffff',
   },
   input: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
     borderRadius: 8,
-    padding: 12,
-    fontSize: 16,
-    backgroundColor: '#fff',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    height: 45,
+    marginBottom: 12,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
   },
   picker: {
-    borderWidth: 1,
-    borderColor: '#ddd',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
     borderRadius: 8,
-    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
   },
 });
 
