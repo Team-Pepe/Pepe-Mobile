@@ -2,26 +2,47 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
+import ProductService from '../../services/product.service';
 
 const MyProductsScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
-  // Datos de ejemplo para mostrar la interfaz
-  const mockProducts = [
-    { id: '1', title: 'Laptop HP Pavilion', price: '899.99', status: 'active', image: require('../../../assets/pepe.jpg') },
-    { id: '2', title: 'Monitor Samsung 24"', price: '199.99', status: 'active', image: require('../../../assets/pepe.jpg') },
-    { id: '3', title: 'Teclado Mecánico RGB', price: '79.99', status: 'pending', image: require('../../../assets/pepe.jpg') },
-    { id: '4', title: 'Mouse Gamer Logitech', price: '49.99', status: 'active', image: require('../../../assets/pepe.jpg') },
-  ];
+  // Cargar productos del usuario
+  const loadUserProducts = async () => {
+    try {
+      setLoading(true);
+      setError(null);
+      console.log('🔄 Cargando productos del usuario...');
+      
+      const userProducts = await ProductService.getUserProducts();
+      
+      // Formatear los productos para que coincidan con la estructura esperada
+      const formattedProducts = userProducts.map(product => ({
+        id: product.id.toString(),
+        title: product.name,
+        price: product.price.toString(),
+        status: 'active', // Por ahora todos los productos están activos
+        image: product.main_image ? { uri: product.main_image } : require('../../../assets/pepe.jpg'),
+        category: product.categories?.name || 'Sin categoría',
+        description: product.description,
+        stock: product.stock,
+        created_at: product.created_at
+      }));
+      
+      console.log('✅ Productos formateados:', formattedProducts);
+      setProducts(formattedProducts);
+    } catch (err) {
+      console.error('❌ Error cargando productos:', err);
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    // Aquí se cargarían los productos del usuario desde la API
-    // Por ahora usamos datos de ejemplo
-    setTimeout(() => {
-      setProducts(mockProducts);
-      setLoading(false);
-    }, 1000);
+    loadUserProducts();
   }, []);
 
   const handleAddProduct = () => {
@@ -103,6 +124,19 @@ const MyProductsScreen = ({ navigation }) => {
       {loading ? (
         <View style={styles.loadingContainer}>
           <ActivityIndicator size="large" color="#007AFF" />
+          <Text style={styles.loadingText}>Cargando tus productos...</Text>
+        </View>
+      ) : error ? (
+        <View style={styles.errorContainer}>
+          <FontAwesome5 name="exclamation-triangle" size={60} color="#FF3B30" />
+          <Text style={styles.errorText}>Error al cargar productos</Text>
+          <Text style={styles.errorMessage}>{error}</Text>
+          <TouchableOpacity 
+            style={styles.button}
+            onPress={loadUserProducts}
+          >
+            <Text style={styles.buttonText}>Reintentar</Text>
+          </TouchableOpacity>
         </View>
       ) : products.length > 0 ? (
         <FlatList
@@ -226,6 +260,31 @@ const styles = StyleSheet.create({
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  loadingText: {
+    color: '#bbbbbb',
+    marginTop: 10,
+    fontSize: 16,
+  },
+  errorContainer: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    padding: 20,
+  },
+  errorText: {
+    fontSize: 18,
+    color: '#FF3B30',
+    textAlign: 'center',
+    marginTop: 20,
+    marginBottom: 10,
+    fontWeight: 'bold',
+  },
+  errorMessage: {
+    fontSize: 14,
+    color: '#bbbbbb',
+    textAlign: 'center',
+    marginBottom: 30,
   },
   emptyContainer: {
     flex: 1,

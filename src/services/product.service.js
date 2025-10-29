@@ -158,6 +158,11 @@ class ProductService {
     try {
       console.log('🔍 Buscando user_id para email:', email);
       
+      if (!email) {
+        console.error('❌ Email es undefined o vacío');
+        throw new Error('Email no proporcionado');
+      }
+      
       const { data, error } = await supabase
         .from('users')
         .select('id')
@@ -166,13 +171,84 @@ class ProductService {
 
       if (error) {
         console.error('❌ Error obteniendo user_id:', error);
+        if (error.code === 'PGRST116') {
+          throw new Error(`Usuario con email ${email} no encontrado en la base de datos`);
+        }
         throw error;
+      }
+
+      if (!data || !data.id) {
+        console.error('❌ No se encontró user_id para el email:', email);
+        throw new Error(`No se encontró user_id para el email ${email}`);
       }
 
       console.log('✅ User_id encontrado:', data.id);
       return data.id;
     } catch (error) {
       console.error('❌ Error en getUserIdByEmail:', error);
+      throw error;
+    }
+  }
+
+  // Obtener productos del usuario autenticado
+  static async getUserProducts() {
+    try {
+      console.log('🔍 Obteniendo productos del usuario autenticado...');
+      
+      // Obtener el usuario autenticado
+      const authResult = await AuthService.getCurrentUser();
+      console.log('🔍 Resultado completo de getCurrentUser:', authResult);
+      
+      const { user, error: authError } = authResult;
+      
+      console.log('👤 Usuario autenticado:', user ? user.email : 'No encontrado');
+      console.log('👤 Objeto usuario completo:', user);
+      
+      if (authError) {
+        console.error('❌ Error de autenticación:', authError);
+        throw new Error(`Error de autenticación: ${authError}`);
+      }
+      
+      if (!user) {
+        console.error('❌ Usuario no autenticado - user es null/undefined');
+        throw new Error('Usuario no autenticado');
+      }
+      
+      if (!user.email) {
+        console.error('❌ Usuario no tiene email - email es:', user.email);
+        throw new Error('Usuario no tiene email asociado');
+      }
+
+      console.log('✅ Usuario válido encontrado, procediendo a buscar user_id...');
+
+      // Obtener el user_id de public.users usando el email
+      const userId = await this.getUserIdByEmail(user.email);
+      
+      console.log('🔍 Buscando productos para user_id:', userId);
+
+      // Obtener productos del usuario con información de categoría
+      const { data, error } = await supabase
+        .from('products')
+        .select(`
+          *,
+          categories (
+            name
+          )
+        `)
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+
+      if (error) {
+        console.error('❌ Error obteniendo productos del usuario:', error);
+        throw error;
+      }
+
+      console.log('✅ Productos encontrados:', data.length);
+      console.log('📦 Productos:', data);
+
+      return data;
+    } catch (error) {
+      console.error('❌ Error completo en getUserProducts:', error);
       throw error;
     }
   }
@@ -474,32 +550,7 @@ class ProductService {
     }
   }
 
-  // Obtener productos del usuario (para futuras funcionalidades)
-  static async getUserProducts(userId) {
-    try {
-      const { data, error } = await supabase
-        .from('products')
-        .select(`
-          *,
-          categories (
-            id,
-            name
-          )
-        `)
-        .eq('user_id', userId)
-        .order('created_at', { ascending: false });
 
-      if (error) {
-        console.error('Error obteniendo productos del usuario:', error);
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error en getUserProducts:', error);
-      throw error;
-    }
-  }
 
   // Obtener todos los productos (para el catálogo)
   static async getAllProducts(filters = {}) {
