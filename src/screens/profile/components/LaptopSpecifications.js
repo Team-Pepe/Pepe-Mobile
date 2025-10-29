@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const LaptopSpecifications = ({ onChange }) => {
@@ -16,7 +16,88 @@ const LaptopSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const updatedSpecs = { ...specifications, [field]: value };
+    let processedValue = value;
+    
+    // Validaciones para campos numéricos
+    if (['ram_gb', 'battery_wh', 'screen_inches', 'weight_kg'].includes(field)) {
+      // Limpiar entrada para permitir solo números y punto decimal
+      processedValue = value.replace(/[^0-9.]/g, '');
+      
+      // Validaciones específicas por campo
+      if (field === 'ram_gb') {
+        // Solo números enteros para RAM
+        processedValue = processedValue.replace(/\./g, '');
+        const numValue = parseInt(processedValue) || 0;
+        
+        // Validación de overflow PostgreSQL
+        if (numValue > 2147483647) {
+          Alert.alert('Error', 'La cantidad de RAM no puede exceder 2,147,483,647 GB');
+          processedValue = '2147483647';
+        }
+        
+        // Alerta para valores inusuales
+        if (numValue > 1024) {
+          Alert.alert('Advertencia', 'La cantidad de RAM parece inusualmente alta. ¿Está seguro?');
+        }
+      }
+      
+      if (field === 'battery_wh') {
+        // Solo números enteros para batería
+        processedValue = processedValue.replace(/\./g, '');
+        const numValue = parseInt(processedValue) || 0;
+        
+        // Validación de overflow PostgreSQL
+        if (numValue > 2147483647) {
+          Alert.alert('Error', 'La capacidad de la batería no puede exceder 2,147,483,647 Wh');
+          processedValue = '2147483647';
+        }
+        
+        // Alerta para valores inusuales
+        if (numValue > 200) {
+          Alert.alert('Advertencia', 'La capacidad de la batería parece inusualmente alta. ¿Está seguro?');
+        }
+      }
+      
+      if (field === 'screen_inches') {
+        // Permitir decimales para tamaño de pantalla
+        const parts = processedValue.split('.');
+        if (parts.length > 2) {
+          processedValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        const numValue = parseFloat(processedValue) || 0;
+        if (numValue > 999) {
+          Alert.alert('Advertencia', 'El tamaño de pantalla parece inusualmente grande. ¿Está seguro?');
+        }
+        
+        // Limitar a 1 decimal
+        if (processedValue.includes('.')) {
+          const [integer, decimal] = processedValue.split('.');
+          processedValue = integer + '.' + (decimal || '').substring(0, 1);
+        }
+      }
+      
+      if (field === 'weight_kg') {
+        // Permitir decimales para peso
+        const parts = processedValue.split('.');
+        if (parts.length > 2) {
+          processedValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        const numValue = parseFloat(processedValue) || 0;
+        if (numValue > 50) {
+          Alert.alert('Advertencia', 'El peso parece inusualmente alto para un laptop. ¿Está seguro?');
+        }
+        
+        // Limitar a 2 decimales
+        if (processedValue.includes('.')) {
+          const [integer, decimal] = processedValue.split('.');
+          processedValue = integer + '.' + (decimal || '').substring(0, 2);
+        }
+      }
+    }
+    
+    const updatedSpecs = { ...specifications, [field]: processedValue };
     setSpecifications(updatedSpecs);
     if (onChange) {
       onChange(updatedSpecs);

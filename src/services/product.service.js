@@ -38,7 +38,7 @@ const validFieldsMap = {
     'cable_type', 'length_m', 'connectors', 'version', 'shielded'
   ],
   laptop_specifications: [
-    'cpu', 'gpu', 'ram_gb', 'storage_gb', 'screen_size_inches', 'battery_wh'
+    'processor', 'ram_gb', 'storage', 'screen_inches', 'resolution', 'graphics_card', 'weight_kg', 'battery_wh', 'operating_system'
   ],
   phone_specifications: [
     'cpu', 'ram_gb', 'storage_gb', 'screen_size_inches', 'battery_mah'
@@ -314,6 +314,16 @@ class ProductService {
             if (tableName === 'peripheral_specifications') {
               if (key === 'response_frequency_hz' && numValue > 2147483647) {
                 throw new Error('La frecuencia de respuesta no puede exceder 2,147,483,647 Hz');
+              }
+            }
+            
+            // Validaciones especiales para Laptop (evitar overflow en campos integer)
+            if (tableName === 'laptop_specifications') {
+              if (key === 'ram_gb' && numValue > 2147483647) {
+                throw new Error('La cantidad de RAM no puede exceder 2,147,483,647 GB');
+              }
+              if (key === 'battery_wh' && numValue > 2147483647) {
+                throw new Error('La capacidad de la batería no puede exceder 2,147,483,647 Wh');
               }
             }
             

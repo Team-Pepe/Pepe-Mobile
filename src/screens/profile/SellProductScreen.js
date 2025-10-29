@@ -175,6 +175,10 @@ const SellProductScreen = ({ navigation }) => {
           errorMessage = error.message;
         } else if (error.message.includes('frecuencia de respuesta no puede exceder')) {
           errorMessage = error.message;
+        } else if (error.message.includes('cantidad de RAM no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('capacidad de la batería no puede exceder')) {
+          errorMessage = error.message;
         } else if (error.message.includes('Faltan campos requeridos')) {
           errorMessage = error.message;
         } else if (error.message.includes('numeric field overflow')) {
