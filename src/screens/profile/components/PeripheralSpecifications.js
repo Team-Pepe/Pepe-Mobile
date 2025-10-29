@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Switch } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Switch, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const PeripheralSpecifications = ({ onChange }) => {
@@ -14,7 +14,34 @@ const PeripheralSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const updatedSpecs = { ...specifications, [field]: value };
+    let processedValue = value;
+    
+    // Campo numérico (response_frequency_hz)
+    if (field === 'response_frequency_hz') {
+      // Limpiar entrada: solo números
+      processedValue = value.replace(/[^0-9]/g, '');
+      
+      const numValue = parseInt(processedValue) || 0;
+      
+      // Validación de overflow PostgreSQL integer
+      if (numValue > 2147483647) {
+        Alert.alert(
+          'Valor demasiado grande',
+          'La frecuencia de respuesta no puede exceder 2,147,483,647 Hz'
+        );
+        processedValue = '2147483647';
+      }
+      
+      // Alerta para valores inusuales
+      if (numValue > 10000) {
+        Alert.alert(
+          'Valor inusual',
+          'Una frecuencia de respuesta mayor a 10,000 Hz es muy alta. ¿Estás seguro?'
+        );
+      }
+    }
+    
+    const updatedSpecs = { ...specifications, [field]: processedValue };
     setSpecifications(updatedSpecs);
     if (onChange) {
       onChange(updatedSpecs);

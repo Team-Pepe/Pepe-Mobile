@@ -32,7 +32,7 @@ const validFieldsMap = {
     'screen_inches', 'resolution', 'refresh_rate_hz', 'panel_type', 'response_time_ms', 'connectors', 'curved'
   ],
   peripheral_specifications: [
-    'type', 'connection'
+    'peripheral_type', 'connectivity', 'mouse_sensor', 'keyboard_switches', 'response_frequency_hz', 'noise_cancellation', 'microphone_type'
   ],
   cable_specifications: [
     'cable_type', 'length_m', 'connectors', 'version', 'shielded'
@@ -307,6 +307,13 @@ class ProductService {
               }
               if (key === 'response_time_ms' && numValue > 2147483647) {
                 throw new Error('El tiempo de respuesta no puede exceder 2,147,483,647 ms');
+              }
+            }
+            
+            // Validaciones especiales para Peripheral (evitar overflow en campos integer)
+            if (tableName === 'peripheral_specifications') {
+              if (key === 'response_frequency_hz' && numValue > 2147483647) {
+                throw new Error('La frecuencia de respuesta no puede exceder 2,147,483,647 Hz');
               }
             }
             
