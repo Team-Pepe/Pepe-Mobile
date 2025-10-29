@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Switch } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Switch, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const MonitorSpecifications = ({ onChange }) => {
@@ -22,15 +22,56 @@ const MonitorSpecifications = ({ onChange }) => {
       // Remover caracteres no numéricos
       processedValue = value.replace(/[^0-9]/g, '');
       
-      // Aplicar límites específicos por campo
+      // Validar overflow de PostgreSQL integer (2,147,483,647)
       const numValue = parseInt(processedValue) || 0;
+      if (numValue > 2147483647) {
+        Alert.alert(
+          'Valor demasiado grande',
+          `El valor para ${field === 'refresh_rate_hz' ? 'frecuencia de actualización' : 'tiempo de respuesta'} no puede exceder 2,147,483,647`
+        );
+        return;
+      }
+      
+      // Aplicar límites específicos por campo y alertas para valores inusuales
       switch(field) {
         case 'refresh_rate_hz':
-          processedValue = Math.min(numValue, 1000).toString(); // Máximo 1000Hz
+          if (numValue > 1000) {
+            Alert.alert(
+              'Valor inusual',
+              'La frecuencia de actualización parece muy alta. ¿Estás seguro?'
+            );
+          }
+          processedValue = numValue.toString();
           break;
         case 'response_time_ms':
-          processedValue = Math.min(numValue, 100).toString(); // Máximo 100ms
+          if (numValue > 100) {
+            Alert.alert(
+              'Valor inusual',
+              'El tiempo de respuesta parece muy alto. ¿Estás seguro?'
+            );
+          }
+          processedValue = numValue.toString();
           break;
+      }
+    }
+    
+    // Campo numérico decimal (screen_inches)
+    if (field === 'screen_inches') {
+      // Permitir números decimales
+      processedValue = value.replace(/[^0-9.]/g, '');
+      
+      // Validar que solo haya un punto decimal
+      const parts = processedValue.split('.');
+      if (parts.length > 2) {
+        processedValue = parts[0] + '.' + parts.slice(1).join('');
+      }
+      
+      const numValue = parseFloat(processedValue) || 0;
+      if (numValue > 999) {
+        Alert.alert(
+          'Valor inusual',
+          'El tamaño de pantalla parece muy grande. ¿Estás seguro?'
+        );
       }
     }
     

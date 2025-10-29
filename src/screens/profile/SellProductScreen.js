@@ -169,6 +169,10 @@ const SellProductScreen = ({ navigation }) => {
           errorMessage = error.message;
         } else if (error.message.includes('número de ventiladores incluidos no puede exceder')) {
           errorMessage = error.message;
+        } else if (error.message.includes('frecuencia de actualización no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('tiempo de respuesta no puede exceder')) {
+          errorMessage = error.message;
         } else if (error.message.includes('Faltan campos requeridos')) {
           errorMessage = error.message;
         } else if (error.message.includes('numeric field overflow')) {

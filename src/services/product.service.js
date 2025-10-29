@@ -29,7 +29,7 @@ const validFieldsMap = {
     'cooler_type', 'compatible_sockets', 'height_mm', 'rpm_range', 'noise_level_db', 'tdp_w'
   ],
   monitor_specifications: [
-    'size_inches', 'resolution', 'refresh_rate_hz', 'panel_type', 'response_time_ms', 'connectors'
+    'screen_inches', 'resolution', 'refresh_rate_hz', 'panel_type', 'response_time_ms', 'connectors', 'curved'
   ],
   peripheral_specifications: [
     'type', 'connection'
@@ -297,6 +297,16 @@ class ProductService {
               }
               if (key === 'included_fans' && numValue > 2147483647) {
                 throw new Error('El número de ventiladores incluidos no puede exceder 2,147,483,647');
+              }
+            }
+            
+            // Validaciones especiales para Monitor (evitar overflow en campos integer)
+            if (tableName === 'monitor_specifications') {
+              if (key === 'refresh_rate_hz' && numValue > 2147483647) {
+                throw new Error('La frecuencia de actualización no puede exceder 2,147,483,647 Hz');
+              }
+              if (key === 'response_time_ms' && numValue > 2147483647) {
+                throw new Error('El tiempo de respuesta no puede exceder 2,147,483,647 ms');
               }
             }
             
