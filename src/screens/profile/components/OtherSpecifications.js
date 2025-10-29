@@ -108,12 +108,19 @@ const OtherSpecifications = ({ onChange }) => {
       </View>
 
       <View style={styles.previewContainer}>
-        <Text style={styles.previewTitle}>Vista Previa:</Text>
-        <Text style={styles.previewText}>
-          {Object.keys(specifications.general_specifications || {}).length > 0 
-            ? JSON.stringify(specifications.general_specifications, null, 2)
-            : 'No hay especificaciones definidas'}
-        </Text>
+        <Text style={styles.previewTitle}>Especificaciones Guardadas:</Text>
+        <View style={styles.specsList}>
+          {Object.keys(specifications.general_specifications || {}).length > 0 ? (
+            Object.entries(specifications.general_specifications).map(([key, value]) => (
+              <View key={key} style={styles.specItem}>
+                <Text style={styles.specKey}>{key}:</Text>
+                <Text style={styles.specValue}>{String(value)}</Text>
+              </View>
+            ))
+          ) : (
+            <Text style={styles.noSpecsText}>No hay especificaciones definidas</Text>
+          )}
+        </View>
       </View>
     </View>
   );
@@ -207,6 +214,31 @@ const styles = StyleSheet.create({
     fontSize: 12,
     fontFamily: 'monospace',
     color: '#999',
+  },
+  specsList: {
+    gap: 8,
+  },
+  specItem: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    paddingVertical: 4,
+  },
+  specKey: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginRight: 8,
+    minWidth: 100,
+  },
+  specValue: {
+    fontSize: 14,
+    color: '#cccccc',
+    flex: 1,
+  },
+  noSpecsText: {
+    fontSize: 14,
+    color: '#999',
+    fontStyle: 'italic',
   },
 });
 

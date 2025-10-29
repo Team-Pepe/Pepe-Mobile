@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet, Switch, Alert } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Switch, Alert, TouchableOpacity } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const MonitorSpecifications = ({ onChange }) => {
@@ -12,6 +12,18 @@ const MonitorSpecifications = ({ onChange }) => {
     connectors: {},
     curved: false
   });
+
+  // Tipos de conectores comunes en monitores con límites realistas
+  const availableConnectors = [
+    { type: 'HDMI', maxCount: 4 },
+    { type: 'DisplayPort', maxCount: 2 },
+    { type: 'USB-C', maxCount: 2 },
+    { type: 'DVI', maxCount: 2 },
+    { type: 'VGA', maxCount: 1 },
+    { type: 'Thunderbolt', maxCount: 2 },
+    { type: 'USB-A', maxCount: 4 },
+    { type: 'Audio Jack', maxCount: 2 }
+  ];
 
   const handleChange = (field, value) => {
     // Validar y limpiar valores numéricos
@@ -98,6 +110,33 @@ const MonitorSpecifications = ({ onChange }) => {
     }
   };
 
+  // Función para actualizar la cantidad de un conector específico
+  const updateConnectorCount = (connectorType, change) => {
+    const currentConnectors = { ...specifications.connectors };
+    const currentCount = currentConnectors[connectorType] || 0;
+    const newCount = Math.max(0, currentCount + change);
+    
+    // Encontrar el límite máximo para este tipo de conector
+    const connectorInfo = availableConnectors.find(c => c.type === connectorType);
+    const maxCount = connectorInfo ? connectorInfo.maxCount : 4;
+    
+    if (newCount > maxCount) {
+      Alert.alert(
+        'Límite alcanzado',
+        `Un monitor típicamente no tiene más de ${maxCount} conectores ${connectorType}`
+      );
+      return;
+    }
+    
+    if (newCount === 0) {
+      delete currentConnectors[connectorType];
+    } else {
+      currentConnectors[connectorType] = newCount;
+    }
+    
+    handleChange('connectors', currentConnectors);
+  };
+
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Especificaciones del Monitor</Text>
@@ -174,15 +213,47 @@ const MonitorSpecifications = ({ onChange }) => {
       </View>
 
       <View style={styles.inputGroup}>
-        <Text style={styles.label}>Conectores (JSON o descripción)</Text>
-        <TextInput
-          style={styles.input}
-          value={typeof specifications.connectors === 'object' ? 
-            JSON.stringify(specifications.connectors) : specifications.connectors}
-          onChangeText={handleConnectorsChange}
-          placeholder='Ej: {"HDMI": 2, "DisplayPort": 1, "USB-C": 1}'
-          multiline
-        />
+        <Text style={styles.label}>Conectores del Monitor</Text>
+        <Text style={styles.helpText}>Selecciona la cantidad de cada tipo de conector</Text>
+        
+        <View style={styles.connectorsContainer}>
+          {availableConnectors.map((connector) => {
+            const currentCount = specifications.connectors[connector.type] || 0;
+            return (
+              <View key={connector.type} style={styles.connectorRow}>
+                <Text style={styles.connectorLabel}>{connector.type}</Text>
+                <View style={styles.connectorControls}>
+                  <TouchableOpacity
+                    style={[styles.connectorButton, currentCount === 0 && styles.disabledButton]}
+                    onPress={() => updateConnectorCount(connector.type, -1)}
+                    disabled={currentCount === 0}
+                  >
+                    <Text style={[styles.connectorButtonText, currentCount === 0 && styles.disabledButtonText]}>-</Text>
+                  </TouchableOpacity>
+                  
+                  <Text style={styles.connectorCount}>{currentCount}</Text>
+                  
+                  <TouchableOpacity
+                    style={[styles.connectorButton, currentCount >= connector.maxCount && styles.disabledButton]}
+                    onPress={() => updateConnectorCount(connector.type, 1)}
+                    disabled={currentCount >= connector.maxCount}
+                  >
+                    <Text style={[styles.connectorButtonText, currentCount >= connector.maxCount && styles.disabledButtonText]}>+</Text>
+                  </TouchableOpacity>
+                </View>
+              </View>
+            );
+          })}
+        </View>
+        
+        {Object.keys(specifications.connectors).length > 0 && (
+          <View style={styles.connectorsPreview}>
+            <Text style={styles.previewTitle}>Conectores seleccionados:</Text>
+            {Object.entries(specifications.connectors).map(([type, count]) => (
+              <Text key={type} style={styles.previewItem}>• {type}: {count}</Text>
+            ))}
+          </View>
+        )}
       </View>
 
       <View style={styles.switchGroup}>
@@ -246,6 +317,81 @@ const styles = StyleSheet.create({
     borderRadius: 8,
     borderWidth: 1,
     borderColor: '#4a4a4a',
+  },
+  helpText: {
+    fontSize: 12,
+    color: '#999',
+    marginBottom: 12,
+    fontStyle: 'italic',
+  },
+  connectorsContainer: {
+    backgroundColor: '#2a2a2a',
+    borderRadius: 8,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
+  },
+  connectorRow: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingVertical: 8,
+    borderBottomWidth: 1,
+    borderBottomColor: '#3a3a3a',
+  },
+  connectorLabel: {
+    fontSize: 14,
+    color: '#ffffff',
+    flex: 1,
+  },
+  connectorControls: {
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  connectorButton: {
+    backgroundColor: '#007AFF',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  disabledButton: {
+    backgroundColor: '#3a3a3a',
+  },
+  connectorButtonText: {
+    color: '#ffffff',
+    fontSize: 18,
+    fontWeight: 'bold',
+  },
+  disabledButtonText: {
+    color: '#666',
+  },
+  connectorCount: {
+    fontSize: 16,
+    color: '#ffffff',
+    marginHorizontal: 16,
+    minWidth: 20,
+    textAlign: 'center',
+  },
+  connectorsPreview: {
+    backgroundColor: '#2c2c2c',
+    padding: 12,
+    borderRadius: 8,
+    marginTop: 12,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
+  },
+  previewTitle: {
+    fontSize: 14,
+    fontWeight: '600',
+    color: '#ffffff',
+    marginBottom: 8,
+  },
+  previewItem: {
+    fontSize: 13,
+    color: '#cccccc',
+    marginBottom: 2,
   },
 });
 
