@@ -1,7 +1,31 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
 
 const CpuSpecifications = ({ onChange }) => {
+  // Lista de opciones de socket para procesadores
+  const socketOptions = [
+    { label: 'Selecciona un socket', value: '' },
+    // Sockets LGA (Intel)
+    { label: 'LGA 1151', value: 'LGA 1151' },
+    { label: 'LGA 1200', value: 'LGA 1200' },
+    { label: 'LGA 1700', value: 'LGA 1700' },
+    { label: 'LGA 2066', value: 'LGA 2066' },
+    // Sockets AMD
+    { label: 'AM4', value: 'AM4' },
+    { label: 'AM5', value: 'AM5' },
+    { label: 'TR4', value: 'TR4' },
+    { label: 'sTRX4', value: 'sTRX4' },
+    { label: 'LGA 4094', value: 'LGA 4094' },
+    // Sockets PGA
+    { label: 'PGA 988', value: 'PGA 988' },
+    { label: 'PGA FM2+', value: 'PGA FM2+' },
+    // Sockets BGA
+    { label: 'BGA', value: 'BGA' },
+    // Otros
+    { label: 'Otro', value: 'Otro' }
+  ];
+
   const [specifications, setSpecifications] = useState({
     socket: '',
     cores: '',
@@ -74,13 +98,25 @@ const CpuSpecifications = ({ onChange }) => {
     <View style={styles.container}>
       <Text style={styles.title}>Especificaciones del Procesador</Text>
       
-      <TextInput
-        style={styles.input}
-        placeholder="Socket (ej: AM4, LGA1700)"
-        placeholderTextColor="#999"
-        value={specifications.socket}
-        onChangeText={(value) => handleChange('socket', value)}
-      />
+      <View style={styles.pickerWrapper}>
+        <Text style={styles.pickerLabel}>Socket</Text>
+        <Picker
+          selectedValue={specifications.socket}
+          onValueChange={(value) => handleChange('socket', value)}
+          style={styles.picker}
+          dropdownIconColor="#007AFF"
+        >
+          {socketOptions.map((option, index) => (
+            <Picker.Item 
+              key={index}
+              label={option.label} 
+              value={option.value}
+              color={option.value === '' ? '#999' : '#ffffff'}
+              style={{ backgroundColor: '#2c2c2c' }}
+            />
+          ))}
+        </Picker>
+      </View>
 
       <View style={styles.row}>
         <TextInput
@@ -192,6 +228,23 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     width: '48%',
+  },
+  pickerWrapper: {
+    marginBottom: 12,
+  },
+  pickerLabel: {
+    color: '#ffffff',
+    fontSize: 16,
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  picker: {
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
+    height: 50,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
   },
 });
 
