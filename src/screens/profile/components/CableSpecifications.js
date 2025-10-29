@@ -12,6 +12,32 @@ const CableSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
+    // Validación especial para el campo length_m
+    if (field === 'length_m') {
+      // Permitir solo números y punto decimal
+      const numericValue = value.replace(/[^0-9.]/g, '');
+      
+      // Validar que no exceda 9.99 metros (límite de la base de datos)
+      const parsedValue = parseFloat(numericValue);
+      if (!isNaN(parsedValue) && parsedValue > 9.99) {
+        // Mostrar alerta al usuario
+        alert('La longitud del cable no puede exceder 9.99 metros');
+        return; // No actualizar el estado si excede el límite
+      }
+      
+      // Limitar a 2 decimales
+      if (numericValue.includes('.')) {
+        const parts = numericValue.split('.');
+        if (parts[1] && parts[1].length > 2) {
+          value = parts[0] + '.' + parts[1].substring(0, 2);
+        } else {
+          value = numericValue;
+        }
+      } else {
+        value = numericValue;
+      }
+    }
+    
     const updatedSpecs = { ...specifications, [field]: value };
     setSpecifications(updatedSpecs);
     if (onChange) {

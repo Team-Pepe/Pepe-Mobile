@@ -34,7 +34,7 @@ const validFieldsMap = {
     'type', 'connection'
   ],
   cable_specifications: [
-    'type', 'length_m'
+    'cable_type', 'length_m', 'connectors', 'version', 'shielded'
   ],
   laptop_specifications: [
     'cpu', 'gpu', 'ram_gb', 'storage_gb', 'screen_size_inches', 'battery_wh'
@@ -55,7 +55,8 @@ const requiredFieldsMap = {
   psu_specifications: ['power_w'],
   ram_specifications: ['capacity_gb', 'type', 'speed_mhz'],
   storage_specifications: ['type', 'capacity_gb'],
-  cooler_specifications: ['cooler_type']
+  cooler_specifications: ['cooler_type'],
+  cable_specifications: ['cable_type']
 };
 
 // Normaliza nombres para coincidencia robusta (minúsculas, sin acentos, espacios únicos)
@@ -227,6 +228,11 @@ class ProductService {
           // Intentar convertir strings numéricos y aplicar las mismas reglas
           const numValue = parseFloat(specData[key]);
           if (!isNaN(numValue)) {
+            // Validación especial para length_m en cables (máximo 9.99)
+            if (key === 'length_m' && tableName === 'cable_specifications' && numValue > 9.99) {
+              throw new Error('La longitud del cable no puede exceder 9.99 metros');
+            }
+            
             if (numValue > 999999999) {
               specData[key] = Math.floor(numValue / 1000000);
             } else if (numValue % 1 !== 0) {

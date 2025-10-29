@@ -129,7 +129,24 @@ const SellProductScreen = ({ navigation }) => {
       );
     } catch (error) {
       console.error('Error publicando producto:', error);
-      Alert.alert('Error', 'No se pudo publicar el producto. Intenta nuevamente.');
+      
+      // Manejo de errores específicos con mensajes amigables
+      let errorMessage = 'No se pudo publicar el producto. Intenta nuevamente.';
+      
+      if (error.message) {
+        // Errores específicos de validación
+        if (error.message.includes('longitud del cable no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('Faltan campos requeridos')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('numeric field overflow')) {
+          errorMessage = 'Uno de los valores numéricos ingresados excede el límite permitido. Por favor, verifica los datos.';
+        } else {
+          errorMessage = error.message;
+        }
+      }
+      
+      Alert.alert('Error', errorMessage);
     } finally {
       setLoading(false);
     }
