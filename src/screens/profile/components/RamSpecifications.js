@@ -7,7 +7,7 @@ const RamSpecifications = ({ onChange }) => {
     type: '',
     speed_mhz: '',
     latency: '',
-    modules: '2',
+    modules: '',
     voltage: '',
     heat_spreader: false,
     rgb_lighting: false

@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Keyboard } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 import * as ImagePicker from 'expo-image-picker';
 import ProductService from '../../services/product.service';
@@ -17,6 +17,28 @@ const SellProductScreen = ({ navigation }) => {
   const [loadingCategories, setLoadingCategories] = useState(true);
   const [specifications, setSpecifications] = useState({});
   const [selectedCategory, setSelectedCategory] = useState(null);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  // Efecto para manejar eventos del teclado
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardOffset(e.endCoordinates.height);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardOffset(0);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   // Cargar categorías al montar el componente
   useEffect(() => {
@@ -197,7 +219,10 @@ const SellProductScreen = ({ navigation }) => {
   };
 
   return (
-    <ScrollView style={styles.container} contentContainerStyle={styles.content}>
+    <View style={[styles.container, { paddingBottom: keyboardOffset }]}>
+      <ScrollView contentContainerStyle={styles.content}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}>
       <Text style={styles.title}>Publicar Producto</Text>
 
       {/* Selector de imagen */}
@@ -299,6 +324,7 @@ const SellProductScreen = ({ navigation }) => {
         )}
       </TouchableOpacity>
     </ScrollView>
+    </View>
   );
 };
 

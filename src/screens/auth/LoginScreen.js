@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator } from 'react-native';
+import React, { useState, useEffect } from 'react';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, Alert, ActivityIndicator, KeyboardAvoidingView, ScrollView, Platform, Keyboard } from 'react-native';
 import { FontAwesome } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
 
@@ -7,6 +7,27 @@ const LoginScreen = ({ navigation }) => {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [loading, setLoading] = useState(false); // añadido
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
+
+  useEffect(() => {
+    const keyboardDidShowListener = Keyboard.addListener(
+      'keyboardDidShow',
+      (e) => {
+        setKeyboardOffset(e.endCoordinates.height);
+      }
+    );
+    const keyboardDidHideListener = Keyboard.addListener(
+      'keyboardDidHide',
+      () => {
+        setKeyboardOffset(0);
+      }
+    );
+
+    return () => {
+      keyboardDidShowListener.remove();
+      keyboardDidHideListener.remove();
+    };
+  }, []);
 
   const handleLogin = async () => {
     setLoading(true); // mostrar loader
@@ -38,62 +59,79 @@ const LoginScreen = ({ navigation }) => {
   };
 
   return (
-    <View style={styles.container}>
-      <Text style={styles.title}>Iniciar Sesión</Text>
-      <TextInput
-        style={styles.input}
-        placeholder="Email"
-        placeholderTextColor="#bdbdbd"
-        value={email}
-        onChangeText={setEmail}
-        keyboardType="email-address"
-        autoCapitalize="none"
-      />
-      <TextInput
-        style={styles.input}
-        placeholder="Contraseña"
-        placeholderTextColor="#bdbdbd"
-        value={password}
-        onChangeText={setPassword}
-        secureTextEntry
-      />
-      <TouchableOpacity
-        style={[styles.button, loading && styles.buttonDisabled]}
-        onPress={handleLogin}
-        disabled={loading} // desactivar mientras carga
+    <View style={[styles.keyboardAvoidingContainer, { paddingBottom: keyboardOffset }]}>
+      <ScrollView 
+        contentContainerStyle={styles.scrollViewContent}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
       >
-        {loading ? (
-          <ActivityIndicator size="small" color="#ffffff" />
-        ) : (
-          <Text style={styles.buttonText}>Iniciar Sesión</Text>
-        )}
-      </TouchableOpacity>
-      <View style={styles.socialButtonsContainer}>
-        <TouchableOpacity style={styles.socialButton} onPress={() => alert('Login con Google - Próximamente')}>
-          <View style={styles.iconContainer}>
-            <FontAwesome name="google" size={20} color="#DB4437" />
+        <View style={styles.container}>
+          <Text style={styles.title}>Iniciar Sesión</Text>
+          <TextInput
+            style={styles.input}
+            placeholder="Email"
+            placeholderTextColor="#bdbdbd"
+            value={email}
+            onChangeText={setEmail}
+            keyboardType="email-address"
+            autoCapitalize="none"
+          />
+          <TextInput
+            style={styles.input}
+            placeholder="Contraseña"
+            placeholderTextColor="#bdbdbd"
+            value={password}
+            onChangeText={setPassword}
+            secureTextEntry
+          />
+          <TouchableOpacity
+            style={[styles.button, loading && styles.buttonDisabled]}
+            onPress={handleLogin}
+            disabled={loading} // desactivar mientras carga
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>Iniciar Sesión</Text>
+            )}
+          </TouchableOpacity>
+          <View style={styles.socialButtonsContainer}>
+            <TouchableOpacity style={styles.socialButton} onPress={() => alert('Login con Google - Próximamente')}>
+              <View style={styles.iconContainer}>
+                <FontAwesome name="google" size={20} color="#DB4437" />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.socialButtonText}>Continuar con Google</Text>
+              </View>
+            </TouchableOpacity>
+            <TouchableOpacity style={styles.socialButton} onPress={() => alert('Login con Facebook - Próximamente')}>
+              <View style={styles.iconContainer}>
+                <FontAwesome name="facebook" size={20} color="#4267B2" />
+              </View>
+              <View style={styles.textContainer}>
+                <Text style={styles.socialButtonText}>Continuar con Facebook</Text>
+              </View>
+            </TouchableOpacity>
           </View>
-          <View style={styles.textContainer}>
-            <Text style={styles.socialButtonText}>Continuar con Google</Text>
-          </View>
-        </TouchableOpacity>
-        <TouchableOpacity style={styles.socialButton} onPress={() => alert('Login con Facebook - Próximamente')}>
-          <View style={styles.iconContainer}>
-            <FontAwesome name="facebook" size={20} color="#4267B2" />
-          </View>
-          <View style={styles.textContainer}>
-            <Text style={styles.socialButtonText}>Continuar con Facebook</Text>
-          </View>
-        </TouchableOpacity>
-      </View>
-      <TouchableOpacity onPress={() => navigation.navigate('Register')}>
-        <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
-      </TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Register')}>
+            <Text style={styles.linkText}>¿No tienes cuenta? Regístrate</Text>
+          </TouchableOpacity>
+        </View>
+      </ScrollView>
     </View>
   );
 };
 
 const styles = StyleSheet.create({
+  keyboardAvoidingContainer: {
+    flex: 1,
+    backgroundColor: '#2c2c2c', // fondo gris oscuro
+  },
+  scrollViewContent: {
+    flexGrow: 1,
+    justifyContent: 'center',
+    backgroundColor: '#2c2c2c',
+  },
   container: {
     flex: 1,
     justifyContent: 'center',
