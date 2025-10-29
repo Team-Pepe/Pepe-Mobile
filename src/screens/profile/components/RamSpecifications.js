@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 
 const RamSpecifications = ({ onChange }) => {
   const [specifications, setSpecifications] = useState({
@@ -18,7 +18,7 @@ const RamSpecifications = ({ onChange }) => {
     let processedValue = value;
     
     // Campos numéricos enteros con límites específicos
-    if (['capacity_gb', 'frequency_mhz', 'modules'].includes(field)) {
+    if (['capacity_gb', 'speed_mhz', 'modules'].includes(field)) {
       // Remover caracteres no numéricos
       processedValue = value.replace(/[^0-9]/g, '');
       
@@ -26,13 +26,28 @@ const RamSpecifications = ({ onChange }) => {
       const numValue = parseInt(processedValue) || 0;
       switch(field) {
         case 'capacity_gb':
-          processedValue = Math.min(numValue, 1024).toString(); // Máximo 1TB RAM
+          if (numValue > 2147483647) {
+            Alert.alert('Error', 'La capacidad de RAM no puede exceder 2,147,483,647 GB');
+            processedValue = '2147483647';
+          } else {
+            processedValue = Math.min(numValue, 1024).toString(); // Límite práctico 1TB RAM
+          }
           break;
-        case 'frequency_mhz':
-          processedValue = Math.min(numValue, 10000).toString(); // Máximo 10000 MHz
+        case 'speed_mhz':
+          if (numValue > 2147483647) {
+            Alert.alert('Error', 'La velocidad de RAM no puede exceder 2,147,483,647 MHz');
+            processedValue = '2147483647';
+          } else {
+            processedValue = Math.min(numValue, 10000).toString(); // Límite práctico 10000 MHz
+          }
           break;
         case 'modules':
-          processedValue = Math.min(numValue, 16).toString(); // Máximo 16 módulos
+          if (numValue > 2147483647) {
+            Alert.alert('Error', 'El número de módulos no puede exceder 2,147,483,647');
+            processedValue = '2147483647';
+          } else {
+            processedValue = Math.min(numValue, 16).toString(); // Límite práctico 16 módulos
+          }
           break;
       }
     }

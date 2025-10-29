@@ -11,7 +11,7 @@ const validFieldsMap = {
     'bandwidth_gbs', 'power_connectors', 'length_mm', 'video_outputs'
   ],
   ram_specifications: [
-    'capacity_gb', 'type', 'speed_mhz'
+    'capacity_gb', 'type', 'speed_mhz', 'latency', 'modules', 'voltage', 'heat_spreader', 'rgb_lighting'
   ],
   motherboard_specifications: [
     'socket', 'chipset', 'form_factor', 'ram_slots', 'ram_type', 'm2_ports', 'sata_ports', 'usb_ports', 'audio', 'network'
@@ -237,6 +237,19 @@ class ProductService {
             // Validación especial para length_mm en GPUs (máximo 999 para evitar overflow)
             if (key === 'length_mm' && tableName === 'gpu_specifications' && numValue > 999) {
               throw new Error('La longitud de la GPU no puede exceder 999 mm');
+            }
+            
+            // Validaciones especiales para RAM (evitar overflow en campos integer)
+            if (tableName === 'ram_specifications') {
+              if (key === 'capacity_gb' && numValue > 2147483647) { // Límite integer en PostgreSQL
+                throw new Error('La capacidad de RAM no puede exceder 2,147,483,647 GB');
+              }
+              if (key === 'speed_mhz' && numValue > 2147483647) {
+                throw new Error('La velocidad de RAM no puede exceder 2,147,483,647 MHz');
+              }
+              if (key === 'modules' && numValue > 2147483647) {
+                throw new Error('El número de módulos de RAM no puede exceder 2,147,483,647');
+              }
             }
             
             if (numValue > 999999999) {
