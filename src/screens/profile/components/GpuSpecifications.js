@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 
 const GpuSpecifications = ({ onChange }) => {
   const [specifications, setSpecifications] = useState({
@@ -37,7 +37,12 @@ const GpuSpecifications = ({ onChange }) => {
           processedValue = Math.min(numValue, 5000).toString(); // Máximo 5000 MHz
           break;
         case 'length_mm':
-          processedValue = Math.min(numValue, 500).toString(); // Máximo 500mm
+          if (numValue > 999) {
+            Alert.alert('Error', 'La longitud de la GPU no puede exceder 999 mm');
+            processedValue = '999';
+          } else {
+            processedValue = numValue.toString();
+          }
           break;
       }
     }

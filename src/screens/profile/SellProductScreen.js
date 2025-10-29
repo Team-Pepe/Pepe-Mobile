@@ -137,6 +137,8 @@ const SellProductScreen = ({ navigation }) => {
         // Errores específicos de validación
         if (error.message.includes('longitud del cable no puede exceder')) {
           errorMessage = error.message;
+        } else if (error.message.includes('longitud de la GPU no puede exceder')) {
+          errorMessage = error.message;
         } else if (error.message.includes('Faltan campos requeridos')) {
           errorMessage = error.message;
         } else if (error.message.includes('numeric field overflow')) {

@@ -7,7 +7,8 @@ const validFieldsMap = {
     'cache_l3', 'tdp', 'integrated_graphics', 'fabrication_technology_nm'
   ],
   gpu_specifications: [
-    'vram_gb', 'gpu_chipset', 'length_mm', 'power_consumption_w', 'recommended_psu_w'
+    'vram_gb', 'vram_type', 'cuda_cores', 'base_frequency_mhz', 'boost_frequency_mhz', 
+    'bandwidth_gbs', 'power_connectors', 'length_mm', 'video_outputs'
   ],
   ram_specifications: [
     'capacity_gb', 'type', 'speed_mhz'
@@ -50,7 +51,7 @@ const validFieldsMap = {
 // Campos requeridos por tabla (respeta NOT NULL en SQL)
 const requiredFieldsMap = {
   cpu_specifications: ['socket', 'cores', 'threads', 'base_frequency_ghz'],
-  gpu_specifications: ['vram_gb'],
+  gpu_specifications: ['vram_gb', 'length_mm'],
   motherboard_specifications: ['socket', 'chipset', 'form_factor', 'ram_slots'],
   psu_specifications: ['power_w'],
   ram_specifications: ['capacity_gb', 'type', 'speed_mhz'],
@@ -231,6 +232,11 @@ class ProductService {
             // Validación especial para length_m en cables (máximo 9.99)
             if (key === 'length_m' && tableName === 'cable_specifications' && numValue > 9.99) {
               throw new Error('La longitud del cable no puede exceder 9.99 metros');
+            }
+            
+            // Validación especial para length_mm en GPUs (máximo 999 para evitar overflow)
+            if (key === 'length_mm' && tableName === 'gpu_specifications' && numValue > 999) {
+              throw new Error('La longitud de la GPU no puede exceder 999 mm');
             }
             
             if (numValue > 999999999) {
