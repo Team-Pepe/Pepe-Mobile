@@ -41,7 +41,7 @@ const validFieldsMap = {
     'processor', 'ram_gb', 'storage', 'screen_inches', 'resolution', 'graphics_card', 'weight_kg', 'battery_wh', 'operating_system'
   ],
   phone_specifications: [
-    'cpu', 'ram_gb', 'storage_gb', 'screen_size_inches', 'battery_mah'
+    'screen_inches', 'resolution', 'processor', 'ram_gb', 'storage_gb', 'main_camera_mp', 'battery_mah', 'operating_system'
   ],
   other_specifications: [
     'general_specifications'
@@ -324,6 +324,19 @@ class ProductService {
               }
               if (key === 'battery_wh' && numValue > 2147483647) {
                 throw new Error('La capacidad de la batería no puede exceder 2,147,483,647 Wh');
+              }
+            }
+            
+            // Validaciones especiales para Phone (evitar overflow en campos integer)
+            if (tableName === 'phone_specifications') {
+              if (key === 'ram_gb' && numValue > 2147483647) {
+                throw new Error('La cantidad de RAM no puede exceder 2,147,483,647 GB');
+              }
+              if (key === 'storage_gb' && numValue > 2147483647) {
+                throw new Error('La capacidad de almacenamiento no puede exceder 2,147,483,647 GB');
+              }
+              if (key === 'battery_mah' && numValue > 2147483647) {
+                throw new Error('La capacidad de la batería no puede exceder 2,147,483,647 mAh');
               }
             }
             

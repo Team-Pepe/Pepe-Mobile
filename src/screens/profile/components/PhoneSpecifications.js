@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { View, Text, TextInput, StyleSheet, Alert } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
 
 const PhoneSpecifications = ({ onChange }) => {
@@ -18,14 +18,81 @@ const PhoneSpecifications = ({ onChange }) => {
     // Validar y limpiar valores numéricos
     let processedValue = value;
     
-    // Campos numéricos enteros con límites específicos
-    if (field === 'battery_mah') {
-      // Remover caracteres no numéricos
-      processedValue = value.replace(/[^0-9]/g, '');
+    // Validaciones para campos numéricos
+    if (['ram_gb', 'storage_gb', 'battery_mah', 'screen_inches'].includes(field)) {
+      // Limpiar entrada para permitir solo números y punto decimal
+      processedValue = value.replace(/[^0-9.]/g, '');
       
-      // Aplicar límite específico
-      const numValue = parseInt(processedValue) || 0;
-      processedValue = Math.min(numValue, 50000).toString(); // Máximo 50,000 mAh
+      // Validaciones específicas por campo
+      if (field === 'ram_gb') {
+        // Solo números enteros para RAM
+        processedValue = processedValue.replace(/\./g, '');
+        const numValue = parseInt(processedValue) || 0;
+        
+        // Validación de overflow PostgreSQL
+        if (numValue > 2147483647) {
+          Alert.alert('Error', 'La cantidad de RAM no puede exceder 2,147,483,647 GB');
+          processedValue = '2147483647';
+        }
+        
+        // Alerta para valores inusuales
+        if (numValue > 32) {
+          Alert.alert('Advertencia', 'La cantidad de RAM parece inusualmente alta para un teléfono. ¿Está seguro?');
+        }
+      }
+      
+      if (field === 'storage_gb') {
+        // Solo números enteros para almacenamiento
+        processedValue = processedValue.replace(/\./g, '');
+        const numValue = parseInt(processedValue) || 0;
+        
+        // Validación de overflow PostgreSQL
+        if (numValue > 2147483647) {
+          Alert.alert('Error', 'La capacidad de almacenamiento no puede exceder 2,147,483,647 GB');
+          processedValue = '2147483647';
+        }
+        
+        // Alerta para valores inusuales
+        if (numValue > 2048) {
+          Alert.alert('Advertencia', 'La capacidad de almacenamiento parece inusualmente alta. ¿Está seguro?');
+        }
+      }
+      
+      if (field === 'battery_mah') {
+        // Solo números enteros para batería
+        processedValue = processedValue.replace(/\./g, '');
+        const numValue = parseInt(processedValue) || 0;
+        
+        // Validación de overflow PostgreSQL
+        if (numValue > 2147483647) {
+          Alert.alert('Error', 'La capacidad de la batería no puede exceder 2,147,483,647 mAh');
+          processedValue = '2147483647';
+        }
+        
+        // Alerta para valores inusuales
+        if (numValue > 10000) {
+          Alert.alert('Advertencia', 'La capacidad de la batería parece inusualmente alta para un teléfono. ¿Está seguro?');
+        }
+      }
+      
+      if (field === 'screen_inches') {
+        // Permitir decimales para tamaño de pantalla
+        const parts = processedValue.split('.');
+        if (parts.length > 2) {
+          processedValue = parts[0] + '.' + parts.slice(1).join('');
+        }
+        
+        const numValue = parseFloat(processedValue) || 0;
+        if (numValue > 20) {
+          Alert.alert('Advertencia', 'El tamaño de pantalla parece inusualmente grande para un teléfono. ¿Está seguro?');
+        }
+        
+        // Limitar a 1 decimal
+        if (processedValue.includes('.')) {
+          const [integer, decimal] = processedValue.split('.');
+          processedValue = integer + '.' + (decimal || '').substring(0, 1);
+        }
+      }
     }
     
     const newSpecs = { ...specifications, [field]: processedValue };
