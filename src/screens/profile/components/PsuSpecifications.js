@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { View, Text, TextInput, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, TextInput, StyleSheet, TouchableOpacity, Alert } from 'react-native';
 
 const PsuSpecifications = ({ onChange }) => {
   const [specifications, setSpecifications] = useState({
@@ -13,7 +13,36 @@ const PsuSpecifications = ({ onChange }) => {
   });
 
   const handleChange = (field, value) => {
-    const newSpecs = { ...specifications, [field]: value };
+    let processedValue = value;
+    
+    // Validación para campos numéricos
+    if (field === 'power_w' || field === 'fan_size_mm') {
+      // Permitir solo números
+      processedValue = value.replace(/[^0-9]/g, '');
+      
+      const numValue = parseInt(processedValue) || 0;
+      
+      // Validación de overflow (límite de integer en PostgreSQL)
+      if (numValue > 2147483647) {
+        if (field === 'power_w') {
+          Alert.alert('Valor muy alto', 'La potencia no puede exceder 2,147,483,647 W');
+        } else if (field === 'fan_size_mm') {
+          Alert.alert('Valor muy alto', 'El tamaño del ventilador no puede exceder 2,147,483,647 mm');
+        }
+        return; // No actualizar si excede el límite
+      }
+      
+      // Validación de límites prácticos
+      if (field === 'power_w' && numValue > 10000) {
+        Alert.alert('Valor inusual', 'La potencia parece muy alta. ¿Estás seguro?');
+      } else if (field === 'fan_size_mm' && numValue > 200) {
+        Alert.alert('Valor inusual', 'El tamaño del ventilador parece muy grande. ¿Estás seguro?');
+      }
+      
+      processedValue = numValue.toString();
+    }
+    
+    const newSpecs = { ...specifications, [field]: processedValue };
     setSpecifications(newSpecs);
     if (onChange) {
       onChange(newSpecs);

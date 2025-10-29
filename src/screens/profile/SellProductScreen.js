@@ -153,6 +153,10 @@ const SellProductScreen = ({ navigation }) => {
           errorMessage = error.message;
         } else if (error.message.includes('TBW no puede exceder')) {
           errorMessage = error.message;
+        } else if (error.message.includes('potencia de la PSU no puede exceder')) {
+          errorMessage = error.message;
+        } else if (error.message.includes('tamaño del ventilador no puede exceder')) {
+          errorMessage = error.message;
         } else if (error.message.includes('Faltan campos requeridos')) {
           errorMessage = error.message;
         } else if (error.message.includes('numeric field overflow')) {

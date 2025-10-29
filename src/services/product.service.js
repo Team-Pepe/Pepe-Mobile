@@ -20,7 +20,7 @@ const validFieldsMap = {
     'type', 'capacity_gb', 'interface', 'read_speed_mbs', 'write_speed_mbs', 'form_factor', 'nand_type', 'tbw'
   ],
   psu_specifications: [
-    'power_w', 'efficiency_rating', 'modular', 'form_factor'
+    'power_w', 'efficiency_certification', 'modular_type', 'form_factor', 'connectors', 'fan_size_mm', 'active_pfc'
   ],
   case_specifications: [
     'form_factor', 'max_gpu_length_mm', 'max_cooler_height_mm', 'bays_25', 'bays_35'
@@ -265,6 +265,16 @@ class ProductService {
               }
               if (key === 'tbw' && numValue > 2147483647) {
                 throw new Error('El TBW no puede exceder 2,147,483,647');
+              }
+            }
+            
+            // Validaciones especiales para PSU (evitar overflow en campos integer)
+            if (tableName === 'psu_specifications') {
+              if (key === 'power_w' && numValue > 2147483647) {
+                throw new Error('La potencia de la PSU no puede exceder 2,147,483,647 W');
+              }
+              if (key === 'fan_size_mm' && numValue > 2147483647) {
+                throw new Error('El tamaño del ventilador no puede exceder 2,147,483,647 mm');
               }
             }
             
