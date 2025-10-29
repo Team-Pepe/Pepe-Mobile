@@ -1,4 +1,5 @@
 import { supabase } from '../lib/supabase';
+import { AuthService } from './auth.service';
 
 // Campos válidos por tabla de especificaciones (alineado al esquema SQL)
 const validFieldsMap = {
@@ -152,8 +153,55 @@ class ProductService {
   }
 
   // Crear un nuevo producto
+  // Obtener el user_id de public.users usando el email del usuario autenticado
+  static async getUserIdByEmail(email) {
+    try {
+      console.log('🔍 Buscando user_id para email:', email);
+      
+      const { data, error } = await supabase
+        .from('users')
+        .select('id')
+        .eq('email', email)
+        .single();
+
+      if (error) {
+        console.error('❌ Error obteniendo user_id:', error);
+        throw error;
+      }
+
+      console.log('✅ User_id encontrado:', data.id);
+      return data.id;
+    } catch (error) {
+      console.error('❌ Error en getUserIdByEmail:', error);
+      throw error;
+    }
+  }
+
   static async createProduct(productData) {
     try {
+      console.log('🚀 Iniciando creación de producto...');
+      
+      // Obtener el usuario autenticado
+      const { user, error: authError } = await AuthService.getCurrentUser();
+      
+      console.log('👤 Usuario autenticado:', user ? user.email : 'No encontrado');
+      
+      if (authError || !user) {
+        console.error('❌ Error de autenticación:', authError);
+        throw new Error('Usuario no autenticado');
+      }
+
+      // Obtener el user_id de public.users usando el email
+      const userId = await this.getUserIdByEmail(user.email);
+      
+      console.log('📝 Datos del producto a insertar:', {
+        name: productData.name,
+        category_id: productData.category_id,
+        price: parseFloat(productData.price),
+        stock: parseInt(productData.stock) || 0,
+        user_id: userId
+      });
+
       const { data, error } = await supabase
         .from('products')
         .insert([{
@@ -162,25 +210,28 @@ class ProductService {
           category_id: productData.category_id,
           price: parseFloat(productData.price),
           stock: parseInt(productData.stock) || 0,
-          main_image: productData.main_image || null
+          main_image: productData.main_image || null,
+          user_id: userId // Agregar el user_id del usuario autenticado
         }])
         .select();
 
       if (error) {
-        console.error('Error creando producto:', error);
+        console.error('❌ Error creando producto en BD:', error);
         throw error;
       }
 
       const product = data[0];
+      console.log('✅ Producto creado exitosamente:', product);
 
       // Si hay especificaciones, guardarlas en la tabla correspondiente
       if (productData.specifications && Object.keys(productData.specifications).length > 0) {
+        console.log('📋 Guardando especificaciones...');
         await this.saveProductSpecifications(product.id, productData.category_id, productData.specifications);
       }
 
       return product;
     } catch (error) {
-      console.error('Error en createProduct:', error);
+      console.error('❌ Error completo en createProduct:', error);
       throw error;
     }
   }
