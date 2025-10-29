@@ -173,7 +173,7 @@ const styles = StyleSheet.create({
   picker: {
     color: '#ffffff',
     backgroundColor: '#2a2a2a',
-    height: 45,
+    height: 60,
   },
 });
 

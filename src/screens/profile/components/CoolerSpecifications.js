@@ -36,12 +36,13 @@ const CoolerSpecifications = ({ onChange }) => {
           selectedValue={specifications.cooler_type}
           onValueChange={(value) => handleChange('cooler_type', value)}
           style={styles.picker}
+          dropdownIconColor="#007AFF"
         >
-          <Picker.Item label="Seleccionar tipo..." value="" />
-          <Picker.Item label="Aire" value="air" />
-          <Picker.Item label="Líquido AIO" value="aio" />
-          <Picker.Item label="Líquido Custom" value="custom" />
-          <Picker.Item label="Pasivo" value="passive" />
+          <Picker.Item label="Seleccionar tipo..." value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Aire" value="air" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Líquido AIO" value="aio" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Líquido Custom" value="custom" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Pasivo" value="passive" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
         </Picker>
       </View>
 
@@ -52,6 +53,7 @@ const CoolerSpecifications = ({ onChange }) => {
           value={specifications.compatible_sockets.join(', ')}
           onChangeText={handleSocketsChange}
           placeholder="Ej: AM4, AM5, LGA1700"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -62,6 +64,7 @@ const CoolerSpecifications = ({ onChange }) => {
           value={specifications.height_mm}
           onChangeText={(value) => handleChange('height_mm', value)}
           placeholder="Ej: 155"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -73,6 +76,7 @@ const CoolerSpecifications = ({ onChange }) => {
           value={specifications.rpm_range}
           onChangeText={(value) => handleChange('rpm_range', value)}
           placeholder="Ej: 800-2000"
+          placeholderTextColor="#999"
         />
       </View>
 
@@ -83,6 +87,7 @@ const CoolerSpecifications = ({ onChange }) => {
           value={specifications.noise_level_db}
           onChangeText={(value) => handleChange('noise_level_db', value)}
           placeholder="Ej: 25.5"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -94,6 +99,7 @@ const CoolerSpecifications = ({ onChange }) => {
           value={specifications.tdp_w}
           onChangeText={(value) => handleChange('tdp_w', value)}
           placeholder="Ej: 180"
+          placeholderTextColor="#999"
           keyboardType="numeric"
         />
       </View>
@@ -104,15 +110,17 @@ const CoolerSpecifications = ({ onChange }) => {
 const styles = StyleSheet.create({
   container: {
     padding: 16,
-    backgroundColor: '#f8f9fa',
+    backgroundColor: '#1a1a1a',
     borderRadius: 8,
     marginVertical: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
   },
   title: {
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 16,
-    color: '#333',
+    color: '#ffffff',
   },
   inputGroup: {
     marginBottom: 16,
@@ -121,21 +129,23 @@ const styles = StyleSheet.create({
     fontSize: 14,
     fontWeight: '500',
     marginBottom: 8,
-    color: '#555',
+    color: '#ffffff',
   },
   input: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#4a4a4a',
     borderRadius: 8,
     padding: 12,
     fontSize: 16,
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
   },
   picker: {
     borderWidth: 1,
-    borderColor: '#ddd',
+    borderColor: '#4a4a4a',
     borderRadius: 8,
-    backgroundColor: '#fff',
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
   },
 });
 

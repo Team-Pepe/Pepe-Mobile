@@ -10,7 +10,7 @@ const SellProductScreen = ({ navigation }) => {
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
   const [categoryId, setCategoryId] = useState('');
-  const [stock, setStock] = useState('1');
+  const [stock, setStock] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
@@ -318,7 +318,7 @@ const styles = StyleSheet.create({
   picker: {
     color: '#ffffff',
     backgroundColor: '#1f1f1f',
-    height: 50,
+    height: 60,
   },
   loadingContainer: {
     flexDirection: 'row',
