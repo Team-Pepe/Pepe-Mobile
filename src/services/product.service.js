@@ -3,7 +3,8 @@ import { supabase } from '../lib/supabase';
 // Campos válidos por tabla de especificaciones (alineado al esquema SQL)
 const validFieldsMap = {
   cpu_specifications: [
-    'cores', 'threads', 'base_clock_ghz', 'boost_clock_ghz', 'tdp_w', 'socket'
+    'socket', 'cores', 'threads', 'base_frequency_ghz', 'boost_frequency_ghz', 
+    'cache_l3', 'tdp', 'integrated_graphics', 'fabrication_technology_nm'
   ],
   gpu_specifications: [
     'vram_gb', 'gpu_chipset', 'length_mm', 'power_consumption_w', 'recommended_psu_w'
@@ -48,6 +49,7 @@ const validFieldsMap = {
 
 // Campos requeridos por tabla (respeta NOT NULL en SQL)
 const requiredFieldsMap = {
+  cpu_specifications: ['socket', 'cores', 'threads', 'base_frequency_ghz'],
   gpu_specifications: ['vram_gb'],
   motherboard_specifications: ['socket', 'chipset', 'form_factor', 'ram_slots'],
   psu_specifications: ['power_w'],
