@@ -6,6 +6,7 @@ import ProductService from '../../services/product.service';
 import { getSpecificationComponent } from './components';
 
 const SellProductScreen = ({ navigation, route }) => {
+  const MAX_SUPPORT_IMAGES = 10;
   const product = route?.params?.product || null;
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -119,21 +120,37 @@ const SellProductScreen = ({ navigation, route }) => {
         return;
       }
 
+      const remaining = Math.max(0, MAX_SUPPORT_IMAGES - supportImages.length);
+      if (remaining <= 0) {
+        Alert.alert('Límite alcanzado', `Solo puedes agregar hasta ${MAX_SUPPORT_IMAGES} fotos adicionales.`);
+        return;
+      }
+
       const result = await ImagePicker.launchImageLibraryAsync({
         mediaTypes: ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.8,
+        allowsMultipleSelection: true,
+        selectionLimit: remaining,
+        allowsEditing: false,
+        quality: 0.8
       });
 
-      if (!result.canceled) {
-        const uri = result.assets[0].uri;
-        setSupportImages(prev => [...prev, uri]);
+      if (!result.canceled && Array.isArray(result.assets)) {
+        const newUris = result.assets.map(a => a.uri).filter(Boolean);
+        setSupportImages(prev => {
+          const merged = [...prev, ...newUris];
+          // Quitar duplicados simples por URI y limitar a MAX
+          const unique = Array.from(new Set(merged)).slice(0, MAX_SUPPORT_IMAGES);
+          return unique;
+        });
       }
     } catch (error) {
       Alert.alert('Error', 'No se pudo seleccionar la imagen');
       console.error('Error seleccionando imagen de apoyo:', error);
     }
+  };
+
+  const removeSupportImage = (index) => {
+    setSupportImages(prev => prev.filter((_, i) => i !== index));
   };
 
   const handleCategoryChange = (itemValue) => {
@@ -379,15 +396,26 @@ const SellProductScreen = ({ navigation, route }) => {
       />
 
       {/* Sección de fotos adicionales */}
-      <Text style={styles.supportSectionTitle}>Fotos adicionales</Text>
-      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.supportImagesRow}>
+      <View style={styles.supportHeaderRow}>
+        <Text style={styles.supportSectionTitle}>Fotos adicionales</Text>
+        <Text style={styles.supportCounter}>{supportImages.length}/{MAX_SUPPORT_IMAGES}</Text>
+      </View>
+      <View style={styles.supportGrid}>
         {supportImages.map((uri, idx) => (
-          <Image key={`${uri}-${idx}`} source={{ uri }} style={styles.supportThumb} />
+          <View key={`${uri}-${idx}`} style={styles.supportCard}>
+            <Image source={{ uri }} style={styles.supportThumb} />
+            <TouchableOpacity style={styles.supportDelete} onPress={() => removeSupportImage(idx)}>
+              <Text style={styles.supportDeleteText}>×</Text>
+            </TouchableOpacity>
+          </View>
         ))}
-        <TouchableOpacity style={styles.addSupportBtn} onPress={addSupportImage}>
-          <Text style={{ color: '#007AFF', fontWeight: '600' }}>+ Agregar foto</Text>
-        </TouchableOpacity>
-      </ScrollView>
+        {supportImages.length < MAX_SUPPORT_IMAGES && (
+          <TouchableOpacity style={styles.addSupportCard} onPress={addSupportImage}>
+            <Text style={styles.addSupportIcon}>＋</Text>
+            <Text style={styles.addSupportText}>Agregar fotos</Text>
+          </TouchableOpacity>
+        )}
+      </View>
 
       <TouchableOpacity 
         style={[styles.button, loading && styles.buttonDisabled]} 
@@ -452,33 +480,75 @@ const styles = StyleSheet.create({
     color: '#999',
     fontSize: 14,
   },
+  supportHeaderRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    marginTop: 10,
+    marginBottom: 8,
+  },
   supportSectionTitle: {
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '500',
-    marginBottom: 8,
-    marginTop: 10,
   },
-  supportImagesRow: {
+  supportCounter: {
+    color: '#999',
+    fontSize: 14,
+  },
+  supportGrid: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 10,
     marginBottom: 15,
   },
-  supportThumb: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 10,
+  supportCard: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#3a3a3a',
+    overflow: 'hidden',
+    position: 'relative',
+    backgroundColor: '#1f1f1f',
   },
-  addSupportBtn: {
-    height: 80,
-    paddingHorizontal: 12,
-    borderRadius: 8,
+  supportThumb: {
+    width: '100%',
+    height: '100%',
+  },
+  supportDelete: {
+    position: 'absolute',
+    top: 4,
+    right: 6,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    borderRadius: 12,
+    paddingHorizontal: 6,
+    paddingVertical: 2,
+  },
+  supportDeleteText: {
+    color: '#fff',
+    fontSize: 14,
+    fontWeight: 'bold',
+  },
+  addSupportCard: {
+    width: 100,
+    height: 100,
+    borderRadius: 10,
     borderWidth: 1,
     borderColor: '#3a3a3a',
     justifyContent: 'center',
     alignItems: 'center',
-    backgroundColor: '#1f1f1f',
+    backgroundColor: '#181818',
+  },
+  addSupportIcon: {
+    color: '#007AFF',
+    fontSize: 24,
+    marginBottom: 4,
+  },
+  addSupportText: {
+    color: '#007AFF',
+    fontWeight: '600',
+    fontSize: 12,
   },
   input: {
     backgroundColor: '#1f1f1f',
