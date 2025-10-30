@@ -550,6 +550,194 @@ class ProductService {
     }
   }
 
+  // Helper: extraer ruta de storage desde URL pública
+  static extractStoragePathFromPublicUrl(publicUrl) {
+    try {
+      if (!publicUrl || typeof publicUrl !== 'string') return null;
+      // Ejemplo: https://<proj>/storage/v1/object/public/image-producs/img/file.jpg
+      const marker = '/object/public/image-producs/';
+      const idx = publicUrl.indexOf(marker);
+      if (idx === -1) return null;
+      const filePath = publicUrl.substring(idx + marker.length);
+      console.log('🧩 Ruta de storage extraída:', filePath);
+      return filePath || null;
+    } catch (e) {
+      console.error('❌ Error extrayendo ruta de storage:', e);
+      return null;
+    }
+  }
+
+  // Eliminar producto: borra imagen del bucket, especificaciones y fila en products
+  static async deleteProduct(productId) {
+    try {
+      console.log('🗑️ Iniciando eliminación de producto:', productId);
+
+      // Verificar usuario autenticado y obtener su user_id
+      const authResult = await AuthService.getCurrentUser();
+      const { user, error: authError } = authResult;
+      if (authError || !user) {
+        console.error('❌ Error de autenticación al eliminar:', authError);
+        throw new Error('Usuario no autenticado');
+      }
+      const userId = await this.getUserIdByEmail(user.email);
+      console.log('👤 user_id autenticado:', userId);
+
+      // Traer el producto para validar propietario y obtener main_image
+      const { data: productRow, error: fetchErr } = await supabase
+        .from('products')
+        .select('id, user_id, main_image, category_id')
+        .eq('id', productId)
+        .single();
+      if (fetchErr) {
+        console.error('❌ Error obteniendo producto a eliminar:', fetchErr);
+        throw fetchErr;
+      }
+      if (!productRow) {
+        console.error('❌ Producto no encontrado:', productId);
+        throw new Error('Producto no encontrado');
+      }
+      if (productRow.user_id !== userId) {
+        console.error('🚫 El usuario no es dueño del producto');
+        throw new Error('No autorizado para eliminar este producto');
+      }
+
+      // Borrar imagen principal del bucket si existe
+      if (productRow.main_image) {
+        const filePath = this.extractStoragePathFromPublicUrl(productRow.main_image);
+        if (filePath) {
+          console.log('🗂️ Eliminando imagen del bucket image-producs:', filePath);
+          const { data: delImg, error: delImgErr } = await supabase.storage
+            .from('image-producs')
+            .remove([filePath]);
+          if (delImgErr) {
+            console.error('⚠️ Error eliminando imagen del bucket:', delImgErr);
+          } else {
+            console.log('✅ Imagen eliminada del bucket:', delImg);
+          }
+        } else {
+          console.log('ℹ️ No se pudo extraer ruta de imagen, se omite borrado de storage');
+        }
+      }
+
+      // Borrar especificaciones en todas las tablas por product_id (solo una tendrá filas)
+      const specTables = [
+        'cpu_specifications',
+        'gpu_specifications',
+        'ram_specifications',
+        'motherboard_specifications',
+        'storage_specifications',
+        'psu_specifications',
+        'case_specifications',
+        'cooler_specifications',
+        'monitor_specifications',
+        'peripheral_specifications',
+        'cable_specifications',
+        'laptop_specifications',
+        'phone_specifications',
+        'other_specifications'
+      ];
+      console.log('🧹 Eliminando especificaciones asociadas...');
+      for (const table of specTables) {
+        const { error: delSpecErr } = await supabase
+          .from(table)
+          .delete()
+          .eq('product_id', productId);
+        if (delSpecErr) {
+          console.error(`⚠️ Error eliminando especificaciones en ${table}:`, delSpecErr);
+        }
+      }
+
+      // Borrar fila del producto
+      const { error: delProdErr } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', productId);
+      if (delProdErr) {
+        console.error('❌ Error eliminando producto en BD:', delProdErr);
+        throw delProdErr;
+      }
+
+      console.log('✅ Producto eliminado correctamente:', productId);
+      return { success: true };
+    } catch (error) {
+      console.error('❌ Error completo en deleteProduct:', error);
+      throw error;
+    }
+  }
+
+  // Actualizar producto: permite cambiar datos y reemplazar imagen
+  static async updateProduct(productId, productData) {
+    try {
+      console.log('✏️ Iniciando actualización de producto...', { productId, productData });
+
+      // Verificar usuario autenticado y obtener su user_id
+      const authResult = await AuthService.getCurrentUser();
+      const { user, error: authError } = authResult;
+      if (authError || !user) {
+        console.error('❌ Error de autenticación al actualizar:', authError);
+        throw new Error('Usuario no autenticado');
+      }
+      const userId = await this.getUserIdByEmail(user.email);
+      console.log('👤 user_id autenticado:', userId);
+
+      // Traer producto actual para validar propietario y conocer imagen previa
+      const { data: current, error: fetchErr } = await supabase
+        .from('products')
+        .select('id, user_id, main_image')
+        .eq('id', productId)
+        .single();
+      if (fetchErr) {
+        console.error('❌ Error obteniendo producto a actualizar:', fetchErr);
+        throw fetchErr;
+      }
+      if (!current || current.user_id !== userId) {
+        console.error('🚫 No autorizado para actualizar este producto');
+        throw new Error('No autorizado para actualizar este producto');
+      }
+
+      // Si se proporciona nueva imagen y es diferente, eliminar la anterior
+      if (productData.main_image && current.main_image && productData.main_image !== current.main_image) {
+        const oldPath = this.extractStoragePathFromPublicUrl(current.main_image);
+        if (oldPath) {
+          console.log('🗂️ Eliminando imagen anterior del bucket:', oldPath);
+          const { error: delOldErr } = await supabase.storage
+            .from('image-producs')
+            .remove([oldPath]);
+          if (delOldErr) {
+            console.error('⚠️ Error eliminando imagen anterior:', delOldErr);
+          }
+        }
+      }
+
+      const updatePayload = {
+        name: productData.name,
+        description: productData.description,
+        category_id: productData.category_id,
+        price: parseFloat(productData.price),
+        stock: parseInt(productData.stock) || 0,
+        // Si no se pasa main_image, mantener la existente
+        ...(productData.main_image ? { main_image: productData.main_image } : {})
+      };
+
+      const { data, error } = await supabase
+        .from('products')
+        .update(updatePayload)
+        .eq('id', productId)
+        .select();
+      if (error) {
+        console.error('❌ Error actualizando producto en BD:', error);
+        throw error;
+      }
+
+      const updated = data && data[0] ? data[0] : null;
+      console.log('✅ Producto actualizado:', updated);
+      return updated;
+    } catch (error) {
+      console.error('❌ Error completo en updateProduct:', error);
+      throw error;
+    }
+  }
+
 
 
   // Obtener todos los productos (para el catálogo)

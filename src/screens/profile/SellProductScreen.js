@@ -5,7 +5,8 @@ import * as ImagePicker from 'expo-image-picker';
 import ProductService from '../../services/product.service';
 import { getSpecificationComponent } from './components';
 
-const SellProductScreen = ({ navigation }) => {
+const SellProductScreen = ({ navigation, route }) => {
+  const product = route?.params?.product || null;
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
@@ -56,6 +57,29 @@ const SellProductScreen = ({ navigation }) => {
       setLoadingCategories(false);
     }
   };
+
+  // Prefill si estamos en modo edición (debe estar dentro del componente)
+  useEffect(() => {
+    if (product) {
+      console.log('✏️ Modo edición - producto:', product);
+      setName(product.title || product.name || '');
+      setDescription(product.description || '');
+      setPrice(product.price !== undefined ? String(product.price) : '');
+      setCategoryId(product.category_id ? String(product.category_id) : '');
+      setStock(product.stock !== undefined ? String(product.stock) : '');
+      if (product.main_image) {
+        setSelectedImage(product.main_image);
+      }
+    }
+  }, [product]);
+
+  // Ajustar categoría seleccionada cuando cargan categorías o cambia categoryId
+  useEffect(() => {
+    if (categories.length && categoryId) {
+      const category = categories.find(cat => cat.id.toString() === categoryId);
+      setSelectedCategory(category || null);
+    }
+  }, [categories, categoryId]);
 
   const selectImage = async () => {
     try {
@@ -119,11 +143,16 @@ const SellProductScreen = ({ navigation }) => {
     
     setLoading(true);
     try {
+      const isEditing = !!product;
       let imageUrl = null;
+      const existingImageUrl = product?.main_image || null;
       
-      // Subir imagen si se seleccionó una
-      if (selectedImage) {
+      // Subir imagen si se seleccionó una nueva local (no URL remota)
+      const isRemoteUrl = typeof selectedImage === 'string' && selectedImage.startsWith('http');
+      if (selectedImage && !isRemoteUrl) {
         imageUrl = await ProductService.uploadProductImage(selectedImage, name);
+      } else if (isEditing) {
+        imageUrl = existingImageUrl; // mantener imagen actual
       }
 
       // Crear el producto
@@ -137,11 +166,15 @@ const SellProductScreen = ({ navigation }) => {
         specifications: specifications
       };
 
-      await ProductService.createProduct(productData);
+      if (isEditing) {
+        await ProductService.updateProduct(product.id || parseInt(product.id), productData);
+      } else {
+        await ProductService.createProduct(productData);
+      }
       
       Alert.alert(
-        'Producto publicado', 
-        'Tu producto ha sido publicado exitosamente',
+        isEditing ? 'Producto actualizado' : 'Producto publicado', 
+        isEditing ? 'Tu producto ha sido actualizado exitosamente' : 'Tu producto ha sido publicado exitosamente',
         [
           {
             text: 'OK',
@@ -223,7 +256,7 @@ const SellProductScreen = ({ navigation }) => {
       <ScrollView contentContainerStyle={styles.content}
         keyboardShouldPersistTaps="handled"
         showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>Publicar Producto</Text>
+      <Text style={styles.title}>{product ? 'Editar Producto' : 'Publicar Producto'}</Text>
 
       {/* Selector de imagen */}
       <TouchableOpacity style={styles.imageSelector} onPress={selectImage}>
@@ -320,7 +353,7 @@ const SellProductScreen = ({ navigation }) => {
         {loading ? (
           <ActivityIndicator size="small" color="#ffffff" />
         ) : (
-          <Text style={styles.buttonText}>Publicar Producto</Text>
+          <Text style={styles.buttonText}>{product ? 'Actualizar Producto' : 'Publicar Producto'}</Text>
         )}
       </TouchableOpacity>
     </ScrollView>

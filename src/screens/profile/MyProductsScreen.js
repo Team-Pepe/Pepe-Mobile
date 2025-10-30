@@ -63,11 +63,17 @@ const MyProductsScreen = ({ navigation }) => {
         { 
           text: 'Eliminar', 
           style: 'destructive',
-          onPress: () => {
-            // Aquí iría la llamada a la API para eliminar
-            // Por ahora solo actualizamos el estado local
-            setProducts(products.filter(p => p.id !== productId));
-            Alert.alert('Producto eliminado', 'El producto ha sido eliminado correctamente');
+          onPress: async () => {
+            try {
+              console.log('🗑️ Solicitando eliminación de producto:', productId);
+              await ProductService.deleteProduct(productId);
+              // Actualizar estado local
+              setProducts(prev => prev.filter(p => p.id !== productId));
+              Alert.alert('Producto eliminado', 'El producto y su imagen han sido eliminados');
+            } catch (err) {
+              console.error('❌ Error eliminando producto:', err);
+              Alert.alert('Error', err.message || 'No se pudo eliminar el producto');
+            }
           }
         },
       ]
