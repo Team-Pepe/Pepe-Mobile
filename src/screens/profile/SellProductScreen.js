@@ -13,6 +13,7 @@ const SellProductScreen = ({ navigation, route }) => {
   const [categoryId, setCategoryId] = useState('');
   const [stock, setStock] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
+  const [supportImages, setSupportImages] = useState([]);
   const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(false);
   const [loadingCategories, setLoadingCategories] = useState(true);
@@ -70,6 +71,9 @@ const SellProductScreen = ({ navigation, route }) => {
       if (product.main_image) {
         setSelectedImage(product.main_image);
       }
+      if (Array.isArray(product.additional_images)) {
+        setSupportImages(product.additional_images);
+      }
     }
   }, [product]);
 
@@ -104,6 +108,31 @@ const SellProductScreen = ({ navigation, route }) => {
     } catch (error) {
       Alert.alert('Error', 'No se pudo seleccionar la imagen');
       console.error('Error seleccionando imagen:', error);
+    }
+  };
+
+  const addSupportImage = async () => {
+    try {
+      const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
+      if (status !== 'granted') {
+        Alert.alert('Permisos requeridos', 'Se necesitan permisos para acceder a la galería');
+        return;
+      }
+
+      const result = await ImagePicker.launchImageLibraryAsync({
+        mediaTypes: ImagePicker.MediaTypeOptions.Images,
+        allowsEditing: true,
+        aspect: [1, 1],
+        quality: 0.8,
+      });
+
+      if (!result.canceled) {
+        const uri = result.assets[0].uri;
+        setSupportImages(prev => [...prev, uri]);
+      }
+    } catch (error) {
+      Alert.alert('Error', 'No se pudo seleccionar la imagen');
+      console.error('Error seleccionando imagen de apoyo:', error);
     }
   };
 
@@ -155,6 +184,9 @@ const SellProductScreen = ({ navigation, route }) => {
         imageUrl = existingImageUrl; // mantener imagen actual
       }
 
+      // Subir imágenes de apoyo y obtener sus URLs públicas (mantener remotas tal cual)
+      const supportUrls = await ProductService.uploadSupportImages(supportImages, name);
+
       // Crear el producto
       const productData = {
         name: name.trim(),
@@ -163,7 +195,8 @@ const SellProductScreen = ({ navigation, route }) => {
         price: parseFloat(price),
         stock: parseInt(stock),
         main_image: imageUrl,
-        specifications: specifications
+        specifications: specifications,
+        additional_images: supportUrls
       };
 
       if (isEditing) {
@@ -345,6 +378,17 @@ const SellProductScreen = ({ navigation, route }) => {
         keyboardType="numeric"
       />
 
+      {/* Sección de fotos adicionales */}
+      <Text style={styles.supportSectionTitle}>Fotos adicionales</Text>
+      <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.supportImagesRow}>
+        {supportImages.map((uri, idx) => (
+          <Image key={`${uri}-${idx}`} source={{ uri }} style={styles.supportThumb} />
+        ))}
+        <TouchableOpacity style={styles.addSupportBtn} onPress={addSupportImage}>
+          <Text style={{ color: '#007AFF', fontWeight: '600' }}>+ Agregar foto</Text>
+        </TouchableOpacity>
+      </ScrollView>
+
       <TouchableOpacity 
         style={[styles.button, loading && styles.buttonDisabled]} 
         onPress={handlePublish}
@@ -407,6 +451,34 @@ const styles = StyleSheet.create({
   imagePlaceholderSubtext: {
     color: '#999',
     fontSize: 14,
+  },
+  supportSectionTitle: {
+    color: '#ffffff',
+    fontSize: 16,
+    fontWeight: '500',
+    marginBottom: 8,
+    marginTop: 10,
+  },
+  supportImagesRow: {
+    marginBottom: 15,
+  },
+  supportThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 10,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+  },
+  addSupportBtn: {
+    height: 80,
+    paddingHorizontal: 12,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#3a3a3a',
+    justifyContent: 'center',
+    alignItems: 'center',
+    backgroundColor: '#1f1f1f',
   },
   input: {
     backgroundColor: '#1f1f1f',

@@ -287,6 +287,7 @@ class ProductService {
           price: parseFloat(productData.price),
           stock: parseInt(productData.stock) || 0,
           main_image: productData.main_image || null,
+          additional_images: productData.additional_images || [],
           user_id: userId // Agregar el user_id del usuario autenticado
         }])
         .select();
@@ -550,6 +551,60 @@ class ProductService {
     }
   }
 
+  // Subir múltiples imágenes de apoyo al bucket en carpeta id-imgs/<producto>
+  static async uploadSupportImages(imageUris = [], productName = '') {
+    try {
+      if (!Array.isArray(imageUris) || imageUris.length === 0) return [];
+
+      const normalizedName = normalizeName(productName || 'producto');
+      const results = [];
+
+      for (let i = 0; i < imageUris.length; i++) {
+        const uri = imageUris[i];
+        const isRemoteUrl = typeof uri === 'string' && uri.startsWith('http');
+        if (isRemoteUrl) {
+          results.push(uri);
+          continue;
+        }
+
+        try {
+          const timestamp = Date.now();
+          const fileName = `${normalizedName}_${timestamp}_${i}.jpg`;
+          const filePath = `id-imgs/${normalizedName}/${fileName}`;
+
+          const response = await fetch(uri);
+          const arrayBuffer = await response.arrayBuffer();
+
+          const { error: uploadError } = await supabase.storage
+            .from('image-producs')
+            .upload(filePath, arrayBuffer, {
+              contentType: 'image/jpeg',
+              upsert: false
+            });
+
+          if (uploadError) {
+            console.error('Error subiendo imagen de apoyo:', uploadError);
+            throw uploadError;
+          }
+
+          const { data: publicUrlData } = supabase.storage
+            .from('image-producs')
+            .getPublicUrl(filePath);
+
+          results.push(publicUrlData.publicUrl);
+        } catch (innerErr) {
+          console.error('Error en una imagen de apoyo:', innerErr);
+          throw innerErr;
+        }
+      }
+
+      return results;
+    } catch (error) {
+      console.error('Error en uploadSupportImages:', error);
+      throw error;
+    }
+  }
+
   // Helper: extraer ruta de storage desde URL pública
   static extractStoragePathFromPublicUrl(publicUrl) {
     try {
@@ -716,7 +771,8 @@ class ProductService {
         price: parseFloat(productData.price),
         stock: parseInt(productData.stock) || 0,
         // Si no se pasa main_image, mantener la existente
-        ...(productData.main_image ? { main_image: productData.main_image } : {})
+        ...(productData.main_image ? { main_image: productData.main_image } : {}),
+        ...(productData.additional_images ? { additional_images: productData.additional_images } : {})
       };
 
       const { data, error } = await supabase
