@@ -28,7 +28,9 @@ const MyProductsScreen = ({ navigation }) => {
         category: product.categories?.name || 'Sin categoría',
         description: product.description,
         stock: product.stock,
-        created_at: product.created_at
+        created_at: product.created_at,
+        main_image: product.main_image,
+        additional_images: product.additional_images || []
       }));
       
       console.log('✅ Productos formateados:', formattedProducts);
@@ -52,6 +54,11 @@ const MyProductsScreen = ({ navigation }) => {
   const handleEditProduct = (product) => {
     // Navegar a la pantalla de edición con los datos del producto
     navigation.navigate('SellProduct', { product });
+  };
+
+  const handleOpenProduct = (product) => {
+    // Navegar al detalle de la publicación con los datos del producto
+    navigation.navigate('ProductDetail', { product });
   };
 
   const handleDeleteProduct = (productId) => {
@@ -81,7 +88,7 @@ const MyProductsScreen = ({ navigation }) => {
   };
 
   const renderProductItem = ({ item }) => (
-    <View style={styles.productItem}>
+    <TouchableOpacity style={styles.productItem} activeOpacity={0.85} onPress={() => handleOpenProduct(item)}>
       <Image 
         source={item.image}
         style={styles.productImage} 
@@ -111,7 +118,7 @@ const MyProductsScreen = ({ navigation }) => {
           <FontAwesome5 name="trash" size={16} color="#ffffff" />
         </TouchableOpacity>
       </View>
-    </View>
+    </TouchableOpacity>
   );
 
   return (

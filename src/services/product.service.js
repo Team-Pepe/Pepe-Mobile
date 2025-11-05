@@ -226,7 +226,7 @@ class ProductService {
       
       console.log('🔍 Buscando productos para user_id:', userId);
 
-      // Obtener productos del usuario con información de categoría
+      // Obtener productos del usuario con información de categoría e imágenes adicionales
       const { data, error } = await supabase
         .from('products')
         .select(`
@@ -790,6 +790,73 @@ class ProductService {
       return updated;
     } catch (error) {
       console.error('❌ Error completo en updateProduct:', error);
+      throw error;
+    }
+  }
+
+  // Obtener especificaciones de un producto según su categoría
+  static async getProductSpecifications(productId, categoryName = '') {
+    try {
+      console.log('🔍 Obteniendo especificaciones para producto:', productId, 'categoría:', categoryName);
+      
+      // Resolver la tabla de especificaciones según el nombre de la categoría
+      const tableName = resolveSpecTableByCategoryName(categoryName);
+      console.log('📊 Tabla de especificaciones inicial:', tableName);
+
+      // Helper para filtrar campos válidos
+      const filterSpecs = (row) => {
+        const filtered = {};
+        if (!row) return filtered;
+        Object.entries(row).forEach(([key, value]) => {
+          if (value !== null && value !== undefined && value !== '' && key !== 'product_id' && key !== 'id') {
+            filtered[key] = value;
+          }
+        });
+        return filtered;
+      };
+
+      // Intenta primero con la tabla resuelta
+      const tryFetchFromTable = async (tbl) => {
+        try {
+          const { data, error } = await supabase
+            .from(tbl)
+            .select('*')
+            .eq('product_id', productId)
+            .single();
+
+          if (error) {
+            if (error.code === 'PGRST116') return null; // sin resultados
+            console.error(`❌ Error consultando ${tbl}:`, error);
+            return null;
+          }
+          return data || null;
+        } catch (err) {
+          console.error(`❌ Excepción consultando ${tbl}:`, err);
+          return null;
+        }
+      };
+
+      let row = await tryFetchFromTable(tableName);
+
+      // Fallback: si no hay datos o la categoría es desconocida, probar todas las tablas conocidas
+      if (!row || tableName === 'other_specifications') {
+        console.log('🔁 Intentando fallback en todas las tablas de especificaciones...');
+        const tablesToTry = Object.keys(validFieldsMap).filter(t => t !== 'other_specifications');
+        for (const tbl of tablesToTry) {
+          const r = await tryFetchFromTable(tbl);
+          if (r) {
+            console.log('✅ Especificaciones encontradas en tabla:', tbl);
+            row = r;
+            break;
+          }
+        }
+      }
+
+      const filteredSpecs = filterSpecs(row);
+      console.log('✅ Especificaciones obtenidas:', filteredSpecs);
+      return filteredSpecs;
+    } catch (error) {
+      console.error('❌ Error en getProductSpecifications:', error);
       throw error;
     }
   }
