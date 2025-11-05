@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Keyboard } from 'react-native';
+import { View, Text, TextInput, TouchableOpacity, StyleSheet, ScrollView, Alert, ActivityIndicator, Image, Keyboard, Platform } from 'react-native';
 import { Picker } from '@react-native-picker/picker';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import * as ImagePicker from 'expo-image-picker';
 import ProductService from '../../services/product.service';
 import { getSpecificationComponent } from './components';
@@ -302,11 +303,13 @@ const SellProductScreen = ({ navigation, route }) => {
   };
 
   return (
-    <View style={[styles.container, { paddingBottom: keyboardOffset }]}>
-      <ScrollView contentContainerStyle={styles.content}
-        keyboardShouldPersistTaps="handled"
-        showsVerticalScrollIndicator={false}>
-      <Text style={styles.title}>{product ? 'Editar Producto' : 'Publicar Producto'}</Text>
+    <SafeAreaView style={styles.safeArea}>
+      <View style={[styles.container, { paddingBottom: keyboardOffset }]}>
+          <ScrollView 
+          contentContainerStyle={[styles.content, Platform.OS === 'ios' && styles.contentIOS]}
+          keyboardShouldPersistTaps="handled"
+          showsVerticalScrollIndicator={false}>
+          <Text style={styles.title}>{product ? 'Editar Producto' : 'Publicar Producto'}</Text>
 
       {/* Selector de imagen */}
       <TouchableOpacity style={styles.imageSelector} onPress={selectImage}>
@@ -355,13 +358,13 @@ const SellProductScreen = ({ navigation, route }) => {
             <Text style={styles.loadingText}>Cargando categorías...</Text>
           </View>
         ) : (
-          <View style={styles.pickerWrapper}>
+          <View style={[styles.pickerWrapper, Platform.OS === 'ios' && styles.pickerWrapperIOS]}>
             <Picker
               selectedValue={categoryId}
               onValueChange={handleCategoryChange}
-              style={styles.picker}
+              style={[styles.picker, Platform.OS === 'ios' && { height: 90 }]}
               dropdownIconColor="#007AFF"
-              itemStyle={{ backgroundColor: '#2c2c2c' }}
+              itemStyle={Platform.OS === 'ios' ? { height: 90, backgroundColor: '#2c2c2c' } : { backgroundColor: '#2c2c2c' }}
             >
               <Picker.Item label="Selecciona una categoría" value="" color="#999" />
               {categories.map((category) => (
@@ -417,23 +420,28 @@ const SellProductScreen = ({ navigation, route }) => {
         )}
       </View>
 
-      <TouchableOpacity 
-        style={[styles.button, loading && styles.buttonDisabled]} 
-        onPress={handlePublish}
-        disabled={loading}
-      >
-        {loading ? (
-          <ActivityIndicator size="small" color="#ffffff" />
-        ) : (
-          <Text style={styles.buttonText}>{product ? 'Actualizar Producto' : 'Publicar Producto'}</Text>
-        )}
-      </TouchableOpacity>
-    </ScrollView>
-    </View>
+          <TouchableOpacity 
+            style={[styles.button, loading && styles.buttonDisabled]} 
+            onPress={handlePublish}
+            disabled={loading}
+          >
+            {loading ? (
+              <ActivityIndicator size="small" color="#ffffff" />
+            ) : (
+              <Text style={styles.buttonText}>{product ? 'Actualizar Producto' : 'Publicar Producto'}</Text>
+            )}
+          </TouchableOpacity>
+        </ScrollView>
+      </View>
+    </SafeAreaView>
   );
 };
 
 const styles = StyleSheet.create({
+  safeArea: {
+    flex: 1,
+    backgroundColor: '#2c2c2c',
+  },
   container: {
     flex: 1,
     backgroundColor: '#2c2c2c',
@@ -442,6 +450,9 @@ const styles = StyleSheet.create({
     padding: 20,
     paddingTop: 30,
     paddingBottom: 40,
+  },
+  contentIOS: {
+    paddingTop: 3,
   },
   title: {
     fontSize: 22,
@@ -580,7 +591,12 @@ const styles = StyleSheet.create({
   picker: {
     color: '#ffffff',
     backgroundColor: '#1f1f1f',
-    height: 60,
+    height: Platform.OS === 'ios' ? 180 : 60,
+  },
+  pickerWrapperIOS: {
+    backgroundColor: '#1f1f1f',
+    marginTop: 4,
+    paddingVertical: 8,
   },
   loadingContainer: {
     flexDirection: 'row',
