@@ -148,7 +148,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
   };
 
   // Formatear valores de especificaciones para evitar renderizar objetos directamente
-  const formatSpecValue = (value) => {
+  const formatSpecValue = (value, key) => {
     if (value === null || value === undefined) return '-';
     if (Array.isArray(value)) return value.join(', ');
     if (typeof value === 'object') {
@@ -157,6 +157,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
         const parts = Object.entries(value)
           .filter(([k, v]) => v !== null && v !== undefined && v !== '')
           .map(([k, v]) => `${k}: ${v}`);
+        
+        // Si es el campo 'connectors', mostrar como lista vertical
+        if (key === 'connectors') {
+          return parts.length ? parts.join('\n') : JSON.stringify(value);
+        }
+        
         return parts.length ? parts.join(' | ') : JSON.stringify(value);
       } catch (e) {
         return JSON.stringify(value);
@@ -178,7 +184,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
         Object.entries(productSpecifications).map(([key, value]) => (
           <View key={key} style={styles.specRow}>
             <Text style={styles.specKey}>{key}</Text>
-            <Text style={styles.specValue}>{formatSpecValue(value)}</Text>
+            <Text style={styles.specValue}>{formatSpecValue(value, key)}</Text>
           </View>
         ))
       ) : (
@@ -275,6 +281,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
               const parts = Object.entries(value)
                 .filter(([k, v]) => v !== null && v !== undefined && v !== '')
                 .map(([k, v]) => `${k}: ${v}`);
+              
+              // Si es el campo 'connectors', mostrar como lista vertical
+              if (key === 'connectors') {
+                return parts.length ? parts.join('\n') : JSON.stringify(value);
+              }
+              
               return parts.length ? parts.join(' | ') : JSON.stringify(value);
             } catch (e) { return JSON.stringify(value); }
           }
@@ -583,6 +595,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#ffffff',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   reviewsContainer: {
     backgroundColor: '#1f1f1f',
