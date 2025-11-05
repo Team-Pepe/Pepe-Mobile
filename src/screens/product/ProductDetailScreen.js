@@ -194,7 +194,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
         <Text style={styles.loadingText}>Cargando especificaciones...</Text>
       ) : (() => {
         const entries = Object.entries(productSpecifications || {}).filter(([key, value]) => (
-          key !== 'general_specifications' && value !== null && value !== undefined && value !== ''
+          key !== 'general_specifications' && key !== 'id' && key !== 'product_id' && value !== null && value !== undefined && value !== ''
         ));
 
         // Fallback: si no hay entradas, pero sí hay general_specifications, muéstralas.

@@ -1,5 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { AuthService } from './auth.service';
+import CategoryService, { resolveSpecTableByCategoryName as resolveSpecTableByCategoryNameFromService } from './category.service';
+import SpecificationService from './specification.service';
 
 // Campos válidos por tabla de especificaciones (alineado al esquema SQL)
 const validFieldsMap = {
@@ -303,7 +305,7 @@ class ProductService {
       // Si hay especificaciones, guardarlas en la tabla correspondiente
       if (productData.specifications && Object.keys(productData.specifications).length > 0) {
         console.log('📋 Guardando especificaciones...');
-        await this.saveProductSpecifications(product.id, productData.category_id, productData.specifications);
+        await SpecificationService.saveProductSpecifications(product.id, productData.category_id, productData.specifications);
       }
 
       return product;
@@ -315,192 +317,8 @@ class ProductService {
 
   // Guardar especificaciones del producto en la tabla correspondiente
   static async saveProductSpecifications(productId, categoryId, specifications) {
-    try {
-      // 1) Resolver nombre de la categoría en BD y obtener la tabla
-      const { data: categoryRows, error: catErr } = await supabase
-        .from('categories')
-        .select('id, name')
-        .eq('id', categoryId)
-        .limit(1);
-
-      if (catErr) {
-        console.error('Error obteniendo categoría para especificaciones:', catErr);
-        throw catErr;
-      }
-      const categoryName = categoryRows && categoryRows[0] ? categoryRows[0].name : '';
-      const tableName = resolveSpecTableByCategoryName(categoryName);
-
-      // 2) Construir y filtrar datos según la tabla
-      const specDataRaw = { product_id: productId, ...specifications };
-      const validFields = validFieldsMap[tableName] || [];
-      const specData = Object.keys(specDataRaw)
-        .filter((key) => key === 'product_id' || validFields.includes(key))
-        .reduce((acc, key) => {
-          acc[key] = specDataRaw[key];
-          return acc;
-        }, {});
-
-      // Limpiar campos vacíos o undefined y convertir números grandes
-      Object.keys(specData).forEach(key => {
-        if (specData[key] === '' || specData[key] === undefined || specData[key] === null) {
-          delete specData[key];
-        } else if (typeof specData[key] === 'number') {
-          // Limitar números muy grandes que pueden causar overflow
-          if (specData[key] > 999999999) {
-            specData[key] = Math.floor(specData[key] / 1000000); // Convertir a millones
-          }
-          // Redondear decimales a máximo 2 decimales
-          if (specData[key] % 1 !== 0) {
-            specData[key] = Math.round(specData[key] * 100) / 100;
-          }
-        } else if (typeof specData[key] === 'string') {
-          // Intentar convertir strings numéricos y aplicar las mismas reglas
-          const numValue = parseFloat(specData[key]);
-          if (!isNaN(numValue)) {
-            // Validación especial para length_m en cables (máximo 9.99)
-            if (key === 'length_m' && tableName === 'cable_specifications' && numValue > 9.99) {
-              throw new Error('La longitud del cable no puede exceder 9.99 metros');
-            }
-            
-            // Validación especial para length_mm en GPUs (máximo 999 para evitar overflow)
-            if (key === 'length_mm' && tableName === 'gpu_specifications' && numValue > 999) {
-              throw new Error('La longitud de la GPU no puede exceder 999 mm');
-            }
-            
-            // Validaciones especiales para RAM (evitar overflow en campos integer)
-            if (tableName === 'ram_specifications') {
-              if (key === 'capacity_gb' && numValue > 2147483647) { // Límite integer en PostgreSQL
-                throw new Error('La capacidad de RAM no puede exceder 2,147,483,647 GB');
-              }
-              if (key === 'speed_mhz' && numValue > 2147483647) {
-                throw new Error('La velocidad de RAM no puede exceder 2,147,483,647 MHz');
-              }
-              if (key === 'modules' && numValue > 2147483647) {
-                throw new Error('El número de módulos de RAM no puede exceder 2,147,483,647');
-              }
-            }
-            
-            // Validaciones especiales para Storage (evitar overflow en campos integer)
-            if (tableName === 'storage_specifications') {
-              if (key === 'capacity_gb' && numValue > 2147483647) {
-                throw new Error('La capacidad de almacenamiento no puede exceder 2,147,483,647 GB');
-              }
-              if (key === 'read_speed_mbs' && numValue > 2147483647) {
-                throw new Error('La velocidad de lectura no puede exceder 2,147,483,647 MB/s');
-              }
-              if (key === 'write_speed_mbs' && numValue > 2147483647) {
-                throw new Error('La velocidad de escritura no puede exceder 2,147,483,647 MB/s');
-              }
-              if (key === 'tbw' && numValue > 2147483647) {
-                throw new Error('El TBW no puede exceder 2,147,483,647');
-              }
-            }
-            
-            // Validaciones especiales para PSU (evitar overflow en campos integer)
-            if (tableName === 'psu_specifications') {
-              if (key === 'power_w' && numValue > 2147483647) {
-                throw new Error('La potencia de la PSU no puede exceder 2,147,483,647 W');
-              }
-              if (key === 'fan_size_mm' && numValue > 2147483647) {
-                throw new Error('El tamaño del ventilador no puede exceder 2,147,483,647 mm');
-              }
-            }
-            
-            // Validaciones especiales para Case (evitar overflow en campos integer)
-            if (tableName === 'case_specifications') {
-              if (key === 'bays_35' && numValue > 2147483647) {
-                throw new Error('El número de bahías 3.5" no puede exceder 2,147,483,647');
-              }
-              if (key === 'bays_25' && numValue > 2147483647) {
-                throw new Error('El número de bahías 2.5" no puede exceder 2,147,483,647');
-              }
-              if (key === 'expansion_slots' && numValue > 2147483647) {
-                throw new Error('El número de slots de expansión no puede exceder 2,147,483,647');
-              }
-              if (key === 'max_gpu_length_mm' && numValue > 2147483647) {
-                throw new Error('La longitud máxima de GPU no puede exceder 2,147,483,647 mm');
-              }
-              if (key === 'max_cooler_height_mm' && numValue > 2147483647) {
-                throw new Error('La altura máxima del cooler no puede exceder 2,147,483,647 mm');
-              }
-              if (key === 'included_fans' && numValue > 2147483647) {
-                throw new Error('El número de ventiladores incluidos no puede exceder 2,147,483,647');
-              }
-            }
-            
-            // Validaciones especiales para Monitor (evitar overflow en campos integer)
-            if (tableName === 'monitor_specifications') {
-              if (key === 'refresh_rate_hz' && numValue > 2147483647) {
-                throw new Error('La frecuencia de actualización no puede exceder 2,147,483,647 Hz');
-              }
-              if (key === 'response_time_ms' && numValue > 2147483647) {
-                throw new Error('El tiempo de respuesta no puede exceder 2,147,483,647 ms');
-              }
-            }
-            
-            // Validaciones especiales para Peripheral (evitar overflow en campos integer)
-            if (tableName === 'peripheral_specifications') {
-              if (key === 'response_frequency_hz' && numValue > 2147483647) {
-                throw new Error('La frecuencia de respuesta no puede exceder 2,147,483,647 Hz');
-              }
-            }
-            
-            // Validaciones especiales para Laptop (evitar overflow en campos integer)
-            if (tableName === 'laptop_specifications') {
-              if (key === 'ram_gb' && numValue > 2147483647) {
-                throw new Error('La cantidad de RAM no puede exceder 2,147,483,647 GB');
-              }
-              if (key === 'battery_wh' && numValue > 2147483647) {
-                throw new Error('La capacidad de la batería no puede exceder 2,147,483,647 Wh');
-              }
-            }
-            
-            // Validaciones especiales para Phone (evitar overflow en campos integer)
-            if (tableName === 'phone_specifications') {
-              if (key === 'ram_gb' && numValue > 2147483647) {
-                throw new Error('La cantidad de RAM no puede exceder 2,147,483,647 GB');
-              }
-              if (key === 'storage_gb' && numValue > 2147483647) {
-                throw new Error('La capacidad de almacenamiento no puede exceder 2,147,483,647 GB');
-              }
-              if (key === 'battery_mah' && numValue > 2147483647) {
-                throw new Error('La capacidad de la batería no puede exceder 2,147,483,647 mAh');
-              }
-            }
-            
-            if (numValue > 999999999) {
-              specData[key] = Math.floor(numValue / 1000000);
-            } else if (numValue % 1 !== 0) {
-              specData[key] = Math.round(numValue * 100) / 100;
-            } else {
-              specData[key] = numValue;
-            }
-          }
-        }
-      });
-
-      // 3) Validar campos obligatorios según tabla
-      const required = requiredFieldsMap[tableName] || [];
-      const missing = required.filter((key) => specData[key] === undefined || specData[key] === null || specData[key] === '');
-      if (missing.length > 0) {
-        throw new Error(`Faltan campos requeridos para ${tableName}: ${missing.join(', ')}`);
-      }
-
-      // 4) Insertar las especificaciones
-      const { data, error } = await supabase
-        .from(tableName)
-        .insert([specData]);
-
-      if (error) {
-        console.error('Error guardando especificaciones:', error);
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error en saveProductSpecifications:', error);
-      throw error;
-    }
+    // Delegar en el nuevo módulo de especificaciones
+    return SpecificationService.saveProductSpecifications(productId, categoryId, specifications);
   }
 
   // Subir imagen a Supabase Storage
@@ -796,69 +614,8 @@ class ProductService {
 
   // Obtener especificaciones de un producto según su categoría
   static async getProductSpecifications(productId, categoryName = '') {
-    try {
-      console.log('🔍 Obteniendo especificaciones para producto:', productId, 'categoría:', categoryName);
-      
-      // Resolver la tabla de especificaciones según el nombre de la categoría
-      const tableName = resolveSpecTableByCategoryName(categoryName);
-      console.log('📊 Tabla de especificaciones inicial:', tableName);
-
-      // Helper para filtrar campos válidos
-      const filterSpecs = (row) => {
-        const filtered = {};
-        if (!row) return filtered;
-        Object.entries(row).forEach(([key, value]) => {
-          if (value !== null && value !== undefined && value !== '' && key !== 'product_id' && key !== 'id') {
-            filtered[key] = value;
-          }
-        });
-        return filtered;
-      };
-
-      // Intenta primero con la tabla resuelta
-      const tryFetchFromTable = async (tbl) => {
-        try {
-          const { data, error } = await supabase
-            .from(tbl)
-            .select('*')
-            .eq('product_id', productId)
-            .single();
-
-          if (error) {
-            if (error.code === 'PGRST116') return null; // sin resultados
-            console.error(`❌ Error consultando ${tbl}:`, error);
-            return null;
-          }
-          return data || null;
-        } catch (err) {
-          console.error(`❌ Excepción consultando ${tbl}:`, err);
-          return null;
-        }
-      };
-
-      let row = await tryFetchFromTable(tableName);
-
-      // Fallback: si no hay datos o la categoría es desconocida, probar todas las tablas conocidas
-      if (!row || tableName === 'other_specifications') {
-        console.log('🔁 Intentando fallback en todas las tablas de especificaciones...');
-        const tablesToTry = Object.keys(validFieldsMap).filter(t => t !== 'other_specifications');
-        for (const tbl of tablesToTry) {
-          const r = await tryFetchFromTable(tbl);
-          if (r) {
-            console.log('✅ Especificaciones encontradas en tabla:', tbl);
-            row = r;
-            break;
-          }
-        }
-      }
-
-      const filteredSpecs = filterSpecs(row);
-      console.log('✅ Especificaciones obtenidas:', filteredSpecs);
-      return filteredSpecs;
-    } catch (error) {
-      console.error('❌ Error en getProductSpecifications:', error);
-      throw error;
-    }
+    // Delegar completamente al módulo de especificaciones
+    return SpecificationService.getProductSpecifications(productId, categoryName);
   }
 
 
