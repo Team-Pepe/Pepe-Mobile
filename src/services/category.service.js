@@ -1,7 +1,7 @@
 import { supabase } from '../lib/supabase';
 
 // Normaliza nombres para coincidencia robusta (minúsculas, sin acentos, espacios únicos)
-function normalizeName(name = '') {
+export function normalizeName(name = '') {
   return name
     .toLowerCase()
     .normalize('NFD')

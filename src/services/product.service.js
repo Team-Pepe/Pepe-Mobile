@@ -1,196 +1,19 @@
 import { supabase } from '../lib/supabase';
 import { AuthService } from './auth.service';
-import CategoryService, { resolveSpecTableByCategoryName as resolveSpecTableByCategoryNameFromService } from './category.service';
+import CategoryService, { normalizeName } from './category.service';
 import SpecificationService from './specification.service';
+import ImageService from './image.service';
+import UserService from './user.service';
 
-// Campos válidos por tabla de especificaciones (alineado al esquema SQL)
-const validFieldsMap = {
-  cpu_specifications: [
-    'socket', 'cores', 'threads', 'base_frequency_ghz', 'boost_frequency_ghz', 
-    'cache_l3', 'tdp', 'integrated_graphics', 'fabrication_technology_nm'
-  ],
-  gpu_specifications: [
-    'vram_gb', 'vram_type', 'cuda_cores', 'base_frequency_mhz', 'boost_frequency_mhz', 
-    'bandwidth_gbs', 'power_connectors', 'length_mm', 'video_outputs'
-  ],
-  ram_specifications: [
-    'capacity_gb', 'type', 'speed_mhz', 'latency', 'modules', 'voltage', 'heat_spreader', 'rgb_lighting'
-  ],
-  motherboard_specifications: [
-    'socket', 'chipset', 'form_factor', 'ram_slots', 'ram_type', 'm2_ports', 'sata_ports', 'usb_ports', 'audio', 'network'
-  ],
-  storage_specifications: [
-    'type', 'capacity_gb', 'interface', 'read_speed_mbs', 'write_speed_mbs', 'form_factor', 'nand_type', 'tbw'
-  ],
-  psu_specifications: [
-    'power_w', 'efficiency_certification', 'modular_type', 'form_factor', 'connectors', 'fan_size_mm', 'active_pfc'
-  ],
-  case_specifications: [
-    'motherboard_formats', 'bays_35', 'bays_25', 'expansion_slots', 'max_gpu_length_mm', 'max_cooler_height_mm', 'psu_type', 'included_fans', 'material'
-  ],
-  cooler_specifications: [
-    'cooler_type', 'compatible_sockets', 'height_mm', 'rpm_range', 'noise_level_db', 'tdp_w'
-  ],
-  monitor_specifications: [
-    'screen_inches', 'resolution', 'refresh_rate_hz', 'panel_type', 'response_time_ms', 'connectors', 'curved'
-  ],
-  peripheral_specifications: [
-    'peripheral_type', 'connectivity', 'mouse_sensor', 'keyboard_switches', 'response_frequency_hz', 'noise_cancellation', 'microphone_type'
-  ],
-  cable_specifications: [
-    'cable_type', 'length_m', 'connectors', 'version', 'shielded'
-  ],
-  laptop_specifications: [
-    'processor', 'ram_gb', 'storage', 'screen_inches', 'resolution', 'graphics_card', 'weight_kg', 'battery_wh', 'operating_system'
-  ],
-  phone_specifications: [
-    'screen_inches', 'resolution', 'processor', 'ram_gb', 'storage_gb', 'main_camera_mp', 'battery_mah', 'operating_system'
-  ],
-  other_specifications: [
-    'general_specifications'
-  ]
-};
-
-// Campos requeridos por tabla (respeta NOT NULL en SQL)
-const requiredFieldsMap = {
-  cpu_specifications: ['socket', 'cores', 'threads', 'base_frequency_ghz'],
-  gpu_specifications: ['vram_gb', 'length_mm'],
-  motherboard_specifications: ['socket', 'chipset', 'form_factor', 'ram_slots'],
-  psu_specifications: ['power_w'],
-  ram_specifications: ['capacity_gb', 'type', 'speed_mhz'],
-  storage_specifications: ['type', 'capacity_gb'],
-  cooler_specifications: ['cooler_type'],
-  cable_specifications: ['cable_type']
-};
-
-// Normaliza nombres para coincidencia robusta (minúsculas, sin acentos, espacios únicos)
-function normalizeName(name = '') {
-  return name
-    .toLowerCase()
-    .normalize('NFD')
-    .replace(/[\u0300-\u036f]/g, '')
-    .replace(/\s+/g, ' ')
-    .trim();
-}
-
-// Resuelve la tabla por nombre de categoría (incluye sinónimos en español)
-function resolveSpecTableByCategoryName(rawName = '') {
-  const n = normalizeName(rawName);
-
-  // Motherboard
-  if (/\b(mother ?board|placa ?base|placa ?madre|motherboards|placas ?bases|placas ?madres)\b/.test(n)) {
-    return 'motherboard_specifications';
-  }
-  // GPU / Tarjeta gráfica
-  if (/\b(gpu|tarjeta(s)? grafica(s)?|grafica|graficas|video)\b/.test(n)) {
-    return 'gpu_specifications';
-  }
-  // RAM
-  if (/\b(ram|memoria ram|memoria)\b/.test(n)) {
-    return 'ram_specifications';
-  }
-  // CPU
-  if (/\b(cpu|procesador|cpus|procesadores)\b/.test(n)) {
-    return 'cpu_specifications';
-  }
-  // Almacenamiento
-  if (/\b(storage|almacenamiento|disco|ssd|hdd)\b/.test(n)) {
-    return 'storage_specifications';
-  }
-  // Fuente de poder
-  if (/\b(psu|fuente de poder|fuente|power supply)\b/.test(n)) {
-    return 'psu_specifications';
-  }
-  // Refrigeración
-  if (/\b(cooler|disipador|refrigeracion|ventilador|heatsink|liquida)\b/.test(n)) {
-    return 'cooler_specifications';
-  }
-  // Gabinete
-  if (/\b(case|gabinete|torre|chasis)\b/.test(n)) {
-    return 'case_specifications';
-  }
-  // Monitor
-  if (/\b(monitor|pantalla|display)\b/.test(n)) {
-    return 'monitor_specifications';
-  }
-  // Portátil
-  if (/\b(laptop|portatil|notebook)\b/.test(n)) {
-    return 'laptop_specifications';
-  }
-  // Teléfono
-  if (/\b(phone|telefono|smartphone|movil|celular)\b/.test(n)) {
-    return 'phone_specifications';
-  }
-  // Periférico
-  if (/\b(peripheral|periferico|teclado|mouse|raton|audifonos|auriculares)\b/.test(n)) {
-    return 'peripheral_specifications';
-  }
-  // Cable
-  if (/\b(cable|cables)\b/.test(n)) {
-    return 'cable_specifications';
-  }
-  // Fallback
-  return 'other_specifications';
-}
 
 class ProductService {
   // Obtener todas las categorías disponibles
   static async getCategories() {
-    try {
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name, description')
-        .order('name');
-
-      if (error) {
-        console.error('Error obteniendo categorías:', error);
-        throw error;
-      }
-
-      return data;
-    } catch (error) {
-      console.error('Error en getCategories:', error);
-      throw error;
-    }
+    return CategoryService.getCategories();
   }
 
   // Crear un nuevo producto
-  // Obtener el user_id de public.users usando el email del usuario autenticado
-  static async getUserIdByEmail(email) {
-    try {
-      console.log('🔍 Buscando user_id para email:', email);
-      
-      if (!email) {
-        console.error('❌ Email es undefined o vacío');
-        throw new Error('Email no proporcionado');
-      }
-      
-      const { data, error } = await supabase
-        .from('users')
-        .select('id')
-        .eq('email', email)
-        .single();
-
-      if (error) {
-        console.error('❌ Error obteniendo user_id:', error);
-        if (error.code === 'PGRST116') {
-          throw new Error(`Usuario con email ${email} no encontrado en la base de datos`);
-        }
-        throw error;
-      }
-
-      if (!data || !data.id) {
-        console.error('❌ No se encontró user_id para el email:', email);
-        throw new Error(`No se encontró user_id para el email ${email}`);
-      }
-
-      console.log('✅ User_id encontrado:', data.id);
-      return data.id;
-    } catch (error) {
-      console.error('❌ Error en getUserIdByEmail:', error);
-      throw error;
-    }
-  }
+  // (delegado) obtener user_id por email
 
   // Obtener productos del usuario autenticado
   static async getUserProducts() {
@@ -224,7 +47,7 @@ class ProductService {
       console.log('✅ Usuario válido encontrado, procediendo a buscar user_id...');
 
       // Obtener el user_id de public.users usando el email
-      const userId = await this.getUserIdByEmail(user.email);
+      const userId = await UserService.getUserIdByEmail(user.email);
       
       console.log('🔍 Buscando productos para user_id:', userId);
 
@@ -270,7 +93,7 @@ class ProductService {
       }
 
       // Obtener el user_id de public.users usando el email
-      const userId = await this.getUserIdByEmail(user.email);
+      const userId = await UserService.getUserIdByEmail(user.email);
       
       console.log('📝 Datos del producto a insertar:', {
         name: productData.name,
@@ -323,121 +146,17 @@ class ProductService {
 
   // Subir imagen a Supabase Storage
   static async uploadProductImage(imageUri, productName) {
-    try {
-      // Generar un nombre único para la imagen
-      const timestamp = Date.now();
-      const fileName = `${productName.replace(/\s+/g, '_')}_${timestamp}.jpg`;
-      const filePath = `img/${fileName}`;  // Guardar en carpeta 'img'
-
-      // Leer el archivo como ArrayBuffer para React Native
-      const response = await fetch(imageUri);
-      const arrayBuffer = await response.arrayBuffer();
-
-      // Subir la imagen usando ArrayBuffer
-      const { data, error } = await supabase.storage
-        .from('image-producs')
-        .upload(filePath, arrayBuffer, {
-          contentType: 'image/jpeg',
-          upsert: false
-        });
-
-      if (error) {
-        console.error('Error subiendo imagen:', error);
-        
-        // Manejo específico para errores de RLS
-        if (error.message && error.message.includes('row-level security policy')) {
-          throw new Error('Error de permisos: Las políticas de seguridad de Supabase Storage impiden subir imágenes. Verifica que las políticas RLS estén configuradas correctamente para usuarios autenticados.');
-        }
-        
-        // Manejo específico para errores de bucket no encontrado
-        if (error.message && error.message.includes('Bucket not found')) {
-          throw new Error('Error: El bucket image-producs no existe en Supabase Storage. Verifica la configuración.');
-        }
-        
-        throw error;
-      }
-
-      // Obtener la URL pública de la imagen
-      const { data: publicUrlData } = supabase.storage
-        .from('image-producs')
-        .getPublicUrl(filePath);
-
-      return publicUrlData.publicUrl;
-    } catch (error) {
-      console.error('Error en uploadProductImage:', error);
-      throw error;
-    }
+    return ImageService.uploadProductImage(imageUri, productName);
   }
 
   // Subir múltiples imágenes de apoyo al bucket en carpeta id-imgs/<producto>
   static async uploadSupportImages(imageUris = [], productName = '') {
-    try {
-      if (!Array.isArray(imageUris) || imageUris.length === 0) return [];
-
-      const normalizedName = normalizeName(productName || 'producto');
-      const results = [];
-
-      for (let i = 0; i < imageUris.length; i++) {
-        const uri = imageUris[i];
-        const isRemoteUrl = typeof uri === 'string' && uri.startsWith('http');
-        if (isRemoteUrl) {
-          results.push(uri);
-          continue;
-        }
-
-        try {
-          const timestamp = Date.now();
-          const fileName = `${normalizedName}_${timestamp}_${i}.jpg`;
-          const filePath = `id-imgs/${normalizedName}/${fileName}`;
-
-          const response = await fetch(uri);
-          const arrayBuffer = await response.arrayBuffer();
-
-          const { error: uploadError } = await supabase.storage
-            .from('image-producs')
-            .upload(filePath, arrayBuffer, {
-              contentType: 'image/jpeg',
-              upsert: false
-            });
-
-          if (uploadError) {
-            console.error('Error subiendo imagen de apoyo:', uploadError);
-            throw uploadError;
-          }
-
-          const { data: publicUrlData } = supabase.storage
-            .from('image-producs')
-            .getPublicUrl(filePath);
-
-          results.push(publicUrlData.publicUrl);
-        } catch (innerErr) {
-          console.error('Error en una imagen de apoyo:', innerErr);
-          throw innerErr;
-        }
-      }
-
-      return results;
-    } catch (error) {
-      console.error('Error en uploadSupportImages:', error);
-      throw error;
-    }
+    return ImageService.uploadSupportImages(imageUris, productName);
   }
 
   // Helper: extraer ruta de storage desde URL pública
   static extractStoragePathFromPublicUrl(publicUrl) {
-    try {
-      if (!publicUrl || typeof publicUrl !== 'string') return null;
-      // Ejemplo: https://<proj>/storage/v1/object/public/image-producs/img/file.jpg
-      const marker = '/object/public/image-producs/';
-      const idx = publicUrl.indexOf(marker);
-      if (idx === -1) return null;
-      const filePath = publicUrl.substring(idx + marker.length);
-      console.log('🧩 Ruta de storage extraída:', filePath);
-      return filePath || null;
-    } catch (e) {
-      console.error('❌ Error extrayendo ruta de storage:', e);
-      return null;
-    }
+    return ImageService.extractStoragePathFromPublicUrl(publicUrl);
   }
 
   // Eliminar producto: borra imagen del bucket, especificaciones y fila en products
@@ -452,7 +171,7 @@ class ProductService {
         console.error('❌ Error de autenticación al eliminar:', authError);
         throw new Error('Usuario no autenticado');
       }
-      const userId = await this.getUserIdByEmail(user.email);
+      const userId = await UserService.getUserIdByEmail(user.email);
       console.log('👤 user_id autenticado:', userId);
 
       // Traer el producto para validar propietario y obtener main_image
@@ -476,19 +195,11 @@ class ProductService {
 
       // Borrar imagen principal del bucket si existe
       if (productRow.main_image) {
-        const filePath = this.extractStoragePathFromPublicUrl(productRow.main_image);
-        if (filePath) {
-          console.log('🗂️ Eliminando imagen del bucket image-producs:', filePath);
-          const { data: delImg, error: delImgErr } = await supabase.storage
-            .from('image-producs')
-            .remove([filePath]);
-          if (delImgErr) {
-            console.error('⚠️ Error eliminando imagen del bucket:', delImgErr);
-          } else {
-            console.log('✅ Imagen eliminada del bucket:', delImg);
-          }
+        const delRes = await ImageService.deleteImageByPublicUrl(productRow.main_image);
+        if (!delRes.deleted) {
+          console.log('ℹ️ No se pudo eliminar imagen del bucket o no se encontró ruta');
         } else {
-          console.log('ℹ️ No se pudo extraer ruta de imagen, se omite borrado de storage');
+          console.log('✅ Imagen eliminada del bucket:', delRes.data);
         }
       }
 
@@ -550,7 +261,7 @@ class ProductService {
         console.error('❌ Error de autenticación al actualizar:', authError);
         throw new Error('Usuario no autenticado');
       }
-      const userId = await this.getUserIdByEmail(user.email);
+      const userId = await UserService.getUserIdByEmail(user.email);
       console.log('👤 user_id autenticado:', userId);
 
       // Traer producto actual para validar propietario y conocer imagen previa
