@@ -17,6 +17,8 @@ import MyPCScreen from '../screens/pc-builder/MyPCScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import SellProductScreen from '../screens/profile/SellProductScreen';
 import MyProductsScreen from '../screens/profile/MyProductsScreen';
+import CartScreen from '../screens/cart/CartScreen';
+import OrdersScreen from '../screens/profile/OrdersScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -70,15 +72,18 @@ const TabNavigator = () => {
       <Tab.Screen 
         name="HomeTab" 
         component={HomeScreen} 
-        options={{
+        options={({ navigation }) => ({
           title: 'Inicio',
           headerTitle: 'PepePlace',
           headerRight: () => (
-            <TouchableOpacity style={{ marginRight: 15 }}>
+            <TouchableOpacity 
+              style={{ marginRight: 15 }}
+              onPress={() => navigation.navigate('Cart')}
+            >
               <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
             </TouchableOpacity>
           ),
-        }}
+        })}
       />
       <Tab.Screen 
         name="Favorites" 
@@ -152,14 +157,17 @@ const AppNavigator = () => {
         <Stack.Screen
           name="ProductDetail"
           component={ProductDetailScreen}
-          options={{
+          options={({ navigation }) => ({
             title: 'Detalle del Producto',
             headerRight: () => (
-              <TouchableOpacity style={{ marginRight: 15 }}>
-                <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
-              </TouchableOpacity>
-            ),
-          }}
+            <TouchableOpacity 
+              style={{ marginRight: 15 }}
+              onPress={() => navigation.navigate('Cart')}
+            >
+              <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
+            </TouchableOpacity>
+          ),
+          })}
         />
         <Stack.Screen
           name="MyProducts"
@@ -174,6 +182,18 @@ const AppNavigator = () => {
           options={{
             title: 'Vender Producto',
           }}
+        />
+        <Stack.Screen
+          name="Orders"
+          component={OrdersScreen}
+          options={{
+            title: 'Mis pedidos',
+          }}
+        />
+        <Stack.Screen
+          name="Cart"
+          component={CartScreen}
+          options={{ headerShown: false }}
         />
       </Stack.Navigator>
       </NavigationContainer>
