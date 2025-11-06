@@ -21,7 +21,7 @@ const formatDate = (iso) => {
   }
 };
 
-const OrdersScreen = () => {
+const OrdersScreen = ({ navigation }) => {
   const [orders, setOrders] = useState([]);
   const [loading, setLoading] = useState(true);
 
@@ -99,10 +99,11 @@ const OrdersScreen = () => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mis Pedidos</Text>
-        <View style={styles.countBadge}>
-          <Text style={styles.countText}>{orders.length}</Text>
-        </View>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <FontAwesome5 name="arrow-left" size={20} color="#ffffff" />
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Mis pedidos</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
@@ -141,25 +142,14 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: '#3a3a3a',
   },
-  title: {
+  backButton: {
+    width: 40,
+    alignItems: 'flex-start',
+  },
+  headerTitle: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#ffffff',
-  },
-  countBadge: {
-    minWidth: 28,
-    height: 28,
-    paddingHorizontal: 8,
-    borderRadius: 14,
-    backgroundColor: '#1f1f1f',
-    borderWidth: 1,
-    borderColor: '#3a3a3a',
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  countText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
   },
   listContent: {
     padding: 16,
