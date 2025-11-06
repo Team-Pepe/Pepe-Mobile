@@ -172,9 +172,7 @@ const AppNavigator = () => {
         <Stack.Screen
           name="MyProducts"
           component={MyProductsScreen}
-          options={{
-            title: 'Mis Productos',
-          }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="SellProduct"
@@ -186,9 +184,7 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Orders"
           component={OrdersScreen}
-          options={{
-            title: 'Mis pedidos',
-          }}
+          options={{ headerShown: false }}
         />
         <Stack.Screen
           name="Cart"
