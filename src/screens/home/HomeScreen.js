@@ -5,6 +5,7 @@ import { AuthService } from '../../services/auth.service';
 import RecommendationService from '../../services/recommendation.service';
 import ProductService from '../../services/product.service';
 import FilterService from '../../services/filter.service';
+import { formatPriceWithSymbol } from '../../utils/formatPrice';
 
 const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -30,7 +31,7 @@ const HomeScreen = ({ navigation }) => {
       try {
         const [recs, all] = await Promise.all([
           RecommendationService.getRecommendedForUser(currentUser.id),
-          RecommendationService.listAll({ limit: 100 }),
+          RecommendationService.listAll({ limit: 20 }),
         ]);
         setRecommended(recs || []);
         setAllProducts(all || []);
@@ -132,9 +133,9 @@ const HomeScreen = ({ navigation }) => {
       try {
         let res;
         if (selectedCategoryId) {
-          res = await FilterService.searchByCategory(selectedCategoryId, q, { limit: 100 });
+          res = await FilterService.searchByCategory(selectedCategoryId, q, { limit: 20 });
         } else {
-          res = await RecommendationService.searchAll(q, { limit: 100 });
+          res = await RecommendationService.searchAll(q, { limit: 20 });
         }
         setSearchResults(res || []);
       } catch (e) {
@@ -152,10 +153,10 @@ const HomeScreen = ({ navigation }) => {
       setCategoryLoading(true);
       try {
         if (selectedCategoryId) {
-          const res = await FilterService.listByCategory(selectedCategoryId, { limit: 100 });
+          const res = await FilterService.listByCategory(selectedCategoryId, { limit: 20 });
           setAllProducts(res || []);
         } else {
-          const all = await RecommendationService.listAll({ limit: 100 });
+          const all = await RecommendationService.listAll({ limit: 20 });
           setAllProducts(all || []);
         }
       } catch (e) {
@@ -220,7 +221,7 @@ const HomeScreen = ({ navigation }) => {
                 <Image source={require('../../../assets/pepe.jpg')} style={styles.productImage} />
               )}
               <Text style={styles.productName}>{p.name}</Text>
-              <Text style={styles.productPrice}>${p.price}</Text>
+              <Text style={styles.productPrice}>{formatPriceWithSymbol(p.price)}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
@@ -254,7 +255,7 @@ const HomeScreen = ({ navigation }) => {
                   <Text style={styles.allName}>{p.name}</Text>
                   <Text style={styles.allMeta}>{p?.categories?.name || 'Sin categoría'}</Text>
                 </View>
-                <Text style={styles.allPrice}>${p.price}</Text>
+                <Text style={styles.allPrice}>{formatPriceWithSymbol(p.price)}</Text>
               </TouchableOpacity>
             ))}
           </View>

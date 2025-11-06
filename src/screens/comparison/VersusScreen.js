@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView, Image 
 import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { Picker } from '@react-native-picker/picker';
 import ProductService from '../../services/product.service';
+import { formatPriceWithSymbol } from '../../utils/formatPrice';
 
 const VersusScreen = () => {
   const [categories, setCategories] = useState([]);
@@ -342,7 +343,7 @@ const VersusScreen = () => {
         <View style={styles.resultTextBlock}>
           <Text style={styles.resultName}>{item.name}</Text>
           <Text style={styles.resultMeta}>
-            #{item.id} • {item?.categories?.name || 'Sin categoría'} • ${item.price}
+            #{item.id} • {item?.categories?.name || 'Sin categoría'} • {formatPriceWithSymbol(item.price)}
           </Text>
         </View>
       </View>

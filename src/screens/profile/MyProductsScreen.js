@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndi
 import { FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProductService from '../../services/product.service';
+import { formatPriceWithSymbol } from '../../utils/formatPrice';
 
 const MyProductsScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
@@ -96,7 +97,7 @@ const MyProductsScreen = ({ navigation }) => {
       />
       <View style={styles.productInfo}>
         <Text style={styles.productTitle}>{item.title}</Text>
-        <Text style={styles.productPrice}>${item.price}</Text>
+        <Text style={styles.productPrice}>{formatPriceWithSymbol(item.price)}</Text>
         <View style={styles.statusContainer}>
           <View style={[styles.statusDot, { backgroundColor: item.status === 'active' ? '#4CD964' : '#FFCC00' }]} />
           <Text style={styles.statusText}>

@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import ProductService from '../../services/product.service';
+import { formatPriceWithSymbol } from '../../utils/formatPrice';
 
 const SLOT_NAMES = {
   cpu: 'CPU',
@@ -187,7 +188,7 @@ const MyPCScreen = ({ navigation }) => {
             <View key={item.id} style={styles.resultItem}>
               <TouchableOpacity style={{ flex: 1 }} onPress={() => selectProduct(slot, item)}>
                 <Text style={styles.resultName}>{item.name}</Text>
-                <Text style={styles.resultMeta}>#{item.id} • {(item?.categories?.name) || 'Sin categoría'} • ${item.price}</Text>
+                <Text style={styles.resultMeta}>#{item.id} • {(item?.categories?.name) || 'Sin categoría'} • {formatPriceWithSymbol(item.price)}</Text>
               </TouchableOpacity>
               <TouchableOpacity style={styles.detailBtn} onPress={() => navigation.navigate('ProductDetail', { product: item })}>
                 <Text style={styles.detailBtnText}>Ver</Text>

@@ -13,6 +13,7 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import ProductService from '../../services/product.service';
+import { formatPriceWithSymbol } from '../../utils/formatPrice';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const [selectedTab, setSelectedTab] = useState('specs');
@@ -415,7 +416,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
       
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{product.name || product.title || product.productName || 'Producto'}</Text>
-        <Text style={styles.price}>${product.price}</Text>
+        <Text style={styles.price}>{formatPriceWithSymbol(product.price)}</Text>
         <Text style={styles.stock}>Stock disponible: {product.stock} unidades</Text>
         
         <TouchableOpacity style={styles.buyButton}>
