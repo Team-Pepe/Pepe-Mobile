@@ -1,10 +1,20 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TextInput } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
+import RecommendationService from '../../services/recommendation.service';
+import ProductService from '../../services/product.service';
+import FilterService from '../../services/filter.service';
 
 const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
+  const [recommended, setRecommended] = useState([]);
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [allProducts, setAllProducts] = useState([]);
+  const [selectedCategoryId, setSelectedCategoryId] = useState(null);
+  const [categoryLoading, setCategoryLoading] = useState(false);
 
   useEffect(() => {
     checkUser();
@@ -16,6 +26,17 @@ const HomeScreen = ({ navigation }) => {
       navigation.replace('Login');
     } else {
       setUser(currentUser);
+      // Cargar recomendaciones iniciales y catálogo
+      try {
+        const [recs, all] = await Promise.all([
+          RecommendationService.getRecommendedForUser(currentUser.id),
+          RecommendationService.listAll({ limit: 100 }),
+        ]);
+        setRecommended(recs || []);
+        setAllProducts(all || []);
+      } catch (e) {
+        console.error('Error cargando recomendaciones/catálogo:', e);
+      }
     }
   };
 
@@ -27,14 +48,29 @@ const HomeScreen = ({ navigation }) => {
       navigation.replace('Login');
     }
   };
+  // Mapeo de categorías alineado con tu tabla (id -> nombre)
   const categories = [
-    { id: 1, name: 'Procesadores', icon: 'microchip' },
-    { id: 2, name: 'Tarjetas Gráficas', icon: 'tv' },
-    { id: 3, name: 'Memoria RAM', icon: 'memory' },
-    { id: 4, name: 'Almacenamiento', icon: 'hdd' },
-    { id: 5, name: 'Placas Base', icon: 'server' },
-    { id: 6, name: 'Periféricos', icon: 'keyboard' },
+    { id: 1, key: 'cpu', name: 'CPU', icon: 'microchip' },
+    { id: 4, key: 'gpu', name: 'GPU', icon: 'tv' },
+    { id: 3, key: 'motherboard', name: 'Motherboard', icon: 'server' },
+    { id: 2, key: 'ram', name: 'RAM', icon: 'memory' },
+    { id: 5, key: 'storage', name: 'Almacenamiento', icon: 'hdd' },
+    { id: 6, key: 'psu', name: 'PSU', icon: 'plug' },
+    { id: 7, key: 'cooler', name: 'Cooler', icon: 'snowflake' },
+    { id: 8, key: 'case', name: 'Gabinete', icon: 'box' },
+    { id: 9, key: 'monitor', name: 'Monitor', icon: 'desktop' },
+    { id: 10, key: 'peripheral', name: 'Periféricos', icon: 'keyboard' },
+    { id: 11, key: 'cable', name: 'Cable', icon: 'link' },
+    { id: 12, key: 'laptop', name: 'Laptop', icon: 'laptop' },
+    { id: 13, key: 'phone', name: 'Teléfono', icon: 'mobile-alt' },
+    { id: 14, key: 'other', name: 'Otros', icon: 'boxes' },
   ];
+
+  const onSelectCategory = async (id) => {
+    // Toggle: si se vuelve a tocar la misma categoría, se limpia el filtro
+    const next = selectedCategoryId === id ? null : id;
+    setSelectedCategoryId(next);
+  };
 
   const featuredProducts = [
     {
@@ -84,20 +120,83 @@ const HomeScreen = ({ navigation }) => {
     },
   ];
 
+  // Búsqueda en tiempo real (global o por categoría si hay filtro)
+  useEffect(() => {
+    const loadSearch = async () => {
+      const q = searchQuery.trim();
+      if (q.length < 2) {
+        setSearchResults([]);
+        return;
+      }
+      setSearchLoading(true);
+      try {
+        let res;
+        if (selectedCategoryId) {
+          res = await FilterService.searchByCategory(selectedCategoryId, q, { limit: 100 });
+        } else {
+          res = await RecommendationService.searchAll(q, { limit: 100 });
+        }
+        setSearchResults(res || []);
+      } catch (e) {
+        console.error('Error en búsqueda global:', e);
+      } finally {
+        setSearchLoading(false);
+      }
+    };
+    loadSearch();
+  }, [searchQuery, selectedCategoryId]);
+
+  // Carga del catálogo según la categoría seleccionada (o todo si no hay filtro)
+  useEffect(() => {
+    const loadCatalog = async () => {
+      setCategoryLoading(true);
+      try {
+        if (selectedCategoryId) {
+          const res = await FilterService.listByCategory(selectedCategoryId, { limit: 100 });
+          setAllProducts(res || []);
+        } else {
+          const all = await RecommendationService.listAll({ limit: 100 });
+          setAllProducts(all || []);
+        }
+      } catch (e) {
+        console.error('Error cargando catálogo por categoría:', e);
+      } finally {
+        setCategoryLoading(false);
+      }
+    };
+    // Solo recargar catálogo cuando no hay una búsqueda activa
+    if (searchQuery.trim().length < 2) {
+      loadCatalog();
+    }
+  }, [selectedCategoryId]);
+
   return (
     <ScrollView style={styles.container}>
       {/* Barra de búsqueda */}
-      <TouchableOpacity style={styles.searchBar}>
+      <View style={styles.searchBar}>
         <FontAwesome5 name="search" size={16} color="#666" />
-        <Text style={styles.searchText}>Buscar productos...</Text>
-      </TouchableOpacity>
+        <TextInput
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          placeholder="Buscar componentes de PC"
+          placeholderTextColor="#888"
+          style={styles.searchInput}
+        />
+      </View>
 
       {/* Categorías */}
       <View style={styles.categoriesContainer}>
         <Text style={styles.sectionTitle}>Categorías</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.categoriesList}>
           {categories.map((category) => (
-            <TouchableOpacity key={category.id} style={styles.categoryItem}>
+            <TouchableOpacity
+              key={category.id}
+              style={[
+                styles.categoryItem,
+                selectedCategoryId === category.id && { borderColor: '#007AFF', borderWidth: 1 },
+              ]}
+              onPress={() => onSelectCategory(category.id)}
+            >
               <FontAwesome5 name={category.icon} size={24} color="#007AFF" />
               <Text style={styles.categoryText}>{category.name}</Text>
             </TouchableOpacity>
@@ -105,53 +204,61 @@ const HomeScreen = ({ navigation }) => {
         </ScrollView>
       </View>
 
-      {/* Ofertas destacadas */}
+      {/* Recomendados para ti (dinámico) */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Ofertas destacadas</Text>
+        <Text style={styles.sectionTitle}>Recomendados para ti</Text>
         <ScrollView horizontal showsHorizontalScrollIndicator={false}>
-          {featuredProducts.map((product) => (
-            <TouchableOpacity 
-              key={product.id} 
+          {recommended.map((p) => (
+            <TouchableOpacity
+              key={p.id}
               style={styles.productCard}
-              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
+              onPress={() => navigation.navigate('ProductDetail', { product: p })}
             >
-              <View style={styles.discountBadge}>
-                <Text style={styles.discountText}>{product.discount}</Text>
-              </View>
-              <Image 
-                source={product.image} // Quitar el {uri: }
-                style={styles.productImage} 
-              />
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>${product.price}</Text>
+              {p.main_image ? (
+                <Image source={{ uri: p.main_image }} style={styles.productImage} />
+              ) : (
+                <Image source={require('../../../assets/pepe.jpg')} style={styles.productImage} />
+              )}
+              <Text style={styles.productName}>{p.name}</Text>
+              <Text style={styles.productPrice}>${p.price}</Text>
             </TouchableOpacity>
           ))}
         </ScrollView>
       </View>
 
-      {/* Productos recomendados */}
+      {/* Todos los componentes (búsqueda global / catálogo) */}
       <View style={styles.section}>
-        <Text style={styles.sectionTitle}>Recomendados para ti</Text>
-        <View style={styles.recommendedGrid}>
-          {recommendedProducts.map((product) => (
-            <TouchableOpacity 
-              key={product.id} 
-              style={styles.recommendedCard}
-              onPress={() => navigation.navigate('ProductDetail', { productId: product.id })}
-            >
-              <Image 
-                source={product.image} // Quitar el {uri: }
-                style={styles.productImage}
-              />
-              <Text style={styles.productName}>{product.name}</Text>
-              <Text style={styles.productPrice}>${product.price}</Text>
-              <View style={styles.ratingContainer}>
-                <FontAwesome5 name="star" solid size={12} color="#FFD700" />
-                <Text style={styles.ratingText}>{product.rating}</Text>
-              </View>
-            </TouchableOpacity>
-          ))}
-        </View>
+        <Text style={styles.sectionTitle}>
+          {searchQuery.trim().length >= 2
+            ? 'Resultados de búsqueda'
+            : selectedCategoryId
+            ? `Componentes: ${categories.find(c => c.id === selectedCategoryId)?.name || ''}`
+            : 'Todos los componentes'}
+        </Text>
+        {searchLoading || categoryLoading ? (
+          <Text style={styles.loadingText}>Buscando…</Text>
+        ) : (
+          <View style={styles.allList}>
+            {(searchQuery.trim().length >= 2 ? searchResults : allProducts).map((p) => (
+              <TouchableOpacity
+                key={p.id}
+                style={styles.allItem}
+                onPress={() => navigation.navigate('ProductDetail', { product: p })}
+              >
+                {p.main_image ? (
+                  <Image source={{ uri: p.main_image }} style={styles.allImage} />
+                ) : (
+                  <Image source={require('../../../assets/pepe.jpg')} style={styles.allImage} />
+                )}
+                <View style={{ flex: 1 }}>
+                  <Text style={styles.allName}>{p.name}</Text>
+                  <Text style={styles.allMeta}>{p?.categories?.name || 'Sin categoría'}</Text>
+                </View>
+                <Text style={styles.allPrice}>${p.price}</Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        )}
       </View>
     </ScrollView>
   );
@@ -174,6 +281,11 @@ const styles = StyleSheet.create({
   searchText: {
     marginLeft: 10,
     color: '#bdbdbd',
+  },
+  searchInput: {
+    marginLeft: 10,
+    color: '#ffffff',
+    flex: 1,
   },
   categoriesContainer: {
     marginVertical: 10,
@@ -269,6 +381,41 @@ const styles = StyleSheet.create({
     marginLeft: 4,
     fontSize: 12,
     color: '#bdbdbd',
+  },
+  loadingText: {
+    color: '#bdbdbd',
+    marginHorizontal: 15,
+  },
+  allList: {
+    paddingHorizontal: 15,
+    gap: 10,
+  },
+  allItem: {
+    backgroundColor: '#1f1f1f',
+    borderRadius: 8,
+    padding: 10,
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 10,
+  },
+  allImage: {
+    width: 68,
+    height: 68,
+    borderRadius: 8,
+    backgroundColor: '#000000',
+  },
+  allName: {
+    color: '#ffffff',
+    fontWeight: '600',
+  },
+  allMeta: {
+    color: '#bdbdbd',
+    fontSize: 12,
+    marginTop: 2,
+  },
+  allPrice: {
+    color: '#007AFF',
+    fontWeight: '700',
   },
 });
 

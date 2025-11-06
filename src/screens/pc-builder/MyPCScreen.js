@@ -13,7 +13,7 @@ const SLOT_NAMES = {
   cooler: 'Cooling',
 };
 
-const MyPCScreen = () => {
+const MyPCScreen = ({ navigation }) => {
   const [categories, setCategories] = useState([]);
   const [categoryIds, setCategoryIds] = useState({});
 
@@ -184,10 +184,15 @@ const MyPCScreen = () => {
       ) : (
         <View style={styles.resultsList}>
           {results[slot].map((item) => (
-            <TouchableOpacity key={item.id} style={styles.resultItem} onPress={() => selectProduct(slot, item)}>
-              <Text style={styles.resultName}>{item.name}</Text>
-              <Text style={styles.resultMeta}>#{item.id} • {(item?.categories?.name) || 'Sin categoría'} • ${item.price}</Text>
-            </TouchableOpacity>
+            <View key={item.id} style={styles.resultItem}>
+              <TouchableOpacity style={{ flex: 1 }} onPress={() => selectProduct(slot, item)}>
+                <Text style={styles.resultName}>{item.name}</Text>
+                <Text style={styles.resultMeta}>#{item.id} • {(item?.categories?.name) || 'Sin categoría'} • ${item.price}</Text>
+              </TouchableOpacity>
+              <TouchableOpacity style={styles.detailBtn} onPress={() => navigation.navigate('ProductDetail', { product: item })}>
+                <Text style={styles.detailBtnText}>Ver</Text>
+              </TouchableOpacity>
+            </View>
           ))}
         </View>
       )}
@@ -196,6 +201,11 @@ const MyPCScreen = () => {
         <View style={styles.selectedBox}>
           <Text style={styles.selectedTitle}>{selected[slot].name}</Text>
           <Text style={styles.selectedMeta}>{selected[slot]?.categories?.name || 'Sin categoría'}</Text>
+          <View style={{ marginTop: 8 }}>
+            <TouchableOpacity style={styles.detailBtn} onPress={() => navigation.navigate('ProductDetail', { product: selected[slot] })}>
+              <Text style={styles.detailBtnText}>Ver detalle</Text>
+            </TouchableOpacity>
+          </View>
         </View>
       )}
     </View>
@@ -289,6 +299,19 @@ const styles = StyleSheet.create({
     color: '#bdbdbd',
     fontSize: 12,
     marginTop: 2,
+  },
+  detailBtn: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 8,
+    marginLeft: 8,
+    alignSelf: 'center',
+  },
+  detailBtnText: {
+    color: '#ffffff',
+    fontWeight: '700',
+    fontSize: 12,
   },
   selectedBox: {
     marginTop: 8,
