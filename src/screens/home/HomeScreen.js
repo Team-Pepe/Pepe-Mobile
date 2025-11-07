@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TextInput } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TextInput, ActivityIndicator } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
 import RecommendationService from '../../services/recommendation.service';
 import ProductService from '../../services/product.service';
 import FilterService from '../../services/filter.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
+import FavoritesService from '../../services/favorites.service';
 
 const HomeScreen = ({ navigation }) => {
   const [user, setUser] = useState(null);
@@ -16,6 +17,8 @@ const HomeScreen = ({ navigation }) => {
   const [allProducts, setAllProducts] = useState([]);
   const [selectedCategoryId, setSelectedCategoryId] = useState(null);
   const [categoryLoading, setCategoryLoading] = useState(false);
+  const [favoriteIds, setFavoriteIds] = useState([]);
+  const [favLoadingIds, setFavLoadingIds] = useState([]);
 
   useEffect(() => {
     checkUser();
@@ -38,6 +41,41 @@ const HomeScreen = ({ navigation }) => {
       } catch (e) {
         console.error('Error cargando recomendaciones/catálogo:', e);
       }
+    }
+  };
+
+  // Cargar IDs de favoritos y mantenerlos actualizados al enfocarse la pantalla
+  const loadFavoriteIds = async () => {
+    try {
+      const ids = await FavoritesService.listFavoriteProductIds();
+      setFavoriteIds(ids || []);
+    } catch (e) {
+      setFavoriteIds([]);
+    }
+  };
+
+  useEffect(() => {
+    const unsub = navigation?.addListener?.('focus', loadFavoriteIds);
+    loadFavoriteIds();
+    return () => unsub && unsub();
+  }, [navigation]);
+
+  const isFavorite = (id) => favoriteIds.includes(id);
+  const toggleFavorite = async (id) => {
+    if (!id) return;
+    setFavLoadingIds((prev) => [...prev, id]);
+    try {
+      if (isFavorite(id)) {
+        const res = await FavoritesService.removeFavorite(id);
+        if (res?.removed) setFavoriteIds((prev) => prev.filter((pid) => pid !== id));
+      } else {
+        const res = await FavoritesService.addFavorite(id);
+        if (res?.added || res?.already) setFavoriteIds((prev) => (prev.includes(id) ? prev : [...prev, id]));
+      }
+    } catch (e) {
+      // ya loguea el servicio
+    } finally {
+      setFavLoadingIds((prev) => prev.filter((pid) => pid !== id));
     }
   };
 
@@ -215,6 +253,17 @@ const HomeScreen = ({ navigation }) => {
               style={styles.productCard}
               onPress={() => navigation.navigate('ProductDetail', { product: p })}
             >
+              <TouchableOpacity
+                style={styles.cardFavButton}
+                onPress={(e) => { e.stopPropagation?.(); toggleFavorite(p.id); }}
+                accessibilityLabel={isFavorite(p.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+              >
+                {favLoadingIds.includes(p.id) ? (
+                  <ActivityIndicator color="#fff" />
+                ) : (
+                  <FontAwesome5 name="heart" solid={isFavorite(p.id)} size={16} color={isFavorite(p.id) ? '#FF3B30' : '#fff'} />
+                )}
+              </TouchableOpacity>
               {p.main_image ? (
                 <Image source={{ uri: p.main_image }} style={styles.productImage} />
               ) : (
@@ -255,7 +304,20 @@ const HomeScreen = ({ navigation }) => {
                   <Text style={styles.allName}>{p.name}</Text>
                   <Text style={styles.allMeta}>{p?.categories?.name || 'Sin categoría'}</Text>
                 </View>
-                <Text style={styles.allPrice}>{formatPriceWithSymbol(p.price)}</Text>
+                <View style={styles.rightActions}>
+                  <Text style={styles.allPrice}>{formatPriceWithSymbol(p.price)}</Text>
+                  <TouchableOpacity
+                    style={styles.favButtonSmall}
+                    onPress={(e) => { e.stopPropagation?.(); toggleFavorite(p.id); }}
+                    accessibilityLabel={isFavorite(p.id) ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+                  >
+                    {favLoadingIds.includes(p.id) ? (
+                      <ActivityIndicator color="#fff" />
+                    ) : (
+                      <FontAwesome5 name="heart" solid={isFavorite(p.id)} size={16} color={isFavorite(p.id) ? '#FF3B30' : '#fff'} />
+                    )}
+                  </TouchableOpacity>
+                </View>
               </TouchableOpacity>
             ))}
           </View>
@@ -326,6 +388,18 @@ const styles = StyleSheet.create({
     marginLeft: 15,
     width: 150,
     elevation: 2,
+  },
+  cardFavButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: 'center',
+    justifyContent: 'center',
+    zIndex: 2,
   },
   discountBadge: {
     position: 'absolute',
@@ -417,6 +491,18 @@ const styles = StyleSheet.create({
   allPrice: {
     color: '#007AFF',
     fontWeight: '700',
+  },
+  rightActions: {
+    alignItems: 'center',
+    gap: 6,
+  },
+  favButtonSmall: {
+    backgroundColor: '#3a3a3a',
+    width: 32,
+    height: 32,
+    borderRadius: 16,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
 });
 
