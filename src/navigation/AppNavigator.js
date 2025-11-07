@@ -17,8 +17,9 @@ import MyPCScreen from '../screens/pc-builder/MyPCScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
 import SellProductScreen from '../screens/profile/SellProductScreen';
 import MyProductsScreen from '../screens/profile/MyProductsScreen';
-import CartScreen from '../screens/cart/CartScreen';
+import CommunitiesScreen from '../screens/communities/CommunitiesScreen';
 import OrdersScreen from '../screens/profile/OrdersScreen';
+import UserPickerScreen from '../screens/communities/UserPickerScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -78,9 +79,9 @@ const TabNavigator = () => {
           headerRight: () => (
             <TouchableOpacity 
               style={{ marginRight: 15 }}
-              onPress={() => navigation.navigate('Cart')}
+              onPress={() => navigation.navigate('Communities')}
             >
-              <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
+              <FontAwesome5 name="comments" size={20} color="#007AFF" />
             </TouchableOpacity>
           ),
         })}
@@ -159,12 +160,12 @@ const AppNavigator = () => {
           component={ProductDetailScreen}
           options={({ navigation }) => ({
             title: 'Detalle del Producto',
-            headerRight: () => (
+          headerRight: () => (
             <TouchableOpacity 
               style={{ marginRight: 15 }}
-              onPress={() => navigation.navigate('Cart')}
+              onPress={() => navigation.navigate('Communities')}
             >
-              <FontAwesome5 name="shopping-cart" size={20} color="#007AFF" />
+              <FontAwesome5 name="comments" size={20} color="#007AFF" />
             </TouchableOpacity>
           ),
           })}
@@ -187,8 +188,13 @@ const AppNavigator = () => {
           options={{ headerShown: false }}
         />
         <Stack.Screen
-          name="Cart"
-          component={CartScreen}
+          name="UserPicker"
+          component={UserPickerScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Communities"
+          component={CommunitiesScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
