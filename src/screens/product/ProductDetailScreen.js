@@ -13,6 +13,8 @@ import {
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import ProductService from '../../services/product.service';
+import { formatPriceWithSymbol } from '../../utils/formatPrice';
+import FavoritesService from '../../services/favorites.service';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const [selectedTab, setSelectedTab] = useState('specs');
@@ -22,6 +24,8 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [reviews, setReviews] = useState([]);
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
+  const [isFavorite, setIsFavorite] = useState(false);
+  const [favLoading, setFavLoading] = useState(false);
 
   // Obtener el producto desde los parámetros de navegación o usar datos de demo
   const productFromRoute = route.params?.product;
@@ -62,6 +66,41 @@ const ProductDetailScreen = ({ route, navigation }) => {
     const safeReviews = Array.isArray(product?.reviews) ? product.reviews : [];
     setReviews(safeReviews);
   }, [productFromRoute]);
+
+  // Estado inicial de favorito
+  useEffect(() => {
+    const checkFavorite = async () => {
+      try {
+        if (productFromRoute?.id) {
+          const fav = await FavoritesService.isFavorite(productFromRoute.id);
+          setIsFavorite(!!fav);
+        } else {
+          setIsFavorite(false);
+        }
+      } catch (e) {
+        setIsFavorite(false);
+      }
+    };
+    checkFavorite();
+  }, [productFromRoute?.id]);
+
+  const toggleFavorite = async () => {
+    if (!productFromRoute?.id || favLoading) return;
+    try {
+      setFavLoading(true);
+      if (isFavorite) {
+        const res = await FavoritesService.removeFavorite(productFromRoute.id);
+        if (res?.removed) setIsFavorite(false);
+      } else {
+        const res = await FavoritesService.addFavorite(productFromRoute.id);
+        if (res?.added || res?.already) setIsFavorite(true);
+      }
+    } catch (e) {
+      // noop; ya se registró en el servicio
+    } finally {
+      setFavLoading(false);
+    }
+  };
 
   // Preparar las imágenes para mostrar (soporta URL string y require local)
   const mainImageSource =
@@ -148,7 +187,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
   };
 
   // Formatear valores de especificaciones para evitar renderizar objetos directamente
-  const formatSpecValue = (value) => {
+  const formatSpecValue = (value, key) => {
     if (value === null || value === undefined) return '-';
     if (Array.isArray(value)) return value.join(', ');
     if (typeof value === 'object') {
@@ -157,6 +196,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
         const parts = Object.entries(value)
           .filter(([k, v]) => v !== null && v !== undefined && v !== '')
           .map(([k, v]) => `${k}: ${v}`);
+        
+        // Si es el campo 'connectors', mostrar como lista vertical
+        if (key === 'connectors') {
+          return parts.length ? parts.join('\n') : JSON.stringify(value);
+        }
+        
         return parts.length ? parts.join(' | ') : JSON.stringify(value);
       } catch (e) {
         return JSON.stringify(value);
@@ -178,7 +223,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
         Object.entries(productSpecifications).map(([key, value]) => (
           <View key={key} style={styles.specRow}>
             <Text style={styles.specKey}>{key}</Text>
-            <Text style={styles.specValue}>{formatSpecValue(value)}</Text>
+            <Text style={styles.specValue}>{formatSpecValue(value, key)}</Text>
           </View>
         ))
       ) : (
@@ -275,6 +320,12 @@ const ProductDetailScreen = ({ route, navigation }) => {
               const parts = Object.entries(value)
                 .filter(([k, v]) => v !== null && v !== undefined && v !== '')
                 .map(([k, v]) => `${k}: ${v}`);
+              
+              // Si es el campo 'connectors', mostrar como lista vertical
+              if (key === 'connectors') {
+                return parts.length ? parts.join('\n') : JSON.stringify(value);
+              }
+              
               return parts.length ? parts.join(' | ') : JSON.stringify(value);
             } catch (e) { return JSON.stringify(value); }
           }
@@ -381,6 +432,25 @@ const ProductDetailScreen = ({ route, navigation }) => {
           getItemLayout={(_, index) => ({ length: screenWidth, offset: screenWidth * index, index })}
         />
 
+        {/* Botón de favorito en esquina superior derecha */}
+        <TouchableOpacity
+          style={styles.favoriteButton}
+          onPress={toggleFavorite}
+          disabled={favLoading || !productFromRoute?.id}
+          accessibilityLabel={isFavorite ? 'Quitar de favoritos' : 'Agregar a favoritos'}
+        >
+          {favLoading ? (
+            <ActivityIndicator color="#fff" />
+          ) : (
+            <FontAwesome5
+              name="heart"
+              solid={isFavorite}
+              size={20}
+              color={isFavorite ? '#FF3B30' : '#fff'}
+            />
+          )}
+        </TouchableOpacity>
+
         {allImages.length > 1 && (
           <>
             <TouchableOpacity style={[styles.navButton, styles.navButtonLeft]} onPress={() => goToImage(currentImageIndex - 1)}>
@@ -403,7 +473,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
       
       <View style={styles.infoContainer}>
         <Text style={styles.name}>{product.name || product.title || product.productName || 'Producto'}</Text>
-        <Text style={styles.price}>${product.price}</Text>
+        <Text style={styles.price}>{formatPriceWithSymbol(product.price)}</Text>
         <Text style={styles.stock}>Stock disponible: {product.stock} unidades</Text>
         
         <TouchableOpacity style={styles.buyButton}>
@@ -485,6 +555,17 @@ const styles = StyleSheet.create({
     flexDirection: 'row',
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  favoriteButton: {
+    position: 'absolute',
+    top: 10,
+    right: 10,
+    backgroundColor: 'rgba(0,0,0,0.4)',
+    width: 36,
+    height: 36,
+    borderRadius: 18,
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   dot: {
     width: 8,
@@ -583,6 +664,8 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: '500',
     color: '#ffffff',
+    flexShrink: 1,
+    textAlign: 'right',
   },
   reviewsContainer: {
     backgroundColor: '#1f1f1f',

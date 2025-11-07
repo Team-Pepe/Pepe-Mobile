@@ -12,6 +12,7 @@ const SellProductScreen = ({ navigation, route }) => {
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [price, setPrice] = useState('');
+  const [formattedPrice, setFormattedPrice] = useState('');
   const [categoryId, setCategoryId] = useState('');
   const [stock, setStock] = useState('');
   const [selectedImage, setSelectedImage] = useState(null);
@@ -67,7 +68,18 @@ const SellProductScreen = ({ navigation, route }) => {
       console.log('✏️ Modo edición - producto:', product);
       setName(product.title || product.name || '');
       setDescription(product.description || '');
-      setPrice(product.price !== undefined ? String(product.price) : '');
+      const productPrice = product.price !== undefined ? String(product.price) : '';
+      setPrice(productPrice);
+      // Formatear el precio inicial si existe
+      if (productPrice && !isNaN(parseInt(productPrice, 10))) {
+        const formatted = new Intl.NumberFormat('es-CO', {
+          minimumFractionDigits: 0,
+          maximumFractionDigits: 0,
+        }).format(parseInt(productPrice, 10));
+        setFormattedPrice(formatted);
+      } else {
+        setFormattedPrice('');
+      }
       setCategoryId(product.category_id ? String(product.category_id) : '');
       setStock(product.stock !== undefined ? String(product.stock) : '');
       if (product.main_image) {
@@ -167,6 +179,38 @@ const SellProductScreen = ({ navigation, route }) => {
 
   const handleSpecificationsChange = (newSpecifications) => {
     setSpecifications(newSpecifications);
+  };
+
+  // Función para formatear el precio mientras se escribe
+  const handlePriceChange = (text) => {
+    // Eliminar todo excepto números
+    const numericValue = text.replace(/[^0-9]/g, '');
+    
+    // Si no hay valor, limpiar ambos estados
+    if (!numericValue) {
+      setPrice('');
+      setFormattedPrice('');
+      return;
+    }
+    
+    // Convertir a número y validar
+    const number = parseInt(numericValue, 10);
+    if (isNaN(number)) {
+      setPrice('');
+      setFormattedPrice('');
+      return;
+    }
+    
+    // Guardar el valor numérico sin formato para operaciones internas
+    setPrice(numericValue);
+    
+    // Formatear con separadores de miles
+    const formatted = new Intl.NumberFormat('es-CO', {
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(number);
+    
+    setFormattedPrice(formatted);
   };
 
   const validate = () => {
@@ -344,8 +388,8 @@ const SellProductScreen = ({ navigation, route }) => {
         style={styles.input}
         placeholder="Precio (COP)"
         placeholderTextColor="#999"
-        value={price}
-        onChangeText={setPrice}
+        value={formattedPrice}
+        onChangeText={handlePriceChange}
         keyboardType="numeric"
       />
 

@@ -3,6 +3,7 @@ import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndi
 import { FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProductService from '../../services/product.service';
+import { formatPriceWithSymbol } from '../../utils/formatPrice';
 
 const MyProductsScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
@@ -96,7 +97,7 @@ const MyProductsScreen = ({ navigation }) => {
       />
       <View style={styles.productInfo}>
         <Text style={styles.productTitle}>{item.title}</Text>
-        <Text style={styles.productPrice}>${item.price}</Text>
+        <Text style={styles.productPrice}>{formatPriceWithSymbol(item.price)}</Text>
         <View style={styles.statusContainer}>
           <View style={[styles.statusDot, { backgroundColor: item.status === 'active' ? '#4CD964' : '#FFCC00' }]} />
           <Text style={styles.statusText}>
@@ -124,14 +125,11 @@ const MyProductsScreen = ({ navigation }) => {
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
-        <Text style={styles.title}>Mis Productos</Text>
-        <TouchableOpacity 
-          style={styles.addButton}
-          onPress={handleAddProduct}
-        >
-          <FontAwesome5 name="plus" size={16} color="#ffffff" />
-          <Text style={styles.addButtonText}>Nuevo</Text>
+        <TouchableOpacity onPress={() => navigation.goBack()} style={styles.backButton}>
+          <FontAwesome5 name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
+        <Text style={styles.title}>Mis Productos</Text>
+        <View style={{ width: 40 }} />
       </View>
 
       {loading ? (
@@ -181,61 +179,55 @@ const styles = StyleSheet.create({
   },
   header: {
     flexDirection: 'row',
-    justifyContent: 'space-between',
     alignItems: 'center',
-    padding: 20,
+    justifyContent: 'space-between',
+    paddingHorizontal: 20,
+    paddingVertical: 16,
     borderBottomWidth: 1,
     borderBottomColor: '#3a3a3a',
+  },
+  backButton: {
+    width: 40,
+    alignItems: 'flex-start',
   },
   title: {
     fontSize: 22,
     fontWeight: 'bold',
     color: '#ffffff',
   },
-  addButton: {
-    flexDirection: 'row',
-    backgroundColor: '#007AFF',
-    paddingHorizontal: 15,
-    paddingVertical: 8,
-    borderRadius: 20,
-    alignItems: 'center',
-  },
-  addButtonText: {
-    color: '#ffffff',
-    fontWeight: 'bold',
-    marginLeft: 5,
-  },
   listContent: {
-    padding: 15,
+    padding: 16,
   },
   productItem: {
     flexDirection: 'row',
     backgroundColor: '#1f1f1f',
     borderRadius: 10,
-    padding: 15,
-    marginBottom: 10,
+    padding: 14,
     borderWidth: 1,
     borderColor: '#3a3a3a',
+    marginBottom: 12,
   },
   productImage: {
-    width: 70,
-    height: 70,
+    width: 60,
+    height: 60,
     borderRadius: 8,
-    marginRight: 15,
+    marginRight: 12,
   },
   productInfo: {
     flex: 1,
+    justifyContent: 'center',
   },
   productTitle: {
     fontSize: 16,
     fontWeight: 'bold',
     color: '#ffffff',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   productPrice: {
-    fontSize: 15,
+    fontSize: 16,
+    fontWeight: 'bold',
     color: '#007AFF',
-    marginBottom: 5,
+    marginBottom: 4,
   },
   statusContainer: {
     flexDirection: 'row',
@@ -245,26 +237,25 @@ const styles = StyleSheet.create({
     width: 8,
     height: 8,
     borderRadius: 4,
-    marginRight: 5,
+    marginRight: 6,
   },
   statusText: {
-    fontSize: 14,
+    fontSize: 12,
     color: '#bbbbbb',
   },
   actionButtons: {
-    justifyContent: 'space-around',
-    marginLeft: 10,
+    justifyContent: 'center',
+    gap: 8,
   },
   actionButton: {
-    width: 36,
-    height: 36,
-    borderRadius: 18,
+    width: 32,
+    height: 32,
+    borderRadius: 16,
     justifyContent: 'center',
     alignItems: 'center',
-    marginVertical: 5,
   },
   editButton: {
-    backgroundColor: '#007AFF',
+    backgroundColor: '#4CAF50',
   },
   deleteButton: {
     backgroundColor: '#FF3B30',
@@ -277,7 +268,6 @@ const styles = StyleSheet.create({
   loadingText: {
     color: '#bbbbbb',
     marginTop: 10,
-    fontSize: 16,
   },
   errorContainer: {
     flex: 1,
@@ -286,18 +276,16 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   errorText: {
-    fontSize: 18,
     color: '#FF3B30',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 10,
+    fontSize: 18,
     fontWeight: 'bold',
+    marginTop: 10,
   },
   errorMessage: {
-    fontSize: 14,
     color: '#bbbbbb',
+    fontSize: 14,
+    marginTop: 8,
     textAlign: 'center',
-    marginBottom: 30,
   },
   emptyContainer: {
     flex: 1,
@@ -306,23 +294,21 @@ const styles = StyleSheet.create({
     padding: 20,
   },
   emptyText: {
-    fontSize: 18,
     color: '#bbbbbb',
-    textAlign: 'center',
-    marginTop: 20,
-    marginBottom: 30,
+    fontSize: 16,
+    marginTop: 10,
   },
   button: {
     backgroundColor: '#007AFF',
-    borderRadius: 10,
+    paddingHorizontal: 20,
     paddingVertical: 12,
-    paddingHorizontal: 30,
-    alignItems: 'center',
+    borderRadius: 8,
+    marginTop: 20,
   },
   buttonText: {
     color: '#ffffff',
-    fontWeight: 'bold',
     fontSize: 16,
+    fontWeight: 'bold',
   },
 });
 
