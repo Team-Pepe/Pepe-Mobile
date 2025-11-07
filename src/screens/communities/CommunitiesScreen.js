@@ -78,7 +78,7 @@ const CommunitiesScreen = ({ navigation }) => {
               <FontAwesome5 name="chevron-right" size={14} color="#bdbdbd" />
             </TouchableOpacity>
 
-            <TouchableOpacity style={styles.sheetOption} onPress={() => setShowTypeSelector(false)}>
+            <TouchableOpacity style={styles.sheetOption} onPress={() => { setShowTypeSelector(false); navigation.navigate('GroupAccess'); }}>
               <View style={styles.optionLeft}>
                 <View style={[styles.optionIcon, { backgroundColor: 'rgba(52,199,89,0.15)' }]}> 
                   <FontAwesome5 name="users" size={16} color="#34C759" />

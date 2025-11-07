@@ -20,6 +20,9 @@ import MyProductsScreen from '../screens/profile/MyProductsScreen';
 import CommunitiesScreen from '../screens/communities/CommunitiesScreen';
 import OrdersScreen from '../screens/profile/OrdersScreen';
 import UserPickerScreen from '../screens/communities/UserPickerScreen';
+import GroupAccessScreen from '../screens/communities/GroupAccessScreen';
+import CreateGroupScreen from '../screens/communities/CreateGroupScreen';
+import JoinGroupScreen from '../screens/communities/JoinGroupScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -195,6 +198,21 @@ const AppNavigator = () => {
         <Stack.Screen
           name="Communities"
           component={CommunitiesScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="GroupAccess"
+          component={GroupAccessScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="CreateGroup"
+          component={CreateGroupScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="JoinGroup"
+          component={JoinGroupScreen}
           options={{ headerShown: false }}
         />
       </Stack.Navigator>
