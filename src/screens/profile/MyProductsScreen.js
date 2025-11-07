@@ -129,7 +129,13 @@ const MyProductsScreen = ({ navigation }) => {
           <FontAwesome5 name="arrow-left" size={20} color="#ffffff" />
         </TouchableOpacity>
         <Text style={styles.title}>Mis Productos</Text>
-        <View style={{ width: 40 }} />
+        <TouchableOpacity 
+          onPress={handleAddProduct}
+          style={styles.newButton}
+        >
+        <FontAwesome5 name="plus" size={16} color="#ffffff" />
+          <Text style={styles.newButtonText}>Nuevo</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -194,6 +200,20 @@ const styles = StyleSheet.create({
     fontSize: 22,
     fontWeight: 'bold',
     color: '#ffffff',
+  },
+  newButton: {
+    backgroundColor: '#007AFF',
+    paddingHorizontal: 15,
+    paddingVertical: 8,
+    borderRadius: 8,
+    flexDirection: 'row',
+    alignItems: 'center',
+  },
+  newButtonText: {
+    color: '#ffffff',
+    fontSize: 14,
+    fontWeight: 'bold',
+    marginLeft: 6,
   },
   listContent: {
     padding: 16,
