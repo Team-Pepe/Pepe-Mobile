@@ -161,54 +161,12 @@ CREATE TABLE public.motherboard_specifications (
   CONSTRAINT motherboard_specifications_pkey PRIMARY KEY (id),
   CONSTRAINT motherboard_specifications_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
 );
-CREATE TABLE public.order_details (
-  id integer NOT NULL DEFAULT nextval('order_details_id_seq'::regclass),
-  order_id integer,
-  product_id integer,
-  quantity integer NOT NULL,
-  unit_price numeric NOT NULL,
-  subtotal numeric NOT NULL,
-  CONSTRAINT order_details_pkey PRIMARY KEY (id),
-  CONSTRAINT order_details_order_id_fkey FOREIGN KEY (order_id) REFERENCES public.orders(id),
-  CONSTRAINT order_details_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
-);
-CREATE TABLE public.orders (
-  id integer NOT NULL DEFAULT nextval('orders_id_seq'::regclass),
-  order_number character varying NOT NULL UNIQUE,
-  user_id integer,
-  status character varying DEFAULT 'pending'::character varying CHECK (status::text = ANY (ARRAY['pending'::character varying, 'confirmed'::character varying, 'processing'::character varying, 'shipped'::character varying, 'delivered'::character varying, 'cancelled'::character varying]::text[])),
-  subtotal numeric,
-  taxes numeric,
-  total numeric NOT NULL,
-  shipping_address jsonb,
-  payment_method character varying,
-  transaction_id character varying,
-  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT orders_pkey PRIMARY KEY (id),
-  CONSTRAINT orders_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
-);
 CREATE TABLE public.other_specifications (
   id integer NOT NULL DEFAULT nextval('other_specifications_id_seq'::regclass),
   product_id integer UNIQUE,
   general_specifications jsonb,
   CONSTRAINT other_specifications_pkey PRIMARY KEY (id),
   CONSTRAINT other_specifications_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
-);
-CREATE TABLE public.pc_configurations (
-  id integer NOT NULL DEFAULT nextval('pc_configurations_id_seq'::regclass),
-  user_id integer,
-  configuration_name character varying,
-  description text,
-  intended_use character varying,
-  total_budget numeric,
-  total_power_consumption numeric,
-  is_compatible boolean DEFAULT true,
-  components jsonb NOT NULL,
-  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT pc_configurations_pkey PRIMARY KEY (id),
-  CONSTRAINT pc_configurations_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.peripheral_specifications (
   id integer NOT NULL DEFAULT nextval('peripheral_specifications_id_seq'::regclass),
@@ -247,8 +205,11 @@ CREATE TABLE public.products (
   main_image text,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  user_id integer,
+  additional_images jsonb DEFAULT '[]'::jsonb,
   CONSTRAINT products_pkey PRIMARY KEY (id),
-  CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id)
+  CONSTRAINT products_category_id_fkey FOREIGN KEY (category_id) REFERENCES public.categories(id),
+  CONSTRAINT products_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.psu_specifications (
   id integer NOT NULL DEFAULT nextval('psu_specifications_id_seq'::regclass),
@@ -282,24 +243,13 @@ CREATE TABLE public.reviews (
   user_id integer,
   product_id integer,
   rating integer NOT NULL CHECK (rating >= 1 AND rating <= 5),
-  title character varying,
-  comment text,
-  is_verified_purchase boolean DEFAULT false,
+  comment_text text,
+  content json,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
   CONSTRAINT reviews_pkey PRIMARY KEY (id),
-  CONSTRAINT reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT reviews_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
-);
-CREATE TABLE public.shopping_cart (
-  id integer NOT NULL DEFAULT nextval('shopping_cart_id_seq'::regclass),
-  user_id integer,
-  product_id integer,
-  quantity integer DEFAULT 1 CHECK (quantity > 0),
-  added_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT shopping_cart_pkey PRIMARY KEY (id),
-  CONSTRAINT shopping_cart_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id),
-  CONSTRAINT shopping_cart_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
+  CONSTRAINT reviews_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id),
+  CONSTRAINT reviews_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.storage_specifications (
   id integer NOT NULL DEFAULT nextval('storage_specifications_id_seq'::regclass),
@@ -315,21 +265,6 @@ CREATE TABLE public.storage_specifications (
   CONSTRAINT storage_specifications_pkey PRIMARY KEY (id),
   CONSTRAINT storage_specifications_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
 );
-CREATE TABLE public.user_addresses (
-  id integer NOT NULL DEFAULT nextval('user_addresses_id_seq'::regclass),
-  user_id integer,
-  address_name character varying NOT NULL,
-  address_line text NOT NULL,
-  department character varying NOT NULL,
-  city character varying NOT NULL,
-  neighborhood character varying,
-  postal_code character varying,
-  is_default boolean DEFAULT false,
-  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
-  CONSTRAINT user_addresses_pkey PRIMARY KEY (id),
-  CONSTRAINT user_addresses_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
-);
 CREATE TABLE public.users (
   id integer NOT NULL CHECK (id > 0 AND id <= '9999999999'::bigint),
   email character varying NOT NULL UNIQUE,
@@ -339,4 +274,3 @@ CREATE TABLE public.users (
   birth_date date,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
-
