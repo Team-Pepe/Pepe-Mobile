@@ -12,6 +12,7 @@ import {
   Dimensions,
   Alert,
   Platform,
+  Modal,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import ProductService from '../../services/product.service';
@@ -32,6 +33,22 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [submittingReview, setSubmittingReview] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+
+  // Visor de imágenes de reseñas
+  const [viewerVisible, setViewerVisible] = useState(false);
+  const [viewerImages, setViewerImages] = useState([]);
+  const [viewerComment, setViewerComment] = useState('');
+  const [viewerIndex, setViewerIndex] = useState(0);
+
+  const openViewer = (images = [], comment = '', startIndex = 0) => {
+    const list = Array.isArray(images) ? images : [];
+    setViewerImages(list);
+    setViewerComment(comment || '');
+    setViewerIndex(startIndex || 0);
+    setViewerVisible(true);
+  };
+
+  const closeViewer = () => setViewerVisible(false);
 
   // Obtener el producto desde los parámetros de navegación o usar datos de demo
   const productFromRoute = route.params?.product;
@@ -571,6 +588,22 @@ const ProductDetailScreen = ({ route, navigation }) => {
           </View>
           <Text style={styles.reviewComment}>{review.comment}</Text>
           <Text style={styles.reviewDate}>{review.date}</Text>
+          {/* Miniaturas de imágenes de la reseña */}
+          {(() => {
+            const imgs = Array.isArray(review.images)
+              ? review.images
+              : (Array.isArray(review?.content?.images) ? review.content.images : []);
+            if (!imgs || !imgs.length) return null;
+            return (
+              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImagesRow}>
+                {imgs.map((url, idx) => (
+                  <TouchableOpacity key={`${index}-${idx}`} onPress={() => openViewer(imgs, review.comment || review.comment_text || '', idx)}>
+                    <Image source={{ uri: url }} style={styles.reviewThumb} />
+                  </TouchableOpacity>
+                ))}
+              </ScrollView>
+            );
+          })()}
         </View>
       ))}
     </View>
@@ -666,6 +699,30 @@ const ProductDetailScreen = ({ route, navigation }) => {
       </View>
 
       {selectedTab === 'specs' ? renderSpecificationsTable() : renderReviews()}
+
+      {/* Visor de imágenes de reseñas */}
+      <Modal visible={viewerVisible} transparent animationType="fade" onRequestClose={closeViewer}>
+        <View style={styles.viewerOverlay}>
+          <FlatList
+            data={viewerImages}
+            keyExtractor={(u, i) => `${u}-${i}`}
+            horizontal
+            pagingEnabled
+            showsHorizontalScrollIndicator={false}
+            renderItem={({ item }) => (
+              <Image source={{ uri: item }} style={[styles.viewerImage, { width: screenWidth }]} />
+            )}
+            initialScrollIndex={viewerIndex}
+            getItemLayout={(_, i) => ({ length: screenWidth, offset: screenWidth * i, index: i })}
+          />
+          <View style={styles.viewerCommentBar}>
+            <Text style={styles.viewerCommentText}>{viewerComment}</Text>
+            <TouchableOpacity style={styles.viewerCloseBtn} onPress={closeViewer}>
+              <Text style={styles.viewerCloseText}>Cerrar</Text>
+            </TouchableOpacity>
+          </View>
+        </View>
+      </Modal>
     </ScrollView>
   );
 };
@@ -951,6 +1008,17 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
   },
+  reviewImagesRow: {
+    marginTop: 8,
+  },
+  reviewThumb: {
+    width: 80,
+    height: 80,
+    borderRadius: 8,
+    marginRight: 8,
+    resizeMode: 'cover',
+    backgroundColor: '#222',
+  },
   additionalImagesContainer: {
     backgroundColor: '#1f1f1f',
     padding: 15,
@@ -983,6 +1051,43 @@ const styles = StyleSheet.create({
     color: '#bdbdbd',
     textAlign: 'center',
     padding: 20,
+  },
+  viewerOverlay: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.85)',
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+  viewerImage: {
+    height: '70%',
+    resizeMode: 'contain',
+  },
+  viewerCommentBar: {
+    position: 'absolute',
+    bottom: 0,
+    left: 0,
+    right: 0,
+    padding: 12,
+    backgroundColor: 'rgba(0,0,0,0.6)',
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+  },
+  viewerCommentText: {
+    color: '#fff',
+    fontSize: 14,
+    flex: 1,
+    marginRight: 12,
+  },
+  viewerCloseBtn: {
+    paddingVertical: 6,
+    paddingHorizontal: 12,
+    backgroundColor: '#007AFF',
+    borderRadius: 6,
+  },
+  viewerCloseText: {
+    color: '#fff',
+    fontWeight: 'bold',
   },
 });
 
