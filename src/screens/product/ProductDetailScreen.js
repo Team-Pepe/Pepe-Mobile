@@ -20,6 +20,7 @@ import { formatPriceWithSymbol } from '../../utils/formatPrice';
 import FavoritesService from '../../services/favorites.service';
 import * as ImagePicker from 'expo-image-picker';
 import ReviewsService from '../../services/reviews.service';
+import UserService from '../../services/user.service';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const [selectedTab, setSelectedTab] = useState('specs');
@@ -115,7 +116,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
           const rows = await ReviewsService.listProductReviews(productFromRoute.id);
           // Mapear a estructura simple usada en la UI
           const mapped = (rows || []).map((r) => ({
-            user: 'Usuario',
+            user: r.user_name || 'Usuario',
             rating: r.rating,
             comment: r.comment_text,
             date: (r.created_at || '').slice(0, 10),
@@ -553,8 +554,15 @@ const ProductDetailScreen = ({ route, navigation }) => {
               if (res?.created) {
                 const created = res.data;
                 console.log('✅ [ProductDetail] Reseña publicada', created);
+                let displayName = 'Tú';
+                try {
+                  if (created?.user_id) {
+                    const name = await UserService.getUserNameById(created.user_id);
+                    if (name) displayName = name;
+                  }
+                } catch (_) {}
                 const newRow = {
-                  user: 'Tú',
+                  user: displayName,
                   rating: created?.rating || newRating,
                   comment: created?.comment_text || newComment.trim(),
                   date: (created?.created_at || new Date().toISOString()).slice(0,10),

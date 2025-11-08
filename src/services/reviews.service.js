@@ -149,7 +149,15 @@ class ReviewsService {
         .eq('product_id', productId)
         .order('created_at', { ascending: true });
       if (error) throw error;
-      return data || [];
+      const rows = data || [];
+      const userIds = Array.from(new Set(rows.map(r => r.user_id).filter(Boolean)));
+      let namesMap = {};
+      try {
+        namesMap = await UserService.getUserNamesByIds(userIds);
+      } catch (e) {
+        namesMap = {};
+      }
+      return rows.map(r => ({ ...r, user_name: namesMap[r.user_id] || null }));
     } catch (error) {
       console.error('Error en ReviewsService.listProductReviews:', error);
       return [];
