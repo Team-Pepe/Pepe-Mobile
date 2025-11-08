@@ -36,7 +36,7 @@ const ProfileScreen = ({ navigation }) => {
       </View>
 
       <View style={styles.menuContainer}>
-        <TouchableOpacity style={styles.menuItem}>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('EditProfile')}>
           <FontAwesome5 name="user-edit" size={20} color="#007AFF" />
           <Text style={styles.menuText}>Editar Perfil</Text>
         </TouchableOpacity>

@@ -22,6 +22,7 @@ import OrdersScreen from '../screens/profile/OrdersScreen';
 import UserReviewsScreen from '../screens/profile/UserReviewsScreen';
 import EditReviewScreen from '../screens/profile/EditReviewScreen';
 import UserPickerScreen from '../screens/communities/UserPickerScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
@@ -201,6 +202,13 @@ const AppNavigator = () => {
           component={EditReviewScreen}
           options={{
             title: 'Editar Opinión',
+          }}
+        />
+        <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
+          options={{
+            title: 'Editar Perfil',
           }}
         />
         <Stack.Screen

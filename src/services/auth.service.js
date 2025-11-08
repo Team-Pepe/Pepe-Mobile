@@ -192,4 +192,50 @@ export const AuthService = {
       return { session: null, error: error.message };
     }
   }
+  ,
+  // Actualizar email del usuario autenticado (schema auth)
+  async updateEmail(newEmail) {
+    try {
+      if (!newEmail) throw new Error('Email requerido');
+      const { data, error } = await supabase.auth.updateUser({ email: newEmail });
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Actualizar contraseña del usuario autenticado (schema auth)
+  async updatePassword(newPassword) {
+    try {
+      if (!newPassword || newPassword.length < 6) {
+        throw new Error('La contraseña debe tener al menos 6 caracteres');
+      }
+      const { data, error } = await supabase.auth.updateUser({ password: newPassword });
+      if (error) throw error;
+      return { success: true, data };
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  },
+
+  // Orquestador: actualiza email y/o contraseña en auth
+  async updateAuthCredentials({ email, password }) {
+    const result = { success: true, steps: {} };
+    try {
+      if (email) {
+        const r = await this.updateEmail(email);
+        result.steps.email = r;
+        if (!r.success) result.success = false;
+      }
+      if (password) {
+        const r = await this.updatePassword(password);
+        result.steps.password = r;
+        if (!r.success) result.success = false;
+      }
+      return result;
+    } catch (error) {
+      return { success: false, error: error.message };
+    }
+  }
 };
