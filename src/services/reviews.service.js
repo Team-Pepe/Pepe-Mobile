@@ -163,6 +163,105 @@ class ReviewsService {
       return [];
     }
   }
+
+  /**
+   * Lista reseñas del usuario autenticado, con datos del producto.
+   * Devuelve cada reseña con { product: { id, name, main_image }, ... }.
+   */
+  static async listUserReviews() {
+    try {
+      const { user, error: authError } = await AuthService.getCurrentUser();
+      if (authError || !user) throw new Error('Usuario no autenticado');
+      const userId = await UserService.getUserIdByEmail(user.email);
+      if (!userId) throw new Error('No se pudo resolver user_id');
+
+      const { data, error } = await supabase
+        .from('reviews')
+        .select('*')
+        .eq('user_id', userId)
+        .order('created_at', { ascending: false });
+      if (error) throw error;
+      const rows = data || [];
+      const productIds = Array.from(new Set(rows.map(r => r.product_id).filter(Boolean)));
+      let productsMap = {};
+      if (productIds.length) {
+        const { data: productsData, error: prodErr } = await supabase
+          .from('products')
+          .select('id, name, main_image')
+          .in('id', productIds);
+        if (!prodErr && productsData) {
+          productsMap = productsData.reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
+        }
+      }
+      return rows.map(r => ({
+        ...r,
+        product: productsMap[r.product_id] || { id: r.product_id },
+      }));
+    } catch (error) {
+      console.error('Error en ReviewsService.listUserReviews:', error);
+      return [];
+    }
+  }
+
+  /**
+   * Actualiza una reseña del usuario autenticado (comentario y/o rating).
+   */
+  static async updateReview(reviewId, { rating, commentText }) {
+    try {
+      const { user, error: authError } = await AuthService.getCurrentUser();
+      if (authError || !user) throw new Error('Usuario no autenticado');
+      const userId = await UserService.getUserIdByEmail(user.email);
+      if (!userId) throw new Error('No se pudo resolver user_id');
+
+      const payload = {};
+      if (typeof rating !== 'undefined') {
+        const r = parseInt(rating, 10);
+        if (!r || r < 1 || r > 5) throw new Error('rating debe estar entre 1 y 5');
+        payload.rating = r;
+      }
+      if (typeof commentText !== 'undefined') {
+        const comment = (commentText || '').trim();
+        if (!comment) throw new Error('commentText es requerido');
+        payload.comment_text = comment;
+      }
+      if (!Object.keys(payload).length) throw new Error('Nada que actualizar');
+
+      const { data, error } = await supabase
+        .from('reviews')
+        .update(payload)
+        .eq('id', reviewId)
+        .eq('user_id', userId)
+        .select();
+      if (error) throw error;
+      return { updated: true, data: data?.[0] || null };
+    } catch (error) {
+      console.error('Error en ReviewsService.updateReview:', error);
+      return { updated: false, error: error?.message || 'Error actualizando reseña' };
+    }
+  }
+
+  /**
+   * Elimina una reseña del usuario autenticado.
+   */
+  static async deleteReview(reviewId) {
+    try {
+      const { user, error: authError } = await AuthService.getCurrentUser();
+      if (authError || !user) throw new Error('Usuario no autenticado');
+      const userId = await UserService.getUserIdByEmail(user.email);
+      if (!userId) throw new Error('No se pudo resolver user_id');
+
+      const { error } = await supabase
+        .from('reviews')
+        .delete()
+        .eq('id', reviewId)
+        .eq('user_id', userId);
+      if (error) throw error;
+      return { deleted: true };
+    } catch (error) {
+      console.error('Error en ReviewsService.deleteReview:', error);
+      return { deleted: false, error: error?.message || 'Error eliminando reseña' };
+    }
+  }
 }
 
 export default ReviewsService;

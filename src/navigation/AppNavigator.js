@@ -19,6 +19,8 @@ import SellProductScreen from '../screens/profile/SellProductScreen';
 import MyProductsScreen from '../screens/profile/MyProductsScreen';
 import CommunitiesScreen from '../screens/communities/CommunitiesScreen';
 import OrdersScreen from '../screens/profile/OrdersScreen';
+import UserReviewsScreen from '../screens/profile/UserReviewsScreen';
+import EditReviewScreen from '../screens/profile/EditReviewScreen';
 import UserPickerScreen from '../screens/communities/UserPickerScreen';
 
 const Stack = createStackNavigator();
@@ -186,6 +188,20 @@ const AppNavigator = () => {
           name="Orders"
           component={OrdersScreen}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="UserReviews"
+          component={UserReviewsScreen}
+          options={{
+            title: 'Mis Opiniones',
+          }}
+        />
+        <Stack.Screen
+          name="EditReview"
+          component={EditReviewScreen}
+          options={{
+            title: 'Editar Opinión',
+          }}
         />
         <Stack.Screen
           name="UserPicker"

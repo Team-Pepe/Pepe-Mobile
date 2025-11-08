@@ -41,9 +41,9 @@ const ProfileScreen = ({ navigation }) => {
           <Text style={styles.menuText}>Editar Perfil</Text>
         </TouchableOpacity>
         
-        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('Orders')}>
-          <FontAwesome5 name="shopping-bag" size={20} color="#007AFF" />
-          <Text style={styles.menuText}>Mis Pedidos</Text>
+        <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserReviews')}>
+          <FontAwesome5 name="comments" size={20} color="#007AFF" />
+          <Text style={styles.menuText}>Mis Opiniones</Text>
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('MyProducts')}>
