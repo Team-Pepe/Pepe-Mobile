@@ -42,7 +42,7 @@ const ProfileScreen = ({ navigation }) => {
         </TouchableOpacity>
         
         <TouchableOpacity style={styles.menuItem} onPress={() => navigation.navigate('UserReviews')}>
-          <FontAwesome5 name="comments" size={20} color="#007AFF" />
+          <FontAwesome5 name="star" size={20} color="#007AFF" />
           <Text style={styles.menuText}>Mis Opiniones</Text>
         </TouchableOpacity>
         

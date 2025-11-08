@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useCallback } from 'react';
+import { useFocusEffect } from '@react-navigation/native';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, Image, Alert, ActivityIndicator } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
@@ -27,6 +28,11 @@ const UserReviewsScreen = ({ navigation }) => {
   }, [navigation]);
 
   useEffect(() => { load(); }, [load]);
+  useFocusEffect(
+    useCallback(() => {
+      load();
+    }, [load])
+  );
 
   const handleEdit = (review) => {
     navigation.navigate('EditReview', { review });
@@ -58,12 +64,16 @@ const UserReviewsScreen = ({ navigation }) => {
         <View style={styles.cardHeader}>
           <View style={styles.productInfo}>
             {item?.product?.main_image ? (
-              <Image source={{ uri: item.product.main_image }} style={styles.productImage} />
+              <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item.product || { id: item.product_id } })}>
+                <Image source={{ uri: item.product.main_image }} style={styles.productImage} />
+              </TouchableOpacity>
             ) : (
               <View style={[styles.productImage, styles.imagePlaceholder]} />
             )}
             <View style={{ flex: 1 }}>
-              <Text style={styles.productName}>{item?.product?.name || `Producto #${item.product_id}`}</Text>
+              <TouchableOpacity onPress={() => navigation.navigate('ProductDetail', { product: item.product || { id: item.product_id } })}>
+                <Text style={styles.productName}>{item?.product?.name || `Producto #${item.product_id}`}</Text>
+              </TouchableOpacity>
               <Text style={styles.meta}>Puntuación: {item.rating} · {new Date(item.created_at).toLocaleDateString()}</Text>
             </View>
           </View>

@@ -1,6 +1,7 @@
 import { supabase } from '../lib/supabase';
 import { AuthService } from './auth.service';
 import UserService from './user.service';
+import ImageService from './image.service';
 
 /**
  * Servicio para crear y listar reseñas, incluyendo subida de imágenes
@@ -187,7 +188,16 @@ class ReviewsService {
       if (productIds.length) {
         const { data: productsData, error: prodErr } = await supabase
           .from('products')
-          .select('id, name, main_image')
+          .select(`
+            id,
+            name,
+            main_image,
+            additional_images,
+            description,
+            price,
+            stock,
+            categories ( id, name )
+          `)
           .in('id', productIds);
         if (!prodErr && productsData) {
           productsMap = productsData.reduce((acc, p) => { acc[p.id] = p; return acc; }, {});
@@ -260,6 +270,130 @@ class ReviewsService {
     } catch (error) {
       console.error('Error en ReviewsService.deleteReview:', error);
       return { deleted: false, error: error?.message || 'Error eliminando reseña' };
+    }
+  }
+
+  /**
+   * Sube nuevas imágenes y las agrega a content.images de una reseña del usuario.
+   * Limita el total a 5 imágenes.
+   * @param {number|string} reviewId
+   * @param {string[]} imageUris
+   * @returns {Promise<{ updated: boolean, data?: any, error?: string }>}
+   */
+  static async appendReviewImages(reviewId, imageUris = []) {
+    try {
+      const { user, error: authError } = await AuthService.getCurrentUser();
+      if (authError || !user) throw new Error('Usuario no autenticado');
+      const userId = await UserService.getUserIdByEmail(user.email);
+      if (!userId) throw new Error('No se pudo resolver user_id');
+
+      const { data: current, error: fetchErr } = await supabase
+        .from('reviews')
+        .select('id, user_id, product_id, content')
+        .eq('id', reviewId)
+        .single();
+      if (fetchErr) throw fetchErr;
+      if (!current || current.user_id !== userId) throw new Error('No autorizado');
+
+      const prevImages = Array.isArray(current?.content?.images) ? current.content.images : [];
+      const uris = Array.isArray(imageUris) ? imageUris.filter(Boolean) : [];
+      if (!uris.length) {
+        return { updated: true, data: current };
+      }
+
+      const uploadedUrls = await this.uploadReviewImages(uris, current.product_id, userId);
+      const MAX_TOTAL = 5;
+      const nextImages = [...prevImages, ...uploadedUrls].slice(0, MAX_TOTAL);
+
+      const content = { ...(current.content || {}), images: nextImages };
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({ content })
+        .eq('id', reviewId)
+        .eq('user_id', userId)
+        .select();
+      if (error) throw error;
+      return { updated: true, data: data?.[0] || null };
+    } catch (error) {
+      console.error('Error en ReviewsService.appendReviewImages:', error);
+      return { updated: false, error: error?.message || 'Error agregando imágenes' };
+    }
+  }
+
+  /**
+   * Reemplaza el arreglo de imágenes en content.images de una reseña del usuario.
+   */
+  static async updateReviewImages(reviewId, newImages = []) {
+    try {
+      const { user, error: authError } = await AuthService.getCurrentUser();
+      if (authError || !user) throw new Error('Usuario no autenticado');
+      const userId = await UserService.getUserIdByEmail(user.email);
+      if (!userId) throw new Error('No se pudo resolver user_id');
+
+      const images = Array.isArray(newImages) ? newImages.filter(Boolean) : [];
+
+      const { data: current, error: fetchErr } = await supabase
+        .from('reviews')
+        .select('id, user_id, content')
+        .eq('id', reviewId)
+        .single();
+      if (fetchErr) throw fetchErr;
+      if (!current || current.user_id !== userId) throw new Error('No autorizado');
+
+      const content = { ...(current.content || {}), images };
+
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({ content })
+        .eq('id', reviewId)
+        .eq('user_id', userId)
+        .select();
+      if (error) throw error;
+      return { updated: true, data: data?.[0] || null };
+    } catch (error) {
+      console.error('Error en ReviewsService.updateReviewImages:', error);
+      return { updated: false, error: error?.message || 'Error actualizando imágenes' };
+    }
+  }
+
+  /**
+   * Elimina una imagen específica (por URL pública) del content.images y del bucket.
+   */
+  static async removeReviewImage(reviewId, imageUrl) {
+    try {
+      const { user, error: authError } = await AuthService.getCurrentUser();
+      if (authError || !user) throw new Error('Usuario no autenticado');
+      const userId = await UserService.getUserIdByEmail(user.email);
+      if (!userId) throw new Error('No se pudo resolver user_id');
+
+      const { data: current, error: fetchErr } = await supabase
+        .from('reviews')
+        .select('id, user_id, content')
+        .eq('id', reviewId)
+        .single();
+      if (fetchErr) throw fetchErr;
+      if (!current || current.user_id !== userId) throw new Error('No autorizado');
+
+      const prevImages = Array.isArray(current?.content?.images) ? current.content.images : [];
+      const nextImages = prevImages.filter(u => u !== imageUrl);
+
+      // Intentar eliminar del bucket
+      if (imageUrl) {
+        await ImageService.deleteImageByPublicUrl(imageUrl);
+      }
+
+      const content = { ...(current.content || {}), images: nextImages };
+      const { data, error } = await supabase
+        .from('reviews')
+        .update({ content })
+        .eq('id', reviewId)
+        .eq('user_id', userId)
+        .select();
+      if (error) throw error;
+      return { deleted: true, data: data?.[0] || null };
+    } catch (error) {
+      console.error('Error en ReviewsService.removeReviewImage:', error);
+      return { deleted: false, error: error?.message || 'Error eliminando imagen' };
     }
   }
 }
