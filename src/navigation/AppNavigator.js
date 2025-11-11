@@ -20,6 +20,7 @@ import MyProductsScreen from '../screens/profile/MyProductsScreen';
 import CommunitiesScreen from '../screens/communities/CommunitiesScreen';
 import OrdersScreen from '../screens/profile/OrdersScreen';
 import UserPickerScreen from '../screens/communities/UserPickerScreen';
+import ChatScreen from '../screens/communities/ChatScreen';
 import GroupAccessScreen from '../screens/communities/GroupAccessScreen';
 import CreateGroupScreen from '../screens/communities/CreateGroupScreen';
 import JoinGroupScreen from '../screens/communities/JoinGroupScreen';
@@ -193,6 +194,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="UserPicker"
           component={UserPickerScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="Chat"
+          component={ChatScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

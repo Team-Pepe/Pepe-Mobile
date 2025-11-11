@@ -11,8 +11,24 @@ const mockConversations = [
 
 const CommunitiesScreen = ({ navigation }) => {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+
+  const buildUserFromConversation = (conv) => {
+    try {
+      if (conv.title.includes(':')) {
+        const namePart = conv.title.split(':')[1].trim();
+        const username = namePart.toLowerCase().replace(/\s+/g, '');
+        return { name: namePart, username };
+      }
+      const name = conv.title;
+      const username = name.toLowerCase().replace(/\s+/g, '');
+      return { name, username };
+    } catch (e) {
+      return { name: conv.title || 'Chat', username: 'chat' };
+    }
+  };
+
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.item}>
+    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('Chat', { user: buildUserFromConversation(item) })}>
       <View style={styles.itemHeader}>
         <Text style={styles.itemTitle}>{item.title}</Text>
         <Text style={styles.itemTime}>{item.time}</Text>

@@ -10,6 +10,7 @@ import {
   ActivityIndicator,
   FlatList,
   Dimensions,
+  Keyboard,
 } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import ProductService from '../../services/product.service';
@@ -26,6 +27,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [newComment, setNewComment] = useState('');
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
+  const [keyboardOffset, setKeyboardOffset] = useState(0);
 
   // Obtener el producto desde los parámetros de navegación o usar datos de demo
   const productFromRoute = route.params?.product;
@@ -84,6 +86,21 @@ const ProductDetailScreen = ({ route, navigation }) => {
     checkFavorite();
   }, [productFromRoute?.id]);
 
+  // Teclado dinámico: ajusta padding inferior al mostrarse/ocultarse
+  useEffect(() => {
+    const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
+      const height = e?.endCoordinates?.height ?? 0;
+      setKeyboardOffset(height);
+    });
+    const hideSub = Keyboard.addListener('keyboardDidHide', () => {
+      setKeyboardOffset(0);
+    });
+    return () => {
+      showSub.remove();
+      hideSub.remove();
+    };
+  }, []);
+
   const toggleFavorite = async () => {
     if (!productFromRoute?.id || favLoading) return;
     try {
@@ -128,6 +145,25 @@ const ProductDetailScreen = ({ route, navigation }) => {
     const clamped = Math.max(0, Math.min(index, allImages.length - 1));
     carouselRef.current.scrollToIndex({ index: clamped, animated: true });
     setCurrentImageIndex(clamped);
+  };
+
+  // Construye el usuario del vendedor para abrir chat
+  const buildSellerUser = () => {
+    const name =
+      productFromRoute?.sellerName ||
+      productFromRoute?.seller_name ||
+      productFromRoute?.seller ||
+      productFromRoute?.owner_name ||
+      productFromRoute?.owner ||
+      productFromRoute?.user_name ||
+      productFromRoute?.user?.name ||
+      'Vendedor';
+    const username =
+      productFromRoute?.sellerUsername ||
+      productFromRoute?.seller_username ||
+      productFromRoute?.user?.username ||
+      String(name).toLowerCase().replace(/\s+/g, '');
+    return { name, username };
   };
 
   // Cargar especificaciones del producto desde la base de datos
@@ -415,7 +451,11 @@ const ProductDetailScreen = ({ route, navigation }) => {
   );
 
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView
+      style={styles.container}
+      keyboardShouldPersistTaps="handled"
+      contentContainerStyle={{ paddingBottom: keyboardOffset }}
+    >
       {/* Carrusel de imágenes (estilo Instagram/MercadoLibre) */}
       <View style={styles.carouselContainer}>
         <FlatList
@@ -476,9 +516,9 @@ const ProductDetailScreen = ({ route, navigation }) => {
         <Text style={styles.price}>{formatPriceWithSymbol(product.price)}</Text>
         <Text style={styles.stock}>Stock disponible: {product.stock} unidades</Text>
         
-        <TouchableOpacity style={styles.buyButton}>
-          <FontAwesome5 name="shopping-cart" size={20} color="#fff" />
-          <Text style={styles.buyButtonText}>Comprar Ahora</Text>
+        <TouchableOpacity style={styles.buyButton} onPress={() => navigation.navigate('Chat', { user: buildSellerUser() })}>
+          <FontAwesome5 name="comments" size={20} color="#fff" />
+          <Text style={styles.buyButtonText}>Chatear con el vendedor</Text>
         </TouchableOpacity>
 
         <Text style={styles.description}>{product.description}</Text>
