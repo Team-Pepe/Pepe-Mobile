@@ -184,7 +184,7 @@ const VersusScreen = () => {
   };
 
   const LABELS = {
-  // Case/Chasis 
+  // Case / Chasis (case_specifications)
   motherboard_formats: 'Formatos de Motherboard',
   bays_35: 'Bahías 3.5"',
   bays_25: 'Bahías 2.5"',
@@ -194,89 +194,114 @@ const VersusScreen = () => {
   psu_type: 'Tipo de Fuente',
   included_fans: 'Ventiladores Incluidos',
   material: 'Material',
-    // CPU
-    cores: 'Núcleos',
-    threads: 'Hilos',
-    base_frequency_ghz: 'Frecuencia Base (GHz)',
-    boost_frequency_ghz: 'Frecuencia Boost (GHz)',
-    tdp: 'TDP (W)',
-    cache_l3: 'Cache L3 (MB)',
-    fabrication_technology_nm: 'Tecnología de Fabricación (nm)',
-    socket: 'Socket',
-    integrated_graphics: 'Gráficos Integrados',
-    
-    // GPU
-    memory_size_gb: 'Memoria (GB)',
-    boost_clock_mhz: 'Frecuencia Boost (MHz)',
-    memory_bus_bits: 'Ancho de Bus (bits)',
-    memory_type: 'Tipo de Memoria',
-    cuda_cores: 'Cores CUDA',
-    stream_processors: 'Stream Processors',
-    
-    // RAM
-    capacity_gb: 'Capacidad (GB)',
-    speed_mhz: 'Velocidad (MHz)',
-    type: 'Tipo de RAM',
-    latency_cls: 'Latencia (CAS)',
-    form_factor: 'Factor de Forma',
-    
-    // Storage
-    capacity: 'Capacidad (GB)',
-    interface: 'Interfaz',
-    read_speed: 'Velocidad de Lectura (MB/s)',
-    write_speed: 'Velocidad de Escritura (MB/s)',
-    form_factors: 'Factor de Forma',
-    
-    // Motherboard
-    chipset: 'Chipset',
-    socket_mb: 'Socket',
-    form_factor_mb: 'Factor de Forma',
-    max_memory: 'Memoria Máxima (GB)',
-    memory_slots: 'Slots de Memoria',
-    pci_slots: 'Slots PCI',
-    
-    // PSU
-    power: 'Potencia (W)',
-    efficiency: 'Eficiencia',
-    modular: '¿Modular?',
-    fan_size: 'Tamaño Ventilador (mm)',
-    
-    // Cooler
-    tdp_max: 'TDP Máximo (W)',
-    fan_speed: 'RPM Ventilador',
-    noise_level: 'Nivel de Ruido (dB)',
-    height: 'Altura (mm)',
-    
-    // Monitor
-    display_size_inch: 'Tamaño Pantalla (pulgadas)',
-    resolution: 'Resolución',
-    refresh_rate: 'Frecuencia Refresco (Hz)',
-    response_time: 'Tiempo Respuesta (ms)',
-    panel_type: 'Tipo de Panel',
-    brightness: 'Brillo (cd/m²)',
-    
-    // Laptop
-    ram_gb: 'RAM (GB)',
-    storage_gb: 'Almacenamiento (GB)',
-    processor: 'Procesador',
-    graphics: 'Gráficos',
-    battery_mah: 'Batería (mAh)',
-    weight_kg: 'Peso (kg)',
-    screen_size: 'Pantalla (pulgadas)',
-    
-    // Phone
-    display_size_phone: 'Pantalla (pulgadas)',
-    processor_phone: 'Procesador',
-    storage_phone: 'Almacenamiento (GB)',
-    camera_main: 'Cámara Principal (MP)',
-    camera_front: 'Cámara Frontal (MP)',
-    battery_phone: 'Batería (mAh)',
-    weight_phone: 'Peso (g)',
-    
-    // Generic/Fallback
-    weight_kg: 'Peso (kg)',
-    price: 'Precio',
-  };
+
+  // CPU (cpu_specifications)
+  socket: 'Socket',
+  cores: 'Núcleos',
+  threads: 'Hilos',
+  base_frequency_ghz: 'Frecuencia Base (GHz)',
+  boost_frequency_ghz: 'Frecuencia Boost (GHz)',
+  cache_l3: 'Cache L3 (MB)',
+  tdp: 'TDP (W)',
+  integrated_graphics: 'Gráficos Integrados',
+  fabrication_technology_nm: 'Tecnología de Fabricación (nm)',
+
+  // GPU (gpu_specifications)
+  vram_gb: 'VRAM (GB)',
+  vram_type: 'Tipo de VRAM',
+  cuda_cores: 'CUDA Cores',
+  base_frequency_mhz: 'Frecuencia Base (MHz)',
+  boost_frequency_mhz: 'Frecuencia Boost (MHz)',
+  bandwidth_gbs: 'Ancho de Banda (GB/s)',
+  power_connectors: 'Conectores de Energía',
+  length_mm: 'Largo (mm)',
+  video_outputs: 'Salidas de Video',
+
+  // RAM (ram_specifications)
+  capacity_gb: 'Capacidad (GB)',
+  type: 'Tipo de RAM',
+  speed_mhz: 'Velocidad (MHz)',
+  latency: 'Latencia (CAS)',
+  modules: 'Módulos',
+  voltage: 'Voltaje (V)',
+  heat_spreader: 'Disipador de Calor',
+  rgb_lighting: 'Iluminación RGB',
+
+  // Storage (storage_specifications)
+  // Nota: usa las columnas EXACTAS con sufijos _gb y _mbs como aparecen en tu DB
+  type: 'Tipo',
+  capacity_gb: 'Capacidad (GB)',
+  interface: 'Interfaz',
+  read_speed_mbs: 'Velocidad de Lectura (MB/s)',
+  write_speed_mbs: 'Velocidad de Escritura (MB/s)',
+  form_factor: 'Factor de Forma',
+  nand_type: 'Tipo de NAND',
+  tbw: 'TBW (TB escritos)',
+
+  // Motherboard (motherboard_specifications)
+  chipset: 'Chipset',
+  form_factor: 'Factor de Forma',
+  ram_slots: 'Slots de RAM',
+  ram_type: 'Tipo de RAM',
+  m2_ports: 'Puertos M.2',
+  sata_ports: 'Puertos SATA',
+  usb_ports: 'Puertos USB',
+  audio: 'Audio',
+  network: 'Red',
+
+  // Cooler (cooler_specifications)
+  cooler_type: 'Tipo de Cooler',
+  compatible_sockets: 'Sockets Compatibles',
+  height_mm: 'Altura (mm)',
+  rpm_range: 'Rango de RPM',
+  noise_level_db: 'Nivel de Ruido (dB)',
+  tdp_w: 'TDP Máximo (W)',
+
+  // Monitor (monitor_specifications)
+  screen_inches: 'Tamaño Pantalla (pulgadas)',
+  resolution: 'Resolución',
+  refresh_rate_hz: 'Frecuencia de Refresco (Hz)',
+  response_time_ms: 'Tiempo de Respuesta (ms)',
+  panel_type: 'Tipo de Panel',
+  connectors: 'Conectores',
+  curved: 'Curvo',
+
+  // Laptop (laptop_specifications)
+  processor: 'Procesador',
+  ram_gb: 'RAM (GB)',
+  storage: 'Almacenamiento',
+  screen_inches: 'Pantalla (pulgadas)',
+  resolution: 'Resolución',
+  graphics_card: 'Gráficos',
+  weight_kg: 'Peso (kg)',
+  battery_wh: 'Batería (Wh)',
+  operating_system: 'Sistema Operativo',
+
+  // Phone (phone_specifications)
+  screen_inches: 'Pantalla (pulgadas)',
+  resolution: 'Resolución',
+  processor: 'Procesador',
+  ram_gb: 'RAM (GB)',
+  storage_gb: 'Almacenamiento (GB)',
+  main_camera_mp: 'Cámara Principal (MP)',
+  battery_mah: 'Batería (mAh)',
+  operating_system: 'Sistema Operativo',
+
+  // Peripheral (peripheral_specifications)
+  peripheral_type: 'Tipo de Periférico',
+  connectivity: 'Conectividad',
+  mouse_sensor: 'Sensor del Ratón',
+  keyboard_switches: 'Switches de Teclado',
+  response_frequency_hz: 'Frecuencia de Respuesta (Hz)',
+  noise_cancellation: 'Cancelación de Ruido',
+  microphone_type: 'Tipo de Micrófono',
+
+  // Otros / genéricos
+  general_specifications: 'Especificaciones Generales',
+  price: 'Precio',
+  // weight_kg ya se mapea arriba en laptop; si lo usas en otras categorías, también aplica
+};
+
 
   // Métricas donde un valor menor es mejor (se invierten al normalizar)
   const LOWER_IS_BETTER = new Set([
