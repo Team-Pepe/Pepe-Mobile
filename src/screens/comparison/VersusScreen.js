@@ -444,7 +444,7 @@ const VersusScreen = () => {
         ) : (
           comparisonKeys.map((key) => (
             <View style={styles.row} key={key}>
-              <Text style={styles.cellKey}>{key}</Text>
+              <Text style={styles.cellKey}>{LABELS[key] || prettify(key)}</Text>
               <Text style={styles.cellVal}>{formatValue(leftSpecs[key])}</Text>
               <Text style={styles.cellVal}>{formatValue(rightSpecs[key])}</Text>
             </View>
