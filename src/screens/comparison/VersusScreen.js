@@ -201,6 +201,19 @@ const VersusScreen = () => {
     weight_kg: 'Weight kg',
   };
 
+  // Métricas donde un valor menor es mejor (se invierten al normalizar)
+  const LOWER_IS_BETTER = new Set([
+    'tdp',
+    'fabrication_technology_nm',
+    'weight_kg',
+  ]);
+
+  // Opcional: máximos fijos por métrica (descomentar para forzar dominios)
+  // const MAX_BY_METRIC = {
+  //   cores: 64, threads: 128, base_frequency_ghz: 6, boost_frequency_ghz: 7,
+  //   cache_l3: 256, tdp: 300, fabrication_technology_nm: 10,
+  // };
+
   const getCategoryKey = (name) => {
     const s = (name || '').trim().toLowerCase();
     if (!s) return null;
@@ -246,13 +259,12 @@ const VersusScreen = () => {
     const radius = size * 0.38; // margen para etiquetas
     const angleStep = (Math.PI * 2) / axes.length;
 
+    // Rangos por eje: usamos 0..max (max calculado entre ambos productos, con mínimo 1 para evitar división por cero)
     const ranges = axes.map(({ key }) => {
       const va = toNumber(aSpecs[key]);
       const vb = toNumber(bSpecs[key]);
-      const vals = [va, vb].filter((x) => x !== null);
-      const min = vals.length ? Math.min(...vals) : 0;
-      const max = vals.length ? Math.max(...vals) : 1;
-      return { key, min, max: max === min ? min + 1 : max };
+      const max = Math.max(va ?? 0, vb ?? 0, 1);
+      return { key, min: 0, max };
     });
 
     const toPoint = (val, index) => {
@@ -261,14 +273,17 @@ const VersusScreen = () => {
       return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
     };
 
-    const norm = (v, { min, max }) => {
+    const norm = (v, range, key) => {
       const num = toNumber(v);
       if (num === null) return 0;
-      return (num - min) / (max - min);
+      const clamped = Math.max(range.min, Math.min(num, range.max));
+      const denom = (range.max - range.min) || 1;
+      const ratio = (clamped - range.min) / denom;
+      return LOWER_IS_BETTER.has(key) ? 1 - ratio : ratio;
     };
 
-    const aPoints = axes.map((ax, i) => toPoint(norm(aSpecs[ax.key], ranges[i]), i));
-    const bPoints = axes.map((ax, i) => toPoint(norm(bSpecs[ax.key], ranges[i]), i));
+  const aPoints = axes.map((ax, i) => toPoint(norm(aSpecs[ax.key], ranges[i], ax.key), i));
+  const bPoints = axes.map((ax, i) => toPoint(norm(bSpecs[ax.key], ranges[i], ax.key), i));
     const aStr = aPoints.map(([x, y]) => `${x},${y}`).join(' ');
     const bStr = bPoints.map(([x, y]) => `${x},${y}`).join(' ');
 
