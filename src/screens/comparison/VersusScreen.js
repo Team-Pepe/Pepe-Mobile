@@ -24,6 +24,8 @@ const VersusScreen = () => {
   const [loadingLeft, setLoadingLeft] = useState(false);
   const [loadingRight, setLoadingRight] = useState(false);
 
+
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -182,23 +184,98 @@ const VersusScreen = () => {
   };
 
   const LABELS = {
-    cores: 'Cores',
-    threads: 'Threads',
-    base_frequency_ghz: 'Base frequency GHz',
-    boost_frequency_ghz: 'Boost frequency GHz',
-    tdp: 'TDP',
-    cache_l3: 'Cache L3 MB',
-    fabrication_technology_nm: 'Fabrication technology nm',
-    memory_size_gb: 'Memory size GB',
-    boost_clock_mhz: 'Boost clock MHz',
-    memory_bus_bits: 'Memory bus bits',
-    capacity_gb: 'Capacity GB',
-    speed_mhz: 'Speed MHz',
-    display_size_inch: 'Display size inch',
-    battery_mah: 'Battery mAh',
-    ram_gb: 'RAM GB',
-    storage_gb: 'Storage GB',
-    weight_kg: 'Weight kg',
+  // Case/Chasis 
+  motherboard_formats: 'Formatos de Motherboard',
+  bays_35: 'Bahías 3.5"',
+  bays_25: 'Bahías 2.5"',
+  expansion_slots: 'Slots de Expansión',
+  max_gpu_length_mm: 'Largo Máx. GPU (mm)',
+  max_cooler_height_mm: 'Altura Máx. Cooler (mm)',
+  psu_type: 'Tipo de Fuente',
+  included_fans: 'Ventiladores Incluidos',
+  material: 'Material',
+    // CPU
+    cores: 'Núcleos',
+    threads: 'Hilos',
+    base_frequency_ghz: 'Frecuencia Base (GHz)',
+    boost_frequency_ghz: 'Frecuencia Boost (GHz)',
+    tdp: 'TDP (W)',
+    cache_l3: 'Cache L3 (MB)',
+    fabrication_technology_nm: 'Tecnología de Fabricación (nm)',
+    socket: 'Socket',
+    integrated_graphics: 'Gráficos Integrados',
+    
+    // GPU
+    memory_size_gb: 'Memoria (GB)',
+    boost_clock_mhz: 'Frecuencia Boost (MHz)',
+    memory_bus_bits: 'Ancho de Bus (bits)',
+    memory_type: 'Tipo de Memoria',
+    cuda_cores: 'Cores CUDA',
+    stream_processors: 'Stream Processors',
+    
+    // RAM
+    capacity_gb: 'Capacidad (GB)',
+    speed_mhz: 'Velocidad (MHz)',
+    type: 'Tipo de RAM',
+    latency_cls: 'Latencia (CAS)',
+    form_factor: 'Factor de Forma',
+    
+    // Storage
+    capacity: 'Capacidad (GB)',
+    interface: 'Interfaz',
+    read_speed: 'Velocidad de Lectura (MB/s)',
+    write_speed: 'Velocidad de Escritura (MB/s)',
+    form_factors: 'Factor de Forma',
+    
+    // Motherboard
+    chipset: 'Chipset',
+    socket_mb: 'Socket',
+    form_factor_mb: 'Factor de Forma',
+    max_memory: 'Memoria Máxima (GB)',
+    memory_slots: 'Slots de Memoria',
+    pci_slots: 'Slots PCI',
+    
+    // PSU
+    power: 'Potencia (W)',
+    efficiency: 'Eficiencia',
+    modular: '¿Modular?',
+    fan_size: 'Tamaño Ventilador (mm)',
+    
+    // Cooler
+    tdp_max: 'TDP Máximo (W)',
+    fan_speed: 'RPM Ventilador',
+    noise_level: 'Nivel de Ruido (dB)',
+    height: 'Altura (mm)',
+    
+    // Monitor
+    display_size_inch: 'Tamaño Pantalla (pulgadas)',
+    resolution: 'Resolución',
+    refresh_rate: 'Frecuencia Refresco (Hz)',
+    response_time: 'Tiempo Respuesta (ms)',
+    panel_type: 'Tipo de Panel',
+    brightness: 'Brillo (cd/m²)',
+    
+    // Laptop
+    ram_gb: 'RAM (GB)',
+    storage_gb: 'Almacenamiento (GB)',
+    processor: 'Procesador',
+    graphics: 'Gráficos',
+    battery_mah: 'Batería (mAh)',
+    weight_kg: 'Peso (kg)',
+    screen_size: 'Pantalla (pulgadas)',
+    
+    // Phone
+    display_size_phone: 'Pantalla (pulgadas)',
+    processor_phone: 'Procesador',
+    storage_phone: 'Almacenamiento (GB)',
+    camera_main: 'Cámara Principal (MP)',
+    camera_front: 'Cámara Frontal (MP)',
+    battery_phone: 'Batería (mAh)',
+    weight_phone: 'Peso (g)',
+    
+    // Generic/Fallback
+    weight_kg: 'Peso (kg)',
+    price: 'Precio',
   };
 
   // Métricas donde un valor menor es mejor (se invierten al normalizar)
