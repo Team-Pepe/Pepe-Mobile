@@ -516,7 +516,7 @@ const ProductDetailScreen = ({ route, navigation }) => {
         <Text style={styles.price}>{formatPriceWithSymbol(product.price)}</Text>
         <Text style={styles.stock}>Stock disponible: {product.stock} unidades</Text>
         
-        <TouchableOpacity style={styles.buyButton} onPress={() => navigation.navigate('Chat', { user: buildSellerUser() })}>
+        <TouchableOpacity style={styles.buyButton} onPress={() => navigation.navigate('Chat', { userId: product.user_id, userName: buildSellerUser().name })}>
           <FontAwesome5 name="comments" size={20} color="#fff" />
           <Text style={styles.buyButtonText}>Chatear con el vendedor</Text>
         </TouchableOpacity>

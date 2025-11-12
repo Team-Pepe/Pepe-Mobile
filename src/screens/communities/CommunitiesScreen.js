@@ -1,34 +1,85 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Modal, TouchableWithoutFeedback } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
-
-const mockConversations = [
-  { id: '1', title: 'Chat con vendedor: Juan', lastMessage: '¿Te interesa aún?', time: '10:24', unread: 2 },
-  { id: '2', title: 'Grupo: Ofertas Laptops', lastMessage: 'Nuevo descuento en Dell', time: 'Ayer', unread: 0 },
-  { id: '3', title: 'Difusión: Anuncios PepePlace', lastMessage: 'Actualización de la app', time: 'Lun', unread: 1 },
-];
+import ConversationService from '../../services/conversation.service';
+import ChatService from '../../services/chat.service';
+import MessageService from '../../services/message.service';
+import UserService from '../../services/user.service';
 
 const CommunitiesScreen = ({ navigation }) => {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [conversations, setConversations] = useState([]);
+  const [search, setSearch] = useState('');
+  const [filtered, setFiltered] = useState([]);
 
-  const buildUserFromConversation = (conv) => {
-    try {
-      if (conv.title.includes(':')) {
-        const namePart = conv.title.split(':')[1].trim();
-        const username = namePart.toLowerCase().replace(/\s+/g, '');
-        return { name: namePart, username };
+  useEffect(() => {
+    const load = async () => {
+      const meId = await ChatService.currentUserId();
+      if (!meId) {
+        setConversations([]);
+        setFiltered([]);
+        setLoading(false);
+        return;
       }
-      const name = conv.title;
-      const username = name.toLowerCase().replace(/\s+/g, '');
-      return { name, username };
-    } catch (e) {
-      return { name: conv.title || 'Chat', username: 'chat' };
-    }
-  };
+      const rows = await ConversationService.listUserConversations(meId);
+      const items = [];
+      for (const row of rows) {
+        const conv = row.conversations || {};
+        const cid = conv.id;
+        let title = 'Chat';
+        let partnerUserId = null;
+        let partnerName = '';
+        if (conv.type === 'direct' && conv.direct_key) {
+          const [aStr, bStr] = String(conv.direct_key).split(':');
+          const a = Number(aStr);
+          const b = Number(bStr);
+          const otherId = meId === a ? b : a;
+          partnerUserId = otherId;
+          const n = await UserService.getUserNameById(otherId);
+          partnerName = n || 'Usuario';
+          title = partnerName;
+        } else if (conv.type === 'group') {
+          title = 'Grupo';
+        }
+        let lastMessage = '';
+        let time = '';
+        const last = await MessageService.listMessages(cid, { limit: 1 });
+        if (last && last.length > 0) {
+          const m = last[0];
+          lastMessage = m.content;
+          const dt = new Date(m.created_at);
+          const hh = String(dt.getHours()).padStart(2, '0');
+          const mm = String(dt.getMinutes()).padStart(2, '0');
+          time = `${hh}:${mm}`;
+        }
+        items.push({ id: String(cid), title, lastMessage, time, unread: 0, conversationId: cid, partnerUserId, partnerName });
+      }
+      setConversations(items);
+      setFiltered(items);
+      setLoading(false);
+    };
+    load();
+  }, []);
+
+  useEffect(() => {
+    const q = search.toLowerCase();
+    const res = conversations.filter((c) => c.title.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q));
+    setFiltered(res);
+  }, [search, conversations]);
 
   const renderItem = ({ item }) => (
-    <TouchableOpacity style={styles.item} onPress={() => navigation.navigate('Chat', { user: buildUserFromConversation(item) })}>
+    <TouchableOpacity
+      style={styles.item}
+      onPress={() => {
+        if (item.partnerUserId) {
+          navigation.navigate('Chat', { userId: item.partnerUserId, userName: item.partnerName });
+        } else {
+          navigation.navigate('Chat', { conversationId: item.conversationId, userName: item.title });
+        }
+      }}
+    >
       <View style={styles.itemHeader}>
         <Text style={styles.itemTitle}>{item.title}</Text>
         <Text style={styles.itemTime}>{item.time}</Text>
@@ -57,11 +108,11 @@ const CommunitiesScreen = ({ navigation }) => {
 
       <View style={styles.searchBar}>
         <FontAwesome5 name="search" size={14} color="#bdbdbd" />
-        <TextInput style={styles.searchInput} placeholder="Buscar chats, grupos..." placeholderTextColor="#8a8a8a" />
+        <TextInput style={styles.searchInput} placeholder="Buscar chats, grupos..." placeholderTextColor="#8a8a8a" value={search} onChangeText={setSearch} />
       </View>
 
       <FlatList
-        data={mockConversations}
+        data={filtered}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={styles.listContainer}

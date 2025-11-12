@@ -2,15 +2,14 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
+import { supabase } from '../../lib/supabase';
 
-const mockUsers = [
-  { id: '1', name: 'Juan Pérez', username: 'juanp', location: 'Bogotá', lastSeen: 'hace 1 h' },
-  { id: '2', name: 'María Gómez', username: 'maria_g', location: 'Medellín', lastSeen: 'en línea' },
-  { id: '3', name: 'Carlos Ruiz', username: 'c_ruiz', location: 'Cali', lastSeen: 'hace 2 h' },
-  { id: '4', name: 'Ana Torres', username: 'ana.t', location: 'Barranquilla', lastSeen: 'ayer' },
-  { id: '5', name: 'Luis Hernández', username: 'luis_h', location: 'Pereira', lastSeen: 'hace 5 min' },
-  { id: '6', name: 'Sofía Martínez', username: 'sofi.m', location: 'Bucaramanga', lastSeen: 'hace 20 min' },
-];
+const toDisplayName = (row) => {
+  const first = (row?.first_name || '').trim();
+  const last = (row?.last_name || '').trim();
+  const full = `${first} ${last}`.trim();
+  return full || row?.email || 'Usuario';
+};
 
 const getInitials = (name) => {
   const parts = name.split(' ');
@@ -44,25 +43,40 @@ const UserPickerScreen = ({ navigation }) => {
   const [search, setSearch] = useState('');
   const [selectedId, setSelectedId] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [filtered, setFiltered] = useState(mockUsers);
+  const [users, setUsers] = useState([]);
+  const [filtered, setFiltered] = useState([]);
 
   useEffect(() => {
-    // Simula carga de red
-    const t = setTimeout(() => setLoading(false), 800);
-    return () => clearTimeout(t);
+    const load = async () => {
+      const { data, error } = await supabase
+        .from('users')
+        .select('id, email, first_name, last_name')
+        .order('first_name', { ascending: true });
+      if (!error) {
+        const mapped = (data || []).map((row) => ({
+          id: String(row.id),
+          name: toDisplayName(row),
+          email: row.email,
+        }));
+        setUsers(mapped);
+        setFiltered(mapped);
+      }
+      setLoading(false);
+    };
+    load();
   }, []);
 
   useEffect(() => {
     if (!loading) {
       const lower = search.toLowerCase();
-      const res = mockUsers.filter(
+      const res = users.filter(
         (u) =>
           u.name.toLowerCase().includes(lower) ||
-          u.username.toLowerCase().includes(lower)
+          (u.email || '').toLowerCase().includes(lower)
       );
       setFiltered(res);
     }
-  }, [search, loading]);
+  }, [search, loading, users]);
 
   const renderItem = ({ item }) => {
     const selected = item.id === selectedId;
@@ -77,7 +91,7 @@ const UserPickerScreen = ({ navigation }) => {
           </View>
           <View>
             <Text style={styles.name}>{item.name}</Text>
-            <Text style={styles.meta}>@{item.username} · {item.location} · {item.lastSeen}</Text>
+            <Text style={styles.meta}>{item.email}</Text>
           </View>
         </View>
         <View style={styles.itemRight}>
@@ -97,9 +111,9 @@ const UserPickerScreen = ({ navigation }) => {
 
   const handleStartChat = () => {
     if (!selectedId) return;
-    const user = mockUsers.find((u) => u.id === selectedId);
+    const user = users.find((u) => u.id === selectedId);
     if (!user) return;
-    navigation.navigate('Chat', { user });
+    navigation.navigate('Chat', { userId: parseInt(user.id), userName: user.name });
   };
 
   return (

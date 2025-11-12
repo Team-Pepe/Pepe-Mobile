@@ -66,6 +66,28 @@ CREATE TABLE public.community_posts (
   CONSTRAINT community_posts_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id),
   CONSTRAINT community_posts_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
+CREATE TABLE public.conversation_members (
+  id integer NOT NULL DEFAULT nextval('conversation_members_id_seq'::regclass),
+  conversation_id integer NOT NULL,
+  user_id integer NOT NULL,
+  role character varying DEFAULT 'member'::character varying CHECK (role::text = ANY (ARRAY['member'::text, 'moderator'::text, 'admin'::text])),
+  joined_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  last_read_at timestamp without time zone,
+  CONSTRAINT conversation_members_pkey PRIMARY KEY (id),
+  CONSTRAINT conversation_members_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id),
+  CONSTRAINT conversation_members_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
+);
+CREATE TABLE public.conversations (
+  id integer NOT NULL DEFAULT nextval('conversations_id_seq'::regclass),
+  type character varying NOT NULL CHECK (type::text = ANY (ARRAY['direct'::text, 'group'::text])),
+  title character varying,
+  community_id integer,
+  direct_key character varying UNIQUE,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  CONSTRAINT conversations_pkey PRIMARY KEY (id),
+  CONSTRAINT conversations_community_id_fkey FOREIGN KEY (community_id) REFERENCES public.communities(id)
+);
 CREATE TABLE public.cooler_specifications (
   id integer NOT NULL DEFAULT nextval('cooler_specifications_id_seq'::regclass),
   product_id integer UNIQUE,
@@ -131,6 +153,19 @@ CREATE TABLE public.laptop_specifications (
   operating_system character varying,
   CONSTRAINT laptop_specifications_pkey PRIMARY KEY (id),
   CONSTRAINT laptop_specifications_product_id_fkey FOREIGN KEY (product_id) REFERENCES public.products(id)
+);
+CREATE TABLE public.messages (
+  id integer NOT NULL DEFAULT nextval('messages_id_seq'::regclass),
+  conversation_id integer NOT NULL,
+  user_id integer NOT NULL,
+  content text NOT NULL,
+  attachments jsonb DEFAULT '[]'::jsonb,
+  created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  updated_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  deleted_at timestamp without time zone,
+  CONSTRAINT messages_pkey PRIMARY KEY (id),
+  CONSTRAINT messages_conversation_id_fkey FOREIGN KEY (conversation_id) REFERENCES public.conversations(id),
+  CONSTRAINT messages_user_id_fkey FOREIGN KEY (user_id) REFERENCES public.users(id)
 );
 CREATE TABLE public.monitor_specifications (
   id integer NOT NULL DEFAULT nextval('monitor_specifications_id_seq'::regclass),

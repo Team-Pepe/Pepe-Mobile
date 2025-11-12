@@ -2,6 +2,9 @@ import React, { useState, useEffect } from 'react';
 import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Keyboard } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
+import ChatService from '../../services/chat.service';
+import MessageService from '../../services/message.service';
+import UserService from '../../services/user.service';
 
 const getInitials = (name = '') => {
   const parts = name.split(' ');
@@ -10,15 +13,16 @@ const getInitials = (name = '') => {
   return (first + last).toUpperCase();
 };
 
-const initialMessages = [
-  { id: '1', from: 'them', text: '¡Hola! ¿Te interesa el producto?', time: '10:20' },
-  { id: '2', from: 'me', text: 'Sí, ¿tiene garantía?', time: '10:22', status: 'read' },
-  { id: '3', from: 'them', text: 'Claro, 12 meses.', time: '10:23' },
-];
 
 const ChatScreen = ({ navigation, route }) => {
-  const user = route?.params?.user || { name: 'Usuario', username: 'user' };
-  const [messages, setMessages] = useState(initialMessages);
+  const paramUser = route?.params?.user || null;
+  const userIdParam = route?.params?.userId || null;
+  const conversationIdParam = route?.params?.conversationId || null;
+  const [headerName, setHeaderName] = useState(paramUser?.name || route?.params?.userName || 'Usuario');
+  const [headerUsername, setHeaderUsername] = useState(paramUser?.username || route?.params?.username || 'user');
+  const [conversationId, setConversationId] = useState(conversationIdParam || null);
+  const [currentUserId, setCurrentUserId] = useState(null);
+  const [messages, setMessages] = useState([]);
   const [input, setInput] = useState('');
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const insets = useSafeAreaInsets();
@@ -38,23 +42,52 @@ const ChatScreen = ({ navigation, route }) => {
     };
   }, []);
 
-  const handleSend = () => {
+  useEffect(() => {
+    const init = async () => {
+      const meId = await ChatService.currentUserId();
+      setCurrentUserId(meId);
+      if (userIdParam && !headerName) {
+        const n = await UserService.getUserNameById(userIdParam);
+        setHeaderName(n || 'Usuario');
+        setHeaderUsername(String(n || 'usuario').toLowerCase().replace(/\s+/g, ''));
+      }
+      let cid = conversationIdParam;
+      if (!cid && userIdParam) {
+        cid = await ChatService.startDirectChat(userIdParam);
+        setConversationId(cid);
+      }
+      if (cid) {
+        const list = await MessageService.listMessages(cid, { limit: 50 });
+        const mapped = (list || []).map((m) => {
+          const dt = new Date(m.created_at);
+          const hh = String(dt.getHours()).padStart(2, '0');
+          const mm = String(dt.getMinutes()).padStart(2, '0');
+          return { id: String(m.id), from: m.user_id === meId ? 'me' : 'them', text: m.content, time: `${hh}:${mm}`, status: m.user_id === meId ? 'read' : undefined };
+        });
+        setMessages(mapped);
+      }
+    };
+    init();
+  }, [userIdParam, conversationIdParam]);
+
+  const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
+    let cid = conversationId;
+    if (!cid && userIdParam) {
+      cid = await ChatService.startDirectChat(userIdParam);
+      setConversationId(cid);
+    }
+    if (!cid) return;
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const id = String(Date.now());
-    const msg = { id, from: 'me', text, time, status: 'sent' };
-    setMessages((prev) => [...prev, msg]);
+    const tempId = String(Date.now());
+    const pending = { id: tempId, from: 'me', text, time, status: 'sent' };
+    setMessages((prev) => [...prev, pending]);
     setInput('');
-
-    // Simulación de progresión de estados: enviado -> entregado -> leído
-    setTimeout(() => {
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'delivered' } : m)));
-    }, 800);
-    setTimeout(() => {
-      setMessages((prev) => prev.map((m) => (m.id === id ? { ...m, status: 'read' } : m)));
-    }, 1800);
+    const saved = await MessageService.sendMessage(cid, text, []);
+    const finalId = String(saved?.id || tempId);
+    setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: finalId, status: 'read' } : m)));
   };
 
   const renderItem = ({ item }) => {
@@ -101,11 +134,11 @@ const ChatScreen = ({ navigation, route }) => {
         </TouchableOpacity>
         <View style={styles.headerCenter}>
           <View style={styles.avatar}>
-            <Text style={styles.avatarText}>{getInitials(user.name)}</Text>
+            <Text style={styles.avatarText}>{getInitials(headerName)}</Text>
           </View>
           <View>
-            <Text style={styles.title}>{user.name}</Text>
-            <Text style={styles.subtitle}>@{user.username}</Text>
+            <Text style={styles.title}>{headerName}</Text>
+            <Text style={styles.subtitle}>@{headerUsername}</Text>
           </View>
         </View>
         <View style={{ width: 40 }} />
