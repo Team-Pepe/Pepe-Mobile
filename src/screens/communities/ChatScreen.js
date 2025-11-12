@@ -141,6 +141,12 @@ const ChatScreen = ({ navigation, route }) => {
         };
         setMessages((prev) => {
           if (prev.some(exists)) return prev;
+          const idx = prev.findIndex((p) => p.from === 'me' && p.status === 'sent' && p.text === m.content);
+          if (idx !== -1) {
+            const copy = [...prev];
+            copy[idx] = { ...copy[idx], id: String(m.id), time: `${hh}:${mm}`, status: 'delivered', createdAt: m.created_at };
+            return copy;
+          }
           return [...prev, newMsg];
         });
         if (m.user_id !== currentUserId) {
@@ -176,7 +182,14 @@ const ChatScreen = ({ navigation, route }) => {
       const saved = await MessageService.sendMessage(cid, text, []);
       console.log('🟩 Mensaje guardado:', saved);
       const finalId = String(saved?.id || tempId);
-      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: finalId, status: 'delivered', createdAt: saved?.created_at || m.createdAt } : m)));
+    setMessages((prev) => {
+      const finalStr = String(finalId);
+      const already = prev.some((m) => m.id === finalStr);
+      if (already) {
+        return prev.filter((m) => m.id !== tempId);
+      }
+      return prev.map((m) => (m.id === tempId ? { ...m, id: finalStr, status: 'delivered', createdAt: saved?.created_at || m.createdAt } : m));
+    });
       const members = await ConversationService.listMembers(cid);
       const partner = (members || []).find((m) => m.user_id !== currentUserId);
       const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
