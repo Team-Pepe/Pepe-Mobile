@@ -166,6 +166,15 @@ const ProductDetailScreen = ({ route, navigation }) => {
     return { name, username };
   };
 
+  const getSellerId = () => {
+    const id =
+      productFromRoute?.user_id ||
+      productFromRoute?.owner_id ||
+      productFromRoute?.user?.id ||
+      null;
+    return id ? parseInt(id) : null;
+  };
+
   // Cargar especificaciones del producto desde la base de datos
   useEffect(() => {
     const loadProductSpecifications = async () => {
@@ -516,7 +525,15 @@ const ProductDetailScreen = ({ route, navigation }) => {
         <Text style={styles.price}>{formatPriceWithSymbol(product.price)}</Text>
         <Text style={styles.stock}>Stock disponible: {product.stock} unidades</Text>
         
-        <TouchableOpacity style={styles.buyButton} onPress={() => navigation.navigate('Chat', { userId: product.user_id, userName: buildSellerUser().name })}>
+        <TouchableOpacity
+          style={styles.buyButton}
+          onPress={() => {
+            const sellerId = getSellerId();
+            if (!sellerId) return;
+            const seller = buildSellerUser();
+            navigation.navigate('Chat', { userId: sellerId, userName: seller.name, username: seller.username });
+          }}
+        >
           <FontAwesome5 name="comments" size={20} color="#fff" />
           <Text style={styles.buyButtonText}>Chatear con el vendedor</Text>
         </TouchableOpacity>
