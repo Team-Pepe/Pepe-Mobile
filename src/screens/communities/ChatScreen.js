@@ -136,6 +136,46 @@ const ChatScreen = ({ navigation, route }) => {
     };
   }, [conversationId, currentUserId]);
 
+  useEffect(() => {
+    let t;
+    const tick = async () => {
+      if (!conversationId || !currentUserId) return;
+      const list = await MessageService.listMessages(conversationId, { limit: 50 });
+      const mapped = (list || []).map((m) => {
+        const dt = new Date(m.created_at);
+        const hh = String(dt.getHours()).padStart(2, '0');
+        const mm = String(dt.getMinutes()).padStart(2, '0');
+        return {
+          id: String(m.id),
+          from: m.user_id === currentUserId ? 'me' : 'them',
+          text: m.content,
+          time: `${hh}:${mm}`,
+          status: m.user_id === currentUserId ? 'delivered' : undefined,
+          createdAt: m.created_at,
+        };
+      });
+      setMessages((prev) => {
+        const map = new Map(prev.map((x) => [x.id, x]));
+        for (const m of mapped) map.set(m.id, { ...(map.get(m.id) || {}), ...m });
+        const arr = Array.from(map.values());
+        arr.sort((a, b) => new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime());
+        const pra = partnerReadAt ? new Date(partnerReadAt).getTime() : null;
+        if (pra) {
+          for (let i = 0; i < arr.length; i++) {
+            const m = arr[i];
+            if (m.from === 'me' && new Date(m.createdAt).getTime() <= pra) arr[i] = { ...m, status: 'read' };
+          }
+        }
+        return arr;
+      });
+      await MessageService.markRead(conversationId);
+    };
+    t = setInterval(tick, 2000);
+    return () => {
+      if (t) clearInterval(t);
+    };
+  }, [conversationId, currentUserId, partnerReadAt]);
+
   const handleSend = async () => {
     const text = input.trim();
     if (!text) return;
