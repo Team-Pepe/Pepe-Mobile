@@ -24,6 +24,8 @@ const VersusScreen = () => {
   const [loadingLeft, setLoadingLeft] = useState(false);
   const [loadingRight, setLoadingRight] = useState(false);
 
+
+
   useEffect(() => {
     const loadCategories = async () => {
       try {
@@ -182,24 +184,137 @@ const VersusScreen = () => {
   };
 
   const LABELS = {
-    cores: 'Cores',
-    threads: 'Threads',
-    base_frequency_ghz: 'Base frequency GHz',
-    boost_frequency_ghz: 'Boost frequency GHz',
-    tdp: 'TDP',
-    cache_l3: 'Cache L3 MB',
-    fabrication_technology_nm: 'Fabrication technology nm',
-    memory_size_gb: 'Memory size GB',
-    boost_clock_mhz: 'Boost clock MHz',
-    memory_bus_bits: 'Memory bus bits',
-    capacity_gb: 'Capacity GB',
-    speed_mhz: 'Speed MHz',
-    display_size_inch: 'Display size inch',
-    battery_mah: 'Battery mAh',
-    ram_gb: 'RAM GB',
-    storage_gb: 'Storage GB',
-    weight_kg: 'Weight kg',
-  };
+  // Case / Chasis (case_specifications)
+  motherboard_formats: 'Formatos de Motherboard',
+  bays_35: 'Bahías 3.5"',
+  bays_25: 'Bahías 2.5"',
+  expansion_slots: 'Slots de Expansión',
+  max_gpu_length_mm: 'Largo Máx. GPU (mm)',
+  max_cooler_height_mm: 'Altura Máx. Cooler (mm)',
+  psu_type: 'Tipo de Fuente',
+  included_fans: 'Ventiladores Incluidos',
+  material: 'Material',
+
+  // CPU (cpu_specifications)
+  socket: 'Socket',
+  cores: 'Núcleos',
+  threads: 'Hilos',
+  base_frequency_ghz: 'Frecuencia Base (GHz)',
+  boost_frequency_ghz: 'Frecuencia Boost (GHz)',
+  cache_l3: 'Cache L3 (MB)',
+  tdp: 'TDP (W)',
+  integrated_graphics: 'Gráficos Integrados',
+  fabrication_technology_nm: 'Tecnología de Fabricación (nm)',
+
+  // GPU (gpu_specifications)
+  vram_gb: 'VRAM (GB)',
+  vram_type: 'Tipo de VRAM',
+  cuda_cores: 'CUDA Cores',
+  base_frequency_mhz: 'Frecuencia Base (MHz)',
+  boost_frequency_mhz: 'Frecuencia Boost (MHz)',
+  bandwidth_gbs: 'Ancho de Banda (GB/s)',
+  power_connectors: 'Conectores de Energía',
+  length_mm: 'Largo (mm)',
+  video_outputs: 'Salidas de Video',
+
+  // RAM (ram_specifications)
+  capacity_gb: 'Capacidad (GB)',
+  type: 'Tipo de RAM',
+  speed_mhz: 'Velocidad (MHz)',
+  latency: 'Latencia (CAS)',
+  modules: 'Módulos',
+  voltage: 'Voltaje (V)',
+  heat_spreader: 'Disipador de Calor',
+  rgb_lighting: 'Iluminación RGB',
+
+  // Storage (storage_specifications)
+  // Nota: usa las columnas EXACTAS con sufijos _gb y _mbs como aparecen en tu DB
+  type: 'Tipo',
+  capacity_gb: 'Capacidad (GB)',
+  interface: 'Interfaz',
+  read_speed_mbs: 'Velocidad de Lectura (MB/s)',
+  write_speed_mbs: 'Velocidad de Escritura (MB/s)',
+  form_factor: 'Factor de Forma',
+  nand_type: 'Tipo de NAND',
+  tbw: 'TBW (TB escritos)',
+
+  // Motherboard (motherboard_specifications)
+  chipset: 'Chipset',
+  form_factor: 'Factor de Forma',
+  ram_slots: 'Slots de RAM',
+  ram_type: 'Tipo de RAM',
+  m2_ports: 'Puertos M.2',
+  sata_ports: 'Puertos SATA',
+  usb_ports: 'Puertos USB',
+  audio: 'Audio',
+  network: 'Red',
+
+  // Cooler (cooler_specifications)
+  cooler_type: 'Tipo de Cooler',
+  compatible_sockets: 'Sockets Compatibles',
+  height_mm: 'Altura (mm)',
+  rpm_range: 'Rango de RPM',
+  noise_level_db: 'Nivel de Ruido (dB)',
+  tdp_w: 'TDP Máximo (W)',
+
+  // Monitor (monitor_specifications)
+  screen_inches: 'Tamaño Pantalla (pulgadas)',
+  resolution: 'Resolución',
+  refresh_rate_hz: 'Frecuencia de Refresco (Hz)',
+  response_time_ms: 'Tiempo de Respuesta (ms)',
+  panel_type: 'Tipo de Panel',
+  connectors: 'Conectores',
+  curved: 'Curvo',
+
+  // Laptop (laptop_specifications)
+  processor: 'Procesador',
+  ram_gb: 'RAM (GB)',
+  storage: 'Almacenamiento',
+  screen_inches: 'Pantalla (pulgadas)',
+  resolution: 'Resolución',
+  graphics_card: 'Gráficos',
+  weight_kg: 'Peso (kg)',
+  battery_wh: 'Batería (Wh)',
+  operating_system: 'Sistema Operativo',
+
+  // Phone (phone_specifications)
+  screen_inches: 'Pantalla (pulgadas)',
+  resolution: 'Resolución',
+  processor: 'Procesador',
+  ram_gb: 'RAM (GB)',
+  storage_gb: 'Almacenamiento (GB)',
+  main_camera_mp: 'Cámara Principal (MP)',
+  battery_mah: 'Batería (mAh)',
+  operating_system: 'Sistema Operativo',
+
+  // Peripheral (peripheral_specifications)
+  peripheral_type: 'Tipo de Periférico',
+  connectivity: 'Conectividad',
+  mouse_sensor: 'Sensor del Ratón',
+  keyboard_switches: 'Switches de Teclado',
+  response_frequency_hz: 'Frecuencia de Respuesta (Hz)',
+  noise_cancellation: 'Cancelación de Ruido',
+  microphone_type: 'Tipo de Micrófono',
+
+  // Otros / genéricos
+  general_specifications: 'Especificaciones Generales',
+  price: 'Precio',
+  // weight_kg ya se mapea arriba en laptop; si lo usas en otras categorías, también aplica
+};
+
+
+  // Métricas donde un valor menor es mejor (se invierten al normalizar)
+  const LOWER_IS_BETTER = new Set([
+    'tdp',
+    'fabrication_technology_nm',
+    'weight_kg',
+  ]);
+
+  // Opcional: máximos fijos por métrica (descomentar para forzar dominios)
+  // const MAX_BY_METRIC = {
+  //   cores: 64, threads: 128, base_frequency_ghz: 6, boost_frequency_ghz: 7,
+  //   cache_l3: 256, tdp: 300, fabrication_technology_nm: 10,
+  // };
 
   const getCategoryKey = (name) => {
     const s = (name || '').trim().toLowerCase();
@@ -246,13 +361,12 @@ const VersusScreen = () => {
     const radius = size * 0.38; // margen para etiquetas
     const angleStep = (Math.PI * 2) / axes.length;
 
+    // Rangos por eje: usamos 0..max (max calculado entre ambos productos, con mínimo 1 para evitar división por cero)
     const ranges = axes.map(({ key }) => {
       const va = toNumber(aSpecs[key]);
       const vb = toNumber(bSpecs[key]);
-      const vals = [va, vb].filter((x) => x !== null);
-      const min = vals.length ? Math.min(...vals) : 0;
-      const max = vals.length ? Math.max(...vals) : 1;
-      return { key, min, max: max === min ? min + 1 : max };
+      const max = Math.max(va ?? 0, vb ?? 0, 1);
+      return { key, min: 0, max };
     });
 
     const toPoint = (val, index) => {
@@ -261,14 +375,17 @@ const VersusScreen = () => {
       return [cx + r * Math.cos(angle), cy + r * Math.sin(angle)];
     };
 
-    const norm = (v, { min, max }) => {
+    const norm = (v, range, key) => {
       const num = toNumber(v);
       if (num === null) return 0;
-      return (num - min) / (max - min);
+      const clamped = Math.max(range.min, Math.min(num, range.max));
+      const denom = (range.max - range.min) || 1;
+      const ratio = (clamped - range.min) / denom;
+      return LOWER_IS_BETTER.has(key) ? 1 - ratio : ratio;
     };
 
-    const aPoints = axes.map((ax, i) => toPoint(norm(aSpecs[ax.key], ranges[i]), i));
-    const bPoints = axes.map((ax, i) => toPoint(norm(bSpecs[ax.key], ranges[i]), i));
+  const aPoints = axes.map((ax, i) => toPoint(norm(aSpecs[ax.key], ranges[i], ax.key), i));
+  const bPoints = axes.map((ax, i) => toPoint(norm(bSpecs[ax.key], ranges[i], ax.key), i));
     const aStr = aPoints.map(([x, y]) => `${x},${y}`).join(' ');
     const bStr = bPoints.map(([x, y]) => `${x},${y}`).join(' ');
 
@@ -429,7 +546,7 @@ const VersusScreen = () => {
         ) : (
           comparisonKeys.map((key) => (
             <View style={styles.row} key={key}>
-              <Text style={styles.cellKey}>{key}</Text>
+              <Text style={styles.cellKey}>{LABELS[key] || prettify(key)}</Text>
               <Text style={styles.cellVal}>{formatValue(leftSpecs[key])}</Text>
               <Text style={styles.cellVal}>{formatValue(rightSpecs[key])}</Text>
             </View>
