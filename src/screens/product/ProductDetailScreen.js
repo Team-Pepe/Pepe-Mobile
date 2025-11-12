@@ -16,9 +16,6 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import ProductService from '../../services/product.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
 import FavoritesService from '../../services/favorites.service';
-import * as ImagePicker from 'expo-image-picker';
-import ReviewsService from '../../services/reviews.service';
-import UserService from '../../services/user.service';
 
 const ProductDetailScreen = ({ route, navigation }) => {
   const [selectedTab, setSelectedTab] = useState('specs');
@@ -28,8 +25,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
   const [reviews, setReviews] = useState([]);
   const [newRating, setNewRating] = useState(0);
   const [newComment, setNewComment] = useState('');
-  const [attachedImages, setAttachedImages] = useState([]); // URIs locales (máx 5)
-  const [submittingReview, setSubmittingReview] = useState(false);
   const [isFavorite, setIsFavorite] = useState(false);
   const [favLoading, setFavLoading] = useState(false);
   const [keyboardOffset, setKeyboardOffset] = useState(0);
@@ -424,162 +419,22 @@ const ProductDetailScreen = ({ route, navigation }) => {
           value={newComment}
           onChangeText={setNewComment}
         />
-        {/* Botón tipo pin para adjuntar fotos (cámara/galería) */}
-        <View style={styles.attachRow}>
-          <TouchableOpacity
-            style={styles.pinButton}
-            onPress={async () => {
-              try {
-                const remaining = Math.max(0, 5 - attachedImages.length);
-                if (remaining <= 0) {
-                  Alert.alert('Límite alcanzado', 'Puedes adjuntar máximo 5 fotos.');
-                  return;
-                }
-
-                const addFromGallery = async () => {
-                  const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
-                  if (status !== 'granted') {
-                    Alert.alert('Permisos requeridos', 'Se necesitan permisos para acceder a la galería');
-                    return;
-                  }
-                  console.log('📷 [ProductDetail] Abriendo galería, límite:', remaining);
-                  const result = await ImagePicker.launchImageLibraryAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                    allowsMultipleSelection: true,
-                    selectionLimit: remaining,
-                    allowsEditing: false,
-                    quality: 0.8,
-                  });
-                  if (!result.canceled && Array.isArray(result.assets)) {
-                    const newUris = result.assets.map(a => a.uri).filter(Boolean);
-                    console.log('📎 [ProductDetail] Imágenes seleccionadas de galería:', newUris);
-                    setAttachedImages(prev => {
-                      const merged = [...prev, ...newUris];
-                      const unique = Array.from(new Set(merged)).slice(0, 5);
-                      return unique;
-                    });
-                  }
-                };
-
-                const addFromCamera = async () => {
-                  if (Platform.OS === 'web') {
-                    return addFromGallery();
-                  }
-                  const { status } = await ImagePicker.requestCameraPermissionsAsync();
-                  if (status !== 'granted') {
-                    Alert.alert('Permisos requeridos', 'Se necesitan permisos para usar la cámara');
-                    return;
-                  }
-                  console.log('📷 [ProductDetail] Abriendo cámara');
-                  const result = await ImagePicker.launchCameraAsync({
-                    mediaTypes: ImagePicker.MediaTypeOptions.Images,
-                    allowsEditing: false,
-                    quality: 0.8,
-                  });
-                  if (!result.canceled && Array.isArray(result.assets)) {
-                    const newUris = result.assets.map(a => a.uri).filter(Boolean);
-                    console.log('📎 [ProductDetail] Imagen capturada de cámara:', newUris);
-                    setAttachedImages(prev => {
-                      const merged = [...prev, ...newUris];
-                      const unique = Array.from(new Set(merged)).slice(0, 5);
-                      return unique;
-                    });
-                  }
-                };
-
-                if (Platform.OS === 'web') {
-                  await addFromGallery();
-                } else {
-                  Alert.alert(
-                    'Adjuntar foto',
-                    'Elige una opción',
-                    [
-                      { text: 'Cámara', onPress: addFromCamera },
-                      { text: 'Galería', onPress: addFromGallery },
-                      { text: 'Cancelar', style: 'cancel' },
-                    ]
-                  );
-                }
-              } catch (err) {
-                console.error('❌ [ProductDetail] Error adjuntando fotos:', err);
-              }
-            }}
-          >
-            <FontAwesome5 name="map-pin" size={20} color="#fff" />
-            <Text style={styles.pinButtonText}>Añadir foto</Text>
-          </TouchableOpacity>
-          <Text style={styles.attachInfo}>Máx 5 fotos</Text>
-        </View>
-
-        {/* Vista previa de imágenes adjuntadas */}
-        {attachedImages.length > 0 && (
-          <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.previewScroll}>
-            {attachedImages.map((uri, idx) => (
-              <View key={`${uri}-${idx}`} style={styles.previewItem}>
-                <Image source={{ uri }} style={styles.previewImage} />
-                <TouchableOpacity style={styles.previewRemove} onPress={() => {
-                  setAttachedImages(prev => prev.filter((_, i) => i !== idx));
-                }}>
-                  <FontAwesome5 name="times" size={14} color="#fff" />
-                </TouchableOpacity>
-              </View>
-            ))}
-          </ScrollView>
-        )}
         <TouchableOpacity
           style={styles.submitButton}
-          disabled={submittingReview}
-          onPress={async () => {
+          onPress={() => {
             if (!newRating || !newComment.trim()) return;
-            if (!productFromRoute?.id) { alert('Producto inválido'); return; }
-            try {
-              setSubmittingReview(true);
-              console.log('📝 [ProductDetail] Publicando reseña...', {
-                productId: productFromRoute.id,
-                rating: newRating,
-                commentLength: newComment.trim().length,
-                imagesCount: attachedImages.length,
-              });
-              const res = await ReviewsService.addReview(productFromRoute.id, {
-                rating: newRating,
-                commentText: newComment.trim(),
-                imageUris: attachedImages,
-              });
-              if (res?.created) {
-                const created = res.data;
-                console.log('✅ [ProductDetail] Reseña publicada', created);
-                let displayName = 'Tú';
-                try {
-                  if (created?.user_id) {
-                    const name = await UserService.getUserNameById(created.user_id);
-                    if (name) displayName = name;
-                  }
-                } catch (_) {}
-                const newRow = {
-                  user: displayName,
-                  rating: created?.rating || newRating,
-                  comment: created?.comment_text || newComment.trim(),
-                  date: (created?.created_at || new Date().toISOString()).slice(0,10),
-                  images: Array.isArray(created?.content?.images) ? created.content.images : [],
-                };
-                setReviews(prev => [newRow, ...prev]);
-                setNewRating(0);
-                setNewComment('');
-                setAttachedImages([]);
-                Alert.alert('Reseña publicada', 'Tu comentario se ha guardado correctamente');
-              } else {
-                console.log('⚠️ [ProductDetail] Falla al publicar reseña:', res?.error);
-                Alert.alert('Error', res?.error || 'No se pudo publicar la reseña');
-              }
-            } catch (e) {
-              console.error('❌ [ProductDetail] Error publicando reseña:', e);
-              Alert.alert('Error', e?.message || 'Error publicando reseña');
-            } finally {
-              setSubmittingReview(false);
-            }
+            const newReview = {
+              user: 'Usuario',
+              rating: newRating,
+              comment: newComment.trim(),
+              date: new Date().toISOString().slice(0,10),
+            };
+            setReviews(prev => [...prev, newReview]);
+            setNewRating(0);
+            setNewComment('');
           }}
         >
-          <Text style={styles.submitButtonText}>{submittingReview ? 'Enviando...' : 'Enviar reseña'}</Text>
+          <Text style={styles.submitButtonText}>Enviar reseña</Text>
         </TouchableOpacity>
       </View>
       {(Array.isArray(reviews) ? reviews : []).map((review, index) => (
@@ -590,22 +445,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
           </View>
           <Text style={styles.reviewComment}>{review.comment}</Text>
           <Text style={styles.reviewDate}>{review.date}</Text>
-          {/* Miniaturas de imágenes de la reseña */}
-          {(() => {
-            const imgs = Array.isArray(review.images)
-              ? review.images
-              : (Array.isArray(review?.content?.images) ? review.content.images : []);
-            if (!imgs || !imgs.length) return null;
-            return (
-              <ScrollView horizontal showsHorizontalScrollIndicator={false} style={styles.reviewImagesRow}>
-                {imgs.map((url, idx) => (
-                  <TouchableOpacity key={`${index}-${idx}`} onPress={() => openViewer(imgs, review.comment || review.comment_text || '', idx)}>
-                    <Image source={{ uri: url }} style={styles.reviewThumb} />
-                  </TouchableOpacity>
-                ))}
-              </ScrollView>
-            );
-          })()}
         </View>
       ))}
     </View>
@@ -705,30 +544,6 @@ const ProductDetailScreen = ({ route, navigation }) => {
       </View>
 
       {selectedTab === 'specs' ? renderSpecificationsTable() : renderReviews()}
-
-      {/* Visor de imágenes de reseñas */}
-      <Modal visible={viewerVisible} transparent animationType="fade" onRequestClose={closeViewer}>
-        <View style={styles.viewerOverlay}>
-          <FlatList
-            data={viewerImages}
-            keyExtractor={(u, i) => `${u}-${i}`}
-            horizontal
-            pagingEnabled
-            showsHorizontalScrollIndicator={false}
-            renderItem={({ item }) => (
-              <Image source={{ uri: item }} style={[styles.viewerImage, { width: screenWidth }]} />
-            )}
-            initialScrollIndex={viewerIndex}
-            getItemLayout={(_, i) => ({ length: screenWidth, offset: screenWidth * i, index: i })}
-          />
-          <View style={styles.viewerCommentBar}>
-            <Text style={styles.viewerCommentText}>{viewerComment}</Text>
-            <TouchableOpacity style={styles.viewerCloseBtn} onPress={closeViewer}>
-              <Text style={styles.viewerCloseText}>Cerrar</Text>
-            </TouchableOpacity>
-          </View>
-        </View>
-      </Modal>
     </ScrollView>
   );
 };
@@ -929,56 +744,6 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: 'bold',
   },
-  attachRow: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    marginBottom: 10,
-  },
-  pinButton: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    backgroundColor: '#6c6c6c',
-    paddingVertical: 8,
-    paddingHorizontal: 12,
-    borderRadius: 20,
-  },
-  pinButtonText: {
-    color: '#fff',
-    marginLeft: 8,
-    fontWeight: '600',
-  },
-  attachInfo: {
-    color: '#bdbdbd',
-    fontSize: 12,
-  },
-  previewScroll: {
-    marginBottom: 10,
-  },
-  previewItem: {
-    width: 70,
-    height: 70,
-    borderRadius: 8,
-    overflow: 'hidden',
-    marginRight: 8,
-    position: 'relative',
-  },
-  previewImage: {
-    width: '100%',
-    height: '100%',
-    resizeMode: 'cover',
-  },
-  previewRemove: {
-    position: 'absolute',
-    top: 4,
-    right: 4,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    borderRadius: 12,
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
   sectionTitle: {
     fontSize: 18,
     fontWeight: 'bold',
@@ -1014,17 +779,6 @@ const styles = StyleSheet.create({
     fontSize: 12,
     color: '#999',
   },
-  reviewImagesRow: {
-    marginTop: 8,
-  },
-  reviewThumb: {
-    width: 80,
-    height: 80,
-    borderRadius: 8,
-    marginRight: 8,
-    resizeMode: 'cover',
-    backgroundColor: '#222',
-  },
   additionalImagesContainer: {
     backgroundColor: '#1f1f1f',
     padding: 15,
@@ -1057,43 +811,6 @@ const styles = StyleSheet.create({
     color: '#bdbdbd',
     textAlign: 'center',
     padding: 20,
-  },
-  viewerOverlay: {
-    flex: 1,
-    backgroundColor: 'rgba(0,0,0,0.85)',
-    justifyContent: 'center',
-    alignItems: 'center',
-  },
-  viewerImage: {
-    height: '70%',
-    resizeMode: 'contain',
-  },
-  viewerCommentBar: {
-    position: 'absolute',
-    bottom: 0,
-    left: 0,
-    right: 0,
-    padding: 12,
-    backgroundColor: 'rgba(0,0,0,0.6)',
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-  },
-  viewerCommentText: {
-    color: '#fff',
-    fontSize: 14,
-    flex: 1,
-    marginRight: 12,
-  },
-  viewerCloseBtn: {
-    paddingVertical: 6,
-    paddingHorizontal: 12,
-    backgroundColor: '#007AFF',
-    borderRadius: 6,
-  },
-  viewerCloseText: {
-    color: '#fff',
-    fontWeight: 'bold',
   },
 });
 
