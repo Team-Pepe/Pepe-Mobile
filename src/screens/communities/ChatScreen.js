@@ -6,6 +6,7 @@ import ChatService from '../../services/chat.service';
 import MessageService from '../../services/message.service';
 import UserService from '../../services/user.service';
 import ConversationService from '../../services/conversation.service';
+import { supabase } from '../../lib/supabase';
 
 const getInitials = (name = '') => {
   const parts = name.split(' ');
@@ -81,20 +82,57 @@ const ChatScreen = ({ navigation, route }) => {
   }, [userIdParam, conversationIdParam]);
 
   useEffect(() => {
-    let t;
-    const tick = async () => {
-      if (!conversationId || !currentUserId) return;
-      const members = await ConversationService.listMembers(conversationId);
-      const partner = (members || []).find((m) => m.user_id !== currentUserId);
-      const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
-      setPartnerReadAt(partner?.last_read_at || null);
-      if (pra) {
-        setMessages((prev) => prev.map((m) => m.from === 'me' && new Date(m.createdAt).getTime() <= pra ? { ...m, status: 'read' } : m));
-      }
-    };
-    t = setInterval(tick, 3000);
+    if (!conversationId || !currentUserId) return;
+    const channel = supabase
+      .channel(`chat:${conversationId}`)
+      .on('postgres_changes', {
+        event: 'UPDATE',
+        schema: 'public',
+        table: 'conversation_members',
+        filter: `conversation_id=eq.${conversationId} AND user_id=neq.${currentUserId}`,
+      }, (payload) => {
+        const newReadAt = payload?.new?.last_read_at || null;
+        setPartnerReadAt(newReadAt);
+        if (newReadAt) {
+          const pra = new Date(newReadAt).getTime();
+          setMessages((prev) => prev.map((msg) => (
+            msg.from === 'me' && new Date(msg.createdAt).getTime() <= pra
+              ? { ...msg, status: 'read' }
+              : msg
+          )));
+        }
+      })
+      .on('postgres_changes', {
+        event: 'INSERT',
+        schema: 'public',
+        table: 'messages',
+        filter: `conversation_id=eq.${conversationId}`,
+      }, async (payload) => {
+        const m = payload?.new;
+        if (!m) return;
+        const exists = (x) => x.id === String(m.id);
+        const dt = new Date(m.created_at);
+        const hh = String(dt.getHours()).padStart(2, '0');
+        const mm = String(dt.getMinutes()).padStart(2, '0');
+        const newMsg = {
+          id: String(m.id),
+          from: m.user_id === currentUserId ? 'me' : 'them',
+          text: m.content,
+          time: `${hh}:${mm}`,
+          status: m.user_id === currentUserId ? 'delivered' : undefined,
+          createdAt: m.created_at,
+        };
+        setMessages((prev) => {
+          if (prev.some(exists)) return prev;
+          return [...prev, newMsg];
+        });
+        if (m.user_id !== currentUserId) {
+          await MessageService.markRead(conversationId);
+        }
+      })
+      .subscribe();
     return () => {
-      if (t) clearInterval(t);
+      supabase.removeChannel(channel);
     };
   }, [conversationId, currentUserId]);
 
