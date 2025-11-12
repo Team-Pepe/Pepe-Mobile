@@ -95,6 +95,13 @@ const UserPickerScreen = ({ navigation }) => {
 
   const clearSearch = () => setSearch('');
 
+  const handleStartChat = () => {
+    if (!selectedId) return;
+    const user = mockUsers.find((u) => u.id === selectedId);
+    if (!user) return;
+    navigation.navigate('Chat', { user });
+  };
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -139,7 +146,7 @@ const UserPickerScreen = ({ navigation }) => {
       )}
 
       <View style={styles.bottomBar}>
-        <TouchableOpacity style={[styles.primaryButton, !selectedId && styles.primaryButtonDisabled]} activeOpacity={selectedId ? 0.8 : 1}>
+        <TouchableOpacity style={[styles.primaryButton, !selectedId && styles.primaryButtonDisabled]} activeOpacity={selectedId ? 0.8 : 1} onPress={handleStartChat}>
           <FontAwesome5 name="paper-plane" size={14} color="#ffffff" />
           <Text style={styles.primaryButtonText}>Iniciar chat</Text>
         </TouchableOpacity>
