@@ -15,10 +15,12 @@ import FavoritesScreen from '../screens/favorites/FavoritesScreen';
 import VersusScreen from '../screens/comparison/VersusScreen';
 import MyPCScreen from '../screens/pc-builder/MyPCScreen';
 import ProfileScreen from '../screens/profile/ProfileScreen';
+import EditProfileScreen from '../screens/profile/EditProfileScreen';
 import SellProductScreen from '../screens/profile/SellProductScreen';
 import MyProductsScreen from '../screens/profile/MyProductsScreen';
 import CommunitiesScreen from '../screens/communities/CommunitiesScreen';
 import OrdersScreen from '../screens/profile/OrdersScreen';
+import UserReviewsScreen from '../screens/profile/UserReviewsScreen';
 import UserPickerScreen from '../screens/communities/UserPickerScreen';
 import ChatScreen from '../screens/communities/ChatScreen';
 import GroupAccessScreen from '../screens/communities/GroupAccessScreen';
@@ -187,9 +189,23 @@ const AppNavigator = () => {
           }}
         />
         <Stack.Screen
+          name="EditProfile"
+          component={EditProfileScreen}
+          options={{
+            title: 'Editar Perfil',
+          }}
+        />
+        <Stack.Screen
           name="Orders"
           component={OrdersScreen}
           options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="UserReviews"
+          component={UserReviewsScreen}
+          options={{
+            title: 'Mis Opiniones',
+          }}
         />
         <Stack.Screen
           name="UserPicker"
