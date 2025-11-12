@@ -5,6 +5,7 @@ import { FontAwesome5 } from '@expo/vector-icons';
 import ChatService from '../../services/chat.service';
 import MessageService from '../../services/message.service';
 import UserService from '../../services/user.service';
+import ConversationService from '../../services/conversation.service';
 
 const getInitials = (name = '') => {
   const parts = name.split(' ');
@@ -23,6 +24,7 @@ const ChatScreen = ({ navigation, route }) => {
   const [conversationId, setConversationId] = useState(conversationIdParam || null);
   const [currentUserId, setCurrentUserId] = useState(null);
   const [messages, setMessages] = useState([]);
+  const [partnerReadAt, setPartnerReadAt] = useState(null);
   const [input, setInput] = useState('');
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const insets = useSafeAreaInsets();
@@ -62,13 +64,39 @@ const ChatScreen = ({ navigation, route }) => {
           const dt = new Date(m.created_at);
           const hh = String(dt.getHours()).padStart(2, '0');
           const mm = String(dt.getMinutes()).padStart(2, '0');
-          return { id: String(m.id), from: m.user_id === meId ? 'me' : 'them', text: m.content, time: `${hh}:${mm}`, status: m.user_id === meId ? 'read' : undefined };
+          return { id: String(m.id), from: m.user_id === meId ? 'me' : 'them', text: m.content, time: `${hh}:${mm}`, status: m.user_id === meId ? 'delivered' : undefined, createdAt: m.created_at };
         });
         setMessages(mapped);
+        await MessageService.markRead(cid);
+        const members = await ConversationService.listMembers(cid);
+        const partner = (members || []).find((m) => m.user_id !== meId);
+        setPartnerReadAt(partner?.last_read_at || null);
+        if (partner?.last_read_at) {
+          const pra = new Date(partner.last_read_at).getTime();
+          setMessages((prev) => prev.map((msg) => msg.from === 'me' && new Date(msg.createdAt).getTime() <= pra ? { ...msg, status: 'read' } : msg));
+        }
       }
     };
     init();
   }, [userIdParam, conversationIdParam]);
+
+  useEffect(() => {
+    let t;
+    const tick = async () => {
+      if (!conversationId || !currentUserId) return;
+      const members = await ConversationService.listMembers(conversationId);
+      const partner = (members || []).find((m) => m.user_id !== currentUserId);
+      const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
+      setPartnerReadAt(partner?.last_read_at || null);
+      if (pra) {
+        setMessages((prev) => prev.map((m) => m.from === 'me' && new Date(m.createdAt).getTime() <= pra ? { ...m, status: 'read' } : m));
+      }
+    };
+    t = setInterval(tick, 3000);
+    return () => {
+      if (t) clearInterval(t);
+    };
+  }, [conversationId, currentUserId]);
 
   const handleSend = async () => {
     const text = input.trim();
@@ -82,12 +110,18 @@ const ChatScreen = ({ navigation, route }) => {
     const now = new Date();
     const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
     const tempId = String(Date.now());
-    const pending = { id: tempId, from: 'me', text, time, status: 'sent' };
+    const pending = { id: tempId, from: 'me', text, time, status: 'sent', createdAt: now.toISOString() };
     setMessages((prev) => [...prev, pending]);
     setInput('');
     const saved = await MessageService.sendMessage(cid, text, []);
     const finalId = String(saved?.id || tempId);
-    setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: finalId, status: 'read' } : m)));
+    setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: finalId, status: 'delivered', createdAt: saved?.created_at || m.createdAt } : m)));
+    const members = await ConversationService.listMembers(cid);
+    const partner = (members || []).find((m) => m.user_id !== currentUserId);
+    const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
+    if (pra) {
+      setMessages((prev) => prev.map((m) => m.id === finalId && new Date(m.createdAt).getTime() <= pra ? { ...m, status: 'read' } : m));
+    }
   };
 
   const renderItem = ({ item }) => {

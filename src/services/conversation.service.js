@@ -94,6 +94,16 @@ class ConversationService {
     if (error) throw error;
     return data || [];
   }
+
+  static async listMembers(conversationId) {
+    if (!conversationId) throw new Error('conversationId requerido');
+    const { data, error } = await supabase
+      .from('conversation_members')
+      .select('user_id, last_read_at, role')
+      .eq('conversation_id', conversationId);
+    if (error) throw error;
+    return data || [];
+  }
 }
 
 export default ConversationService;
