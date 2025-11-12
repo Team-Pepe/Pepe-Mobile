@@ -47,35 +47,47 @@ const ChatScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     const init = async () => {
-      const meId = await ChatService.currentUserId();
-      setCurrentUserId(meId);
-      if (userIdParam && !headerName) {
-        const n = await UserService.getUserNameById(userIdParam);
-        setHeaderName(n || 'Usuario');
-        setHeaderUsername(String(n || 'usuario').toLowerCase().replace(/\s+/g, ''));
-      }
-      let cid = conversationIdParam;
-      if (!cid && userIdParam) {
-        cid = await ChatService.startDirectChat(userIdParam);
-        setConversationId(cid);
-      }
-      if (cid) {
-        const list = await MessageService.listMessages(cid, { limit: 50 });
-        const mapped = (list || []).map((m) => {
-          const dt = new Date(m.created_at);
-          const hh = String(dt.getHours()).padStart(2, '0');
-          const mm = String(dt.getMinutes()).padStart(2, '0');
-          return { id: String(m.id), from: m.user_id === meId ? 'me' : 'them', text: m.content, time: `${hh}:${mm}`, status: m.user_id === meId ? 'delivered' : undefined, createdAt: m.created_at };
-        });
-        setMessages(mapped);
-        await MessageService.markRead(cid);
-        const members = await ConversationService.listMembers(cid);
-        const partner = (members || []).find((m) => m.user_id !== meId);
-        setPartnerReadAt(partner?.last_read_at || null);
-        if (partner?.last_read_at) {
-          const pra = new Date(partner.last_read_at).getTime();
-          setMessages((prev) => prev.map((msg) => msg.from === 'me' && new Date(msg.createdAt).getTime() <= pra ? { ...msg, status: 'read' } : msg));
+      try {
+        console.log('🟦 Chat init: params', { userIdParam, conversationIdParam });
+        const meId = await ChatService.currentUserId();
+        console.log('🟦 Usuario actual (public.users.id):', meId);
+        setCurrentUserId(meId);
+        if (userIdParam && !headerName) {
+          const n = await UserService.getUserNameById(userIdParam);
+          console.log('🟦 Nombre de cabecera resuelto:', n);
+          setHeaderName(n || 'Usuario');
+          setHeaderUsername(String(n || 'usuario').toLowerCase().replace(/\s+/g, ''));
         }
+        let cid = conversationIdParam;
+        if (!cid && userIdParam) {
+          cid = await ChatService.startDirectChat(userIdParam);
+          console.log('🟦 Conversación directa creada/obtenida:', cid);
+          setConversationId(cid);
+        }
+        if (cid) {
+          console.log('🟦 Cargando mensajes para conversación:', cid);
+          const list = await MessageService.listMessages(cid, { limit: 50 });
+          console.log('🟩 Mensajes cargados:', (list || []).length);
+          const mapped = (list || []).map((m) => {
+            const dt = new Date(m.created_at);
+            const hh = String(dt.getHours()).padStart(2, '0');
+            const mm = String(dt.getMinutes()).padStart(2, '0');
+            return { id: String(m.id), from: m.user_id === meId ? 'me' : 'them', text: m.content, time: `${hh}:${mm}`, status: m.user_id === meId ? 'delivered' : undefined, createdAt: m.created_at };
+          });
+          setMessages(mapped);
+          const mr = await MessageService.markRead(cid);
+          console.log('🟩 Marcar leído resultado:', mr);
+          const members = await ConversationService.listMembers(cid);
+          console.log('🟦 Miembros conversación:', members);
+          const partner = (members || []).find((m) => m.user_id !== meId);
+          setPartnerReadAt(partner?.last_read_at || null);
+          if (partner?.last_read_at) {
+            const pra = new Date(partner.last_read_at).getTime();
+            setMessages((prev) => prev.map((msg) => msg.from === 'me' && new Date(msg.createdAt).getTime() <= pra ? { ...msg, status: 'read' } : msg));
+          }
+        }
+      } catch (e) {
+        console.error('❌ Error en init de ChatScreen:', e?.message || e);
       }
     };
     init();
@@ -83,14 +95,18 @@ const ChatScreen = ({ navigation, route }) => {
 
   useEffect(() => {
     if (!conversationId || !currentUserId) return;
+    console.log('🟪 Suscribiendo canal realtime:', { conversationId, currentUserId });
     const channel = supabase
       .channel(`chat:${conversationId}`)
       .on('postgres_changes', {
         event: 'UPDATE',
         schema: 'public',
         table: 'conversation_members',
-        filter: `conversation_id=eq.${conversationId} AND user_id=neq.${currentUserId}`,
+        filter: `conversation_id=eq.${conversationId}`,
       }, (payload) => {
+        console.log('🟨 UPDATE conversation_members recibido:', payload?.new);
+        const changedUserId = payload?.new?.user_id;
+        if (changedUserId === currentUserId) return;
         const newReadAt = payload?.new?.last_read_at || null;
         setPartnerReadAt(newReadAt);
         if (newReadAt) {
@@ -109,6 +125,7 @@ const ChatScreen = ({ navigation, route }) => {
         filter: `conversation_id=eq.${conversationId}`,
       }, async (payload) => {
         const m = payload?.new;
+        console.log('🟨 INSERT messages recibido:', m);
         if (!m) return;
         const exists = (x) => x.id === String(m.id);
         const dt = new Date(m.created_at);
@@ -127,38 +144,47 @@ const ChatScreen = ({ navigation, route }) => {
           return [...prev, newMsg];
         });
         if (m.user_id !== currentUserId) {
-          await MessageService.markRead(conversationId);
+          const mr = await MessageService.markRead(conversationId);
+          console.log('🟩 Mark read por INSERT de tercero:', mr);
         }
       })
       .subscribe();
     return () => {
+      console.log('🟥 Eliminando canal realtime:', `chat:${conversationId}`);
       supabase.removeChannel(channel);
     };
   }, [conversationId, currentUserId]);
 
   const handleSend = async () => {
-    const text = input.trim();
-    if (!text) return;
-    let cid = conversationId;
-    if (!cid && userIdParam) {
-      cid = await ChatService.startDirectChat(userIdParam);
-      setConversationId(cid);
-    }
-    if (!cid) return;
-    const now = new Date();
-    const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
-    const tempId = String(Date.now());
-    const pending = { id: tempId, from: 'me', text, time, status: 'sent', createdAt: now.toISOString() };
-    setMessages((prev) => [...prev, pending]);
-    setInput('');
-    const saved = await MessageService.sendMessage(cid, text, []);
-    const finalId = String(saved?.id || tempId);
-    setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: finalId, status: 'delivered', createdAt: saved?.created_at || m.createdAt } : m)));
-    const members = await ConversationService.listMembers(cid);
-    const partner = (members || []).find((m) => m.user_id !== currentUserId);
-    const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
-    if (pra) {
-      setMessages((prev) => prev.map((m) => m.id === finalId && new Date(m.createdAt).getTime() <= pra ? { ...m, status: 'read' } : m));
+    try {
+      const text = input.trim();
+      if (!text) return;
+      let cid = conversationId;
+      if (!cid && userIdParam) {
+        cid = await ChatService.startDirectChat(userIdParam);
+        console.log('🟦 Conversación creada en envío:', cid);
+        setConversationId(cid);
+      }
+      if (!cid) return;
+      console.log('🟪 Enviando mensaje...', { cid, textLength: text.length });
+      const now = new Date();
+      const time = `${String(now.getHours()).padStart(2, '0')}:${String(now.getMinutes()).padStart(2, '0')}`;
+      const tempId = String(Date.now());
+      const pending = { id: tempId, from: 'me', text, time, status: 'sent', createdAt: now.toISOString() };
+      setMessages((prev) => [...prev, pending]);
+      setInput('');
+      const saved = await MessageService.sendMessage(cid, text, []);
+      console.log('🟩 Mensaje guardado:', saved);
+      const finalId = String(saved?.id || tempId);
+      setMessages((prev) => prev.map((m) => (m.id === tempId ? { ...m, id: finalId, status: 'delivered', createdAt: saved?.created_at || m.createdAt } : m)));
+      const members = await ConversationService.listMembers(cid);
+      const partner = (members || []).find((m) => m.user_id !== currentUserId);
+      const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
+      if (pra) {
+        setMessages((prev) => prev.map((m) => m.id === finalId && new Date(m.createdAt).getTime() <= pra ? { ...m, status: 'read' } : m));
+      }
+    } catch (e) {
+      console.error('❌ Error al enviar mensaje:', e?.message || e);
     }
   };
 

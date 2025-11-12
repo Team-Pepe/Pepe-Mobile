@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Modal, TouchableWithoutFeedback } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Modal, TouchableWithoutFeedback, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import ConversationService from '../../services/conversation.service';
@@ -93,6 +93,16 @@ const CommunitiesScreen = ({ navigation }) => {
     </TouchableOpacity>
   );
 
+  const SkeletonItem = () => (
+    <View style={styles.skeletonItem}>
+      <View style={styles.skeletonHeader}>
+        <View style={styles.skeletonTitle} />
+        <View style={styles.skeletonTime} />
+      </View>
+      <View style={styles.skeletonLine} />
+    </View>
+  );
+
   return (
     <SafeAreaView style={styles.container}>
       <View style={styles.header}>
@@ -111,13 +121,28 @@ const CommunitiesScreen = ({ navigation }) => {
         <TextInput style={styles.searchInput} placeholder="Buscar chats, grupos..." placeholderTextColor="#8a8a8a" value={search} onChangeText={setSearch} />
       </View>
 
-      <FlatList
-        data={filtered}
-        keyExtractor={(item) => item.id}
-        renderItem={renderItem}
-        contentContainerStyle={styles.listContainer}
-        ListEmptyComponent={<Text style={styles.emptyText}>Aún no tienes conversaciones</Text>}
-      />
+      {loading ? (
+        <View style={styles.loadingContainer}>
+          <View style={styles.loadingHeader}>
+            <ActivityIndicator color="#ffffff" size="small" />
+            <Text style={styles.loadingText}>Cargando chats…</Text>
+          </View>
+          <FlatList
+            data={[...Array(6)]}
+            keyExtractor={(_, i) => String(i)}
+            renderItem={SkeletonItem}
+            contentContainerStyle={styles.listContainer}
+          />
+        </View>
+      ) : (
+        <FlatList
+          data={filtered}
+          keyExtractor={(item) => item.id}
+          renderItem={renderItem}
+          contentContainerStyle={styles.listContainer}
+          ListEmptyComponent={<Text style={styles.emptyText}>Aún no tienes conversaciones</Text>}
+        />
+      )}
 
       <Modal
         visible={showTypeSelector}
@@ -362,6 +387,52 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
     fontWeight: 'bold',
+  },
+  loadingContainer: {
+    flex: 1,
+  },
+  loadingHeader: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 8,
+    paddingHorizontal: 16,
+    paddingTop: 12,
+  },
+  loadingText: {
+    color: '#ffffff',
+    fontSize: 14,
+  },
+  skeletonItem: {
+    backgroundColor: '#2c2c2c',
+    borderRadius: 12,
+    borderWidth: 1,
+    borderColor: '#333333',
+    padding: 14,
+    marginBottom: 12,
+  },
+  skeletonHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    marginBottom: 6,
+  },
+  skeletonTitle: {
+    height: 16,
+    width: '40%',
+    backgroundColor: '#3a3a3a',
+    borderRadius: 4,
+  },
+  skeletonTime: {
+    height: 12,
+    width: 50,
+    backgroundColor: '#3a3a3a',
+    borderRadius: 4,
+  },
+  skeletonLine: {
+    height: 12,
+    width: '70%',
+    backgroundColor: '#3a3a3a',
+    borderRadius: 4,
   },
 });
 
