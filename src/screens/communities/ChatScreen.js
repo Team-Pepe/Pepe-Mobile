@@ -188,6 +188,7 @@ const ChatScreen = ({ navigation, route }) => {
       const tempId = String(Date.now());
       const pending = { id: tempId, from: 'me', text, time, status: 'sent', createdAt: now.toISOString() };
       setMessages((prev) => [...prev, pending]);
+      setTimeout(() => { listRef.current?.scrollToOffset?.({ offset: 0, animated: true }); }, 0);
       setInput('');
       const saved = await MessageService.sendMessage(cid, text, []);
       console.log('🟩 Mensaje guardado:', saved);
@@ -200,6 +201,7 @@ const ChatScreen = ({ navigation, route }) => {
       }
       return prev.map((m) => (m.id === tempId ? { ...m, id: finalStr, status: 'delivered', createdAt: saved?.created_at || m.createdAt } : m));
     });
+      setTimeout(() => { listRef.current?.scrollToOffset?.({ offset: 0, animated: true }); }, 0);
       const members = await ConversationService.listMembers(cid);
       const partner = (members || []).find((m) => m.user_id !== currentUserId);
       const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
@@ -289,8 +291,9 @@ const ChatScreen = ({ navigation, route }) => {
         renderItem={renderItem}
         contentContainerStyle={[
           styles.listContainer,
-          { paddingBottom: 0, paddingTop: inputBarHeight + keyboardOffset + Math.max(insets.bottom, 8) }
+          { paddingBottom: 0 }
         ]}
+        ListHeaderComponent={<View style={{ height: inputBarHeight + keyboardOffset + Math.max(insets.bottom, 8) }} />}
         maintainVisibleContentPosition={{ autoscrollToTopThreshold: 1, minIndexForVisible: 1 }}
         onViewableItemsChanged={onViewableItemsChanged}
         viewabilityConfig={viewabilityConfigRef.current}
@@ -306,7 +309,10 @@ const ChatScreen = ({ navigation, route }) => {
           activeOpacity={0.8}
           onPress={() => {
             try {
-              listRef.current?.scrollToIndex?.({ index: 0, animated: true });
+              listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+              setTimeout(() => {
+                listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+              }, 60);
             } catch {
               listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
             }
