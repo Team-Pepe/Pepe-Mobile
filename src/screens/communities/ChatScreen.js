@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Keyboard } from 'react-native';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Keyboard, Animated } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import ChatService from '../../services/chat.service';
@@ -29,21 +29,27 @@ const ChatScreen = ({ navigation, route }) => {
   const [input, setInput] = useState('');
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const insets = useSafeAreaInsets();
+  const listRef = useRef(null);
+  const keyboardAnim = useRef(new Animated.Value(0)).current;
 
   // Teclado dinámico: desplaza todo el contenido hacia arriba y eleva la barra de entrada
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
       const height = e?.endCoordinates?.height ?? 0;
       setKeyboardOffset(height);
+      Animated.timing(keyboardAnim, { toValue: -height, duration: 180, useNativeDriver: true }).start();
     });
     const hideSub = Keyboard.addListener('keyboardDidHide', () => {
       setKeyboardOffset(0);
+      Animated.timing(keyboardAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
     });
     return () => {
       showSub.remove();
       hideSub.remove();
     };
   }, []);
+
+  
 
   useEffect(() => {
     const init = async () => {
@@ -201,41 +207,57 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
-  const renderItem = ({ item }) => {
+  const MessageItem = React.memo(({ item }) => {
     const isMe = item.from === 'me';
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(8)).current;
+    const metaOpacity = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
+      ]).start(() => {
+        Animated.timing(metaOpacity, { toValue: 1, duration: 160, useNativeDriver: true }).start();
+      });
+    }, []);
     return (
-      <View style={[styles.messageRow, isMe ? styles.rowRight : styles.rowLeft]}>
+      <Animated.View style={[styles.messageRow, isMe ? styles.rowRight : styles.rowLeft, { opacity, transform: [{ translateY }] }]}> 
         <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
           <Text style={styles.bubbleText}>{item.text}</Text>
-          <Text style={styles.bubbleTime}>{item.time}</Text>
-          {isMe && (
-            <View style={styles.statusRow}>
-              {item.status === 'sent' && (
-                <View style={styles.statusBadge}>
-                  <FontAwesome5 name="check" size={10} color="#dcdcdc" />
-                  <Text style={styles.statusText}> Enviado</Text>
-                </View>
-              )}
-              {item.status === 'delivered' && (
-                <View style={styles.statusBadge}>
-                  <FontAwesome5 name="check" size={10} color="#dcdcdc" />
-                  <FontAwesome5 name="check" size={10} color="#dcdcdc" style={{ marginLeft: 2 }} />
-                  <Text style={styles.statusText}> Entregado</Text>
-                </View>
-              )}
-              {item.status === 'read' && (
-                <View style={styles.statusBadge}>
-                  <FontAwesome5 name="check" size={10} color="#ffffff" />
-                  <FontAwesome5 name="check" size={10} color="#ffffff" style={{ marginLeft: 2 }} />
-                  <Text style={[styles.statusText, { color: '#ffffff' }]}> Leído</Text>
-                </View>
-              )}
-            </View>
-          )}
+          <Animated.View style={[styles.metaRow, { opacity: metaOpacity }]}> 
+            <Text style={styles.bubbleTime}>{item.time}</Text>
+            {isMe && (
+              <>
+                {item.status === 'sent' && (
+                  <View style={styles.statusBadge}>
+                    <FontAwesome5 name="check" size={10} color="#dcdcdc" />
+                    <Text style={styles.statusText}> Enviado</Text>
+                  </View>
+                )}
+                {item.status === 'delivered' && (
+                  <View style={styles.statusBadge}>
+                    <FontAwesome5 name="check" size={10} color="#dcdcdc" />
+                    <FontAwesome5 name="check" size={10} color="#dcdcdc" style={{ marginLeft: 2 }} />
+                    <Text style={styles.statusText}> Entregado</Text>
+                  </View>
+                )}
+                {item.status === 'read' && (
+                  <View style={styles.statusBadge}>
+                    <FontAwesome5 name="check" size={10} color="#ffffff" />
+                    <FontAwesome5 name="check" size={10} color="#ffffff" style={{ marginLeft: 2 }} />
+                    <Text style={[styles.statusText, { color: '#ffffff' }]}> Leído</Text>
+                  </View>
+                )}
+              </>
+            )}
+          </Animated.View>
         </View>
-      </View>
+      </Animated.View>
     );
-  };
+  });
+
+  const invertedData = useMemo(() => [...messages].reverse(), [messages]);
+  const renderItem = useCallback(({ item }) => <MessageItem item={item} />, []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top','bottom']}>
@@ -256,23 +278,27 @@ const ChatScreen = ({ navigation, route }) => {
       </View>
 
       <FlatList
-        data={messages}
+        ref={listRef}
+        inverted
+        data={invertedData}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={[
           styles.listContainer,
-          { paddingBottom: 90 + keyboardOffset + Math.max(insets.bottom, 8) }
+          { paddingBottom: 0, paddingTop: 90 + keyboardOffset + Math.max(insets.bottom, 8) }
         ]}
+        maintainVisibleContentPosition={{ autoscrollToTopThreshold: 1, minIndexForVisible: 1 }}
         keyboardShouldPersistTaps="handled"
       />
 
-      <View
+      <Animated.View
         style={[
           styles.inputBar,
           {
-            bottom: keyboardOffset + insets.bottom,
+            bottom: insets.bottom,
             paddingBottom: Math.max(insets.bottom, 8)
-          }
+          },
+          { transform: [{ translateY: keyboardAnim }] }
         ]}
       >
         <TouchableOpacity style={styles.inputIcon} activeOpacity={0.8}>
@@ -288,7 +314,7 @@ const ChatScreen = ({ navigation, route }) => {
         <TouchableOpacity style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]} onPress={handleSend} activeOpacity={input.trim() ? 0.8 : 1}>
           <FontAwesome5 name="paper-plane" size={14} color="#ffffff" />
         </TouchableOpacity>
-      </View>
+      </Animated.View>
     </SafeAreaView>
   );
 };
@@ -321,9 +347,9 @@ const styles = StyleSheet.create({
   bubbleThem: { backgroundColor: '#2c2c2c', borderColor: '#333333' },
   bubbleMe: { backgroundColor: '#007AFF', borderColor: '#2a6fd0' },
   bubbleText: { color: '#ffffff', fontSize: 14 },
-  bubbleTime: { color: '#dcdcdc', fontSize: 10, marginTop: 4, textAlign: 'right' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center' },
+  bubbleTime: { color: '#dcdcdc', fontSize: 10 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 4 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
   statusText: { color: '#dcdcdc', fontSize: 10, marginLeft: 4 },
 
   inputBar: {
