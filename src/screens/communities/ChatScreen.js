@@ -30,18 +30,22 @@ const ChatScreen = ({ navigation, route }) => {
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const insets = useSafeAreaInsets();
   const listRef = useRef(null);
-  const keyboardAnim = useRef(new Animated.Value(0)).current;
+  const [inputBarHeight, setInputBarHeight] = useState(0);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const viewabilityConfigRef = useRef({ itemVisiblePercentThreshold: 70 });
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    const latestVisible = viewableItems.some((v) => v.index === 0);
+    setShowScrollToBottom(!latestVisible);
+  }).current;
 
   // Teclado dinámico: desplaza todo el contenido hacia arriba y eleva la barra de entrada
   useEffect(() => {
     const showSub = Keyboard.addListener('keyboardDidShow', (e) => {
       const height = e?.endCoordinates?.height ?? 0;
       setKeyboardOffset(height);
-      Animated.timing(keyboardAnim, { toValue: -height, duration: 180, useNativeDriver: true }).start();
     });
     const hideSub = Keyboard.addListener('keyboardDidHide', () => {
       setKeyboardOffset(0);
-      Animated.timing(keyboardAnim, { toValue: 0, duration: 180, useNativeDriver: true }).start();
     });
     return () => {
       showSub.remove();
@@ -285,21 +289,42 @@ const ChatScreen = ({ navigation, route }) => {
         renderItem={renderItem}
         contentContainerStyle={[
           styles.listContainer,
-          { paddingBottom: 0, paddingTop: 90 + keyboardOffset + Math.max(insets.bottom, 8) }
+          { paddingBottom: 0, paddingTop: inputBarHeight + keyboardOffset + Math.max(insets.bottom, 8) }
         ]}
         maintainVisibleContentPosition={{ autoscrollToTopThreshold: 1, minIndexForVisible: 1 }}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfigRef.current}
         keyboardShouldPersistTaps="handled"
       />
 
-      <Animated.View
+      {showScrollToBottom && (
+        <TouchableOpacity
+          style={[
+            styles.scrollDownButton,
+            { bottom: inputBarHeight + keyboardOffset + insets.bottom + 16 }
+          ]}
+          activeOpacity={0.8}
+          onPress={() => {
+            try {
+              listRef.current?.scrollToIndex?.({ index: 0, animated: true });
+            } catch {
+              listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+            }
+          }}
+        >
+          <FontAwesome5 name="chevron-down" size={16} color="#ffffff" />
+        </TouchableOpacity>
+      )}
+
+      <View
         style={[
           styles.inputBar,
           {
-            bottom: insets.bottom,
+            bottom: keyboardOffset + insets.bottom,
             paddingBottom: Math.max(insets.bottom, 8)
           },
-          { transform: [{ translateY: keyboardAnim }] }
         ]}
+        onLayout={(e) => setInputBarHeight(e.nativeEvent.layout.height)}
       >
         <TouchableOpacity style={styles.inputIcon} activeOpacity={0.8}>
           <FontAwesome5 name="paperclip" size={16} color="#bdbdbd" />
@@ -308,13 +333,14 @@ const ChatScreen = ({ navigation, route }) => {
           style={styles.input}
           value={input}
           onChangeText={setInput}
+          onFocus={() => { listRef.current?.scrollToOffset?.({ offset: 0, animated: true }); }}
           placeholder="Escribe un mensaje"
           placeholderTextColor="#8a8a8a"
         />
         <TouchableOpacity style={[styles.sendButton, !input.trim() && styles.sendButtonDisabled]} onPress={handleSend} activeOpacity={input.trim() ? 0.8 : 1}>
           <FontAwesome5 name="paper-plane" size={14} color="#ffffff" />
         </TouchableOpacity>
-      </Animated.View>
+      </View>
     </SafeAreaView>
   );
 };
@@ -373,6 +399,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
   },
   sendButtonDisabled: { backgroundColor: '#2a6fd0', opacity: 0.6 },
+  scrollDownButton: {
+    position: 'absolute', right: 16,
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#2c2c2c', borderWidth: 1, borderColor: '#333333',
+    zIndex: 10,
+    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
+  },
 });
 
 export default ChatScreen;
