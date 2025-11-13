@@ -169,11 +169,12 @@ const VersusScreen = () => {
       'speed_mhz',
     ],
     laptop: [
-      'display_size_inch',
-      'battery_mah',
       'ram_gb',
-      'storage_gb',
-      'weight_kg',
+      'storage',          // ← nuevo (se parsea a GB)
+      'screen_inches',
+      'resolution',       // ← nuevo (se parsea a megapíxeles)
+      'battery_wh',       // ← nuevo (inverso)
+      'weight_kg',        // ya existía
     ],
     phone: [
       'display_size_inch',
@@ -308,6 +309,7 @@ const VersusScreen = () => {
     'tdp',
     'fabrication_technology_nm',
     'weight_kg',
+    'battery_wh',
   ]);
 
   // Opcional: máximos fijos por métrica (descomentar para forzar dominios)
