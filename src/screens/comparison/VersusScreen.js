@@ -130,14 +130,34 @@ const VersusScreen = () => {
   };
 
   // Utilidades para la gráfica de radar
-  // Sólo acepta valores numéricos puros o con unidades conocidas (evita "LGA 1700", "Intel UHD 770", etc.)
+  // Convierte valores con unidades a números puros, manejando TB→GB, resoluciones, etc.
   const toNumber = (v) => {
     if (typeof v === 'number') return v;
     if (typeof v === 'string') {
       const s = v.trim().toLowerCase();
-      const m = s.match(/^\s*([0-9]+(?:\.[0-9]+)?)\s*(ghz|mhz|gb|mb|nm|mah|in|inch|inches|%)?\s*$/);
-      if (m) return parseFloat(m[1]);
-      // también aceptamos sólo dígitos
+      
+      // Manejo de resoluciones "1920x1080" → tomar el valor más alto (ancho)
+      const resMatch = s.match(/^\s*(\d+)\s*x\s*(\d+)\s*$/);
+      if (resMatch) {
+        const width = parseInt(resMatch[1], 10);
+        const height = parseInt(resMatch[2], 10);
+        // Retornar el valor más alto (típicamente el ancho)
+        return Math.max(width, height);
+      }
+
+      // Manejo de unidades conocidas: GHz, MHz, GB, MB, TB, nm, mAh, Wh, in, inch, %
+      const m = s.match(/^\s*([0-9]+(?:\.[0-9]+)?)\s*(tb|gb|mb|ghz|mhz|nm|mah|wh|in|inch|inches|%)?\s*$/);
+      if (m) {
+        let num = parseFloat(m[1]);
+        const unit = m[2];
+        // Convertir TB a GB
+        if (unit === 'tb') {
+          num = num * 1024;
+        }
+        return num;
+      }
+
+      // Fallback: sólo dígitos
       const m2 = s.match(/^\s*([0-9]+(?:\.[0-9]+)?)\s*$/);
       if (m2) return parseFloat(m2[1]);
       return null;
@@ -318,6 +338,84 @@ const VersusScreen = () => {
   //   cache_l3: 256, tdp: 300, fabrication_technology_nm: 10,
   // };
 
+  // Dominios personalizados por métrica (min, max)
+  // Las claves deben coincidir exactamente con los keys en aSpecs, bSpecs, CATEGORY_AXES
+  // Las métricas no incluidas usan fallback: min=0, max=valor máximo observado o 1
+  const DOMAIN_BY_METRIC = {
+    // CPU
+    cores: { min: 1, max: 64 },
+    threads: { min: 1, max: 128 },
+    base_frequency_ghz: { min: 1.0, max: 6.0 },
+    boost_frequency_ghz: { min: 1.5, max: 7.0 },
+    tdp: { min: 10, max: 350 },
+    cache_l3: { min: 2, max: 256 },
+    fabrication_technology_nm: { min: 5, max: 180 },
+
+    // GPU
+    memory_size_gb: { min: 1, max: 48 },
+    vram_gb: { min: 1, max: 48 },
+    boost_clock_mhz: { min: 1000, max: 3000 },
+    boost_frequency_mhz: { min: 1000, max: 3000 },
+    memory_bus_bits: { min: 64, max: 576 },
+    bandwidth_gbs: { min: 100, max: 1000 },
+    cuda_cores: { min: 128, max: 16384 },
+    stream_processors: { min: 256, max: 65536 },
+
+    // RAM
+    capacity_gb: { min: 1, max: 256 },
+    speed_mhz: { min: 1600, max: 6400 },
+    latency_cls: { min: 14, max: 40 },
+    latency: { min: 14, max: 40 },
+
+    // Storage
+    read_speed_mbs: { min: 100, max: 7400 },
+    read_speed: { min: 100, max: 7400 },
+    write_speed_mbs: { min: 100, max: 7000 },
+    write_speed: { min: 100, max: 7000 },
+
+    // Monitor
+    refresh_rate_hz: { min: 50, max: 360 },
+    refresh_rate: { min: 50, max: 360 },
+    response_time_ms: { min: 0.1, max: 10 },
+    response_time: { min: 0.1, max: 10 },
+    brightness: { min: 200, max: 800 },
+    resolution: { min: 1024, max: 3840 },    // píxeles (ancho), no megapíxeles
+
+    // Laptop
+    ram_gb: { min: 4, max: 64 },
+    storage_gb: { min: 128, max: 4096 },
+    storage: { min: 128, max: 4096 },        // convertido a GB
+    screen_inches: { min: 11, max: 18 },
+    resolution: { min: 1024, max: 3840 },    // píxeles (ancho), no megapíxeles
+    weight_kg: { min: 0.8, max: 4 },
+    battery_wh: { min: 30, max: 120 },
+
+    // Phone
+    display_size_inch: { min: 4, max: 8 },
+    display_size_phone: { min: 4, max: 8 },
+    battery_mah: { min: 2000, max: 8000 },
+    battery_phone: { min: 2000, max: 8000 },
+    main_camera_mp: { min: 5, max: 200 },
+
+    // Case
+    dimension_length: { min: 300, max: 800 },
+    dimension_width: { min: 200, max: 600 },
+    dimension_height: { min: 300, max: 700 },
+    max_gpu_length_mm: { min: 200, max: 450 },
+    max_cooler_height_mm: { min: 100, max: 200 },
+
+    // Cooler
+    height_mm: { min: 50, max: 180 },
+    tdp_w: { min: 100, max: 500 },
+    tdp_max: { min: 100, max: 500 },
+    noise_level_db: { min: 20, max: 40 },
+    noise_level: { min: 20, max: 40 },
+    rpm_range: { min: 1000, max: 5000 },
+
+    // Periféricos
+    response_frequency_hz: { min: 125, max: 8000 },
+  };
+
   const getCategoryKey = (name) => {
     const s = (name || '').trim().toLowerCase();
     if (!s) return null;
@@ -363,12 +461,25 @@ const VersusScreen = () => {
     const radius = size * 0.38; // margen para etiquetas
     const angleStep = (Math.PI * 2) / axes.length;
 
-    // Rangos por eje: usamos 0..max (max calculado entre ambos productos, con mínimo 1 para evitar división por cero)
+    // Rangos por eje: usar dominios personalizados si existen, sino usar datos observados
     const ranges = axes.map(({ key }) => {
       const va = toNumber(aSpecs[key]);
       const vb = toNumber(bSpecs[key]);
-      const max = Math.max(va ?? 0, vb ?? 0, 1);
-      return { key, min: 0, max };
+      
+      // Verificar si existe un dominio personalizado para esta métrica
+      const hasConfig = DOMAIN_BY_METRIC[key] !== undefined;
+      
+      if (hasConfig) {
+        // Usar dominio personalizado
+        let min = DOMAIN_BY_METRIC[key].min;
+        let max = DOMAIN_BY_METRIC[key].max;
+        if (max <= min) max = min + 1;
+        return { key, min, max };
+      } else {
+        // Fallback: usar rango observado entre A y B
+        const dataMax = Math.max(va ?? 0, vb ?? 0, 1);
+        return { key, min: 0, max: dataMax };
+      }
     });
 
     const toPoint = (val, index) => {
