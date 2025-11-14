@@ -1,5 +1,5 @@
-import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Keyboard } from 'react-native';
+import React, { useState, useEffect, useRef, useMemo, useCallback } from 'react';
+import { View, Text, StyleSheet, TouchableOpacity, FlatList, TextInput, Keyboard, Animated } from 'react-native';
 import { SafeAreaView, useSafeAreaInsets } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import ChatService from '../../services/chat.service';
@@ -29,6 +29,14 @@ const ChatScreen = ({ navigation, route }) => {
   const [input, setInput] = useState('');
   const [keyboardOffset, setKeyboardOffset] = useState(0);
   const insets = useSafeAreaInsets();
+  const listRef = useRef(null);
+  const [inputBarHeight, setInputBarHeight] = useState(0);
+  const [showScrollToBottom, setShowScrollToBottom] = useState(false);
+  const viewabilityConfigRef = useRef({ itemVisiblePercentThreshold: 70 });
+  const onViewableItemsChanged = useRef(({ viewableItems }) => {
+    const latestVisible = viewableItems.some((v) => v.index === 0);
+    setShowScrollToBottom(!latestVisible);
+  }).current;
 
   // Teclado dinámico: desplaza todo el contenido hacia arriba y eleva la barra de entrada
   useEffect(() => {
@@ -44,6 +52,8 @@ const ChatScreen = ({ navigation, route }) => {
       hideSub.remove();
     };
   }, []);
+
+  
 
   useEffect(() => {
     const init = async () => {
@@ -178,6 +188,7 @@ const ChatScreen = ({ navigation, route }) => {
       const tempId = String(Date.now());
       const pending = { id: tempId, from: 'me', text, time, status: 'sent', createdAt: now.toISOString() };
       setMessages((prev) => [...prev, pending]);
+      setTimeout(() => { listRef.current?.scrollToOffset?.({ offset: 0, animated: true }); }, 0);
       setInput('');
       const saved = await MessageService.sendMessage(cid, text, []);
       console.log('🟩 Mensaje guardado:', saved);
@@ -190,6 +201,7 @@ const ChatScreen = ({ navigation, route }) => {
       }
       return prev.map((m) => (m.id === tempId ? { ...m, id: finalStr, status: 'delivered', createdAt: saved?.created_at || m.createdAt } : m));
     });
+      setTimeout(() => { listRef.current?.scrollToOffset?.({ offset: 0, animated: true }); }, 0);
       const members = await ConversationService.listMembers(cid);
       const partner = (members || []).find((m) => m.user_id !== currentUserId);
       const pra = partner?.last_read_at ? new Date(partner.last_read_at).getTime() : null;
@@ -201,41 +213,57 @@ const ChatScreen = ({ navigation, route }) => {
     }
   };
 
-  const renderItem = ({ item }) => {
+  const MessageItem = React.memo(({ item }) => {
     const isMe = item.from === 'me';
+    const opacity = useRef(new Animated.Value(0)).current;
+    const translateY = useRef(new Animated.Value(8)).current;
+    const metaOpacity = useRef(new Animated.Value(0)).current;
+    useEffect(() => {
+      Animated.parallel([
+        Animated.timing(opacity, { toValue: 1, duration: 200, useNativeDriver: true }),
+        Animated.timing(translateY, { toValue: 0, duration: 200, useNativeDriver: true }),
+      ]).start(() => {
+        Animated.timing(metaOpacity, { toValue: 1, duration: 160, useNativeDriver: true }).start();
+      });
+    }, []);
     return (
-      <View style={[styles.messageRow, isMe ? styles.rowRight : styles.rowLeft]}>
+      <Animated.View style={[styles.messageRow, isMe ? styles.rowRight : styles.rowLeft, { opacity, transform: [{ translateY }] }]}> 
         <View style={[styles.bubble, isMe ? styles.bubbleMe : styles.bubbleThem]}>
           <Text style={styles.bubbleText}>{item.text}</Text>
-          <Text style={styles.bubbleTime}>{item.time}</Text>
-          {isMe && (
-            <View style={styles.statusRow}>
-              {item.status === 'sent' && (
-                <View style={styles.statusBadge}>
-                  <FontAwesome5 name="check" size={10} color="#dcdcdc" />
-                  <Text style={styles.statusText}> Enviado</Text>
-                </View>
-              )}
-              {item.status === 'delivered' && (
-                <View style={styles.statusBadge}>
-                  <FontAwesome5 name="check" size={10} color="#dcdcdc" />
-                  <FontAwesome5 name="check" size={10} color="#dcdcdc" style={{ marginLeft: 2 }} />
-                  <Text style={styles.statusText}> Entregado</Text>
-                </View>
-              )}
-              {item.status === 'read' && (
-                <View style={styles.statusBadge}>
-                  <FontAwesome5 name="check" size={10} color="#ffffff" />
-                  <FontAwesome5 name="check" size={10} color="#ffffff" style={{ marginLeft: 2 }} />
-                  <Text style={[styles.statusText, { color: '#ffffff' }]}> Leído</Text>
-                </View>
-              )}
-            </View>
-          )}
+          <Animated.View style={[styles.metaRow, { opacity: metaOpacity }]}> 
+            <Text style={styles.bubbleTime}>{item.time}</Text>
+            {isMe && (
+              <>
+                {item.status === 'sent' && (
+                  <View style={styles.statusBadge}>
+                    <FontAwesome5 name="check" size={10} color="#dcdcdc" />
+                    <Text style={styles.statusText}> Enviado</Text>
+                  </View>
+                )}
+                {item.status === 'delivered' && (
+                  <View style={styles.statusBadge}>
+                    <FontAwesome5 name="check" size={10} color="#dcdcdc" />
+                    <FontAwesome5 name="check" size={10} color="#dcdcdc" style={{ marginLeft: 2 }} />
+                    <Text style={styles.statusText}> Entregado</Text>
+                  </View>
+                )}
+                {item.status === 'read' && (
+                  <View style={styles.statusBadge}>
+                    <FontAwesome5 name="check" size={10} color="#ffffff" />
+                    <FontAwesome5 name="check" size={10} color="#ffffff" style={{ marginLeft: 2 }} />
+                    <Text style={[styles.statusText, { color: '#ffffff' }]}> Leído</Text>
+                  </View>
+                )}
+              </>
+            )}
+          </Animated.View>
         </View>
-      </View>
+      </Animated.View>
     );
-  };
+  });
+
+  const invertedData = useMemo(() => [...messages].reverse(), [messages]);
+  const renderItem = useCallback(({ item }) => <MessageItem item={item} />, []);
 
   return (
     <SafeAreaView style={styles.container} edges={['top','bottom']}>
@@ -256,15 +284,43 @@ const ChatScreen = ({ navigation, route }) => {
       </View>
 
       <FlatList
-        data={messages}
+        ref={listRef}
+        inverted
+        data={invertedData}
         keyExtractor={(item) => item.id}
         renderItem={renderItem}
         contentContainerStyle={[
           styles.listContainer,
-          { paddingBottom: 90 + keyboardOffset + Math.max(insets.bottom, 8) }
+          { paddingBottom: 0 }
         ]}
+        ListHeaderComponent={<View style={{ height: inputBarHeight + keyboardOffset + Math.max(insets.bottom, 8) }} />}
+        maintainVisibleContentPosition={{ autoscrollToTopThreshold: 1, minIndexForVisible: 1 }}
+        onViewableItemsChanged={onViewableItemsChanged}
+        viewabilityConfig={viewabilityConfigRef.current}
         keyboardShouldPersistTaps="handled"
       />
+
+      {showScrollToBottom && (
+        <TouchableOpacity
+          style={[
+            styles.scrollDownButton,
+            { bottom: inputBarHeight + keyboardOffset + insets.bottom + 16 }
+          ]}
+          activeOpacity={0.8}
+          onPress={() => {
+            try {
+              listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+              setTimeout(() => {
+                listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+              }, 60);
+            } catch {
+              listRef.current?.scrollToOffset?.({ offset: 0, animated: true });
+            }
+          }}
+        >
+          <FontAwesome5 name="chevron-down" size={16} color="#ffffff" />
+        </TouchableOpacity>
+      )}
 
       <View
         style={[
@@ -272,8 +328,9 @@ const ChatScreen = ({ navigation, route }) => {
           {
             bottom: keyboardOffset + insets.bottom,
             paddingBottom: Math.max(insets.bottom, 8)
-          }
+          },
         ]}
+        onLayout={(e) => setInputBarHeight(e.nativeEvent.layout.height)}
       >
         <TouchableOpacity style={styles.inputIcon} activeOpacity={0.8}>
           <FontAwesome5 name="paperclip" size={16} color="#bdbdbd" />
@@ -282,6 +339,7 @@ const ChatScreen = ({ navigation, route }) => {
           style={styles.input}
           value={input}
           onChangeText={setInput}
+          onFocus={() => { listRef.current?.scrollToOffset?.({ offset: 0, animated: true }); }}
           placeholder="Escribe un mensaje"
           placeholderTextColor="#8a8a8a"
         />
@@ -321,9 +379,9 @@ const styles = StyleSheet.create({
   bubbleThem: { backgroundColor: '#2c2c2c', borderColor: '#333333' },
   bubbleMe: { backgroundColor: '#007AFF', borderColor: '#2a6fd0' },
   bubbleText: { color: '#ffffff', fontSize: 14 },
-  bubbleTime: { color: '#dcdcdc', fontSize: 10, marginTop: 4, textAlign: 'right' },
-  statusRow: { flexDirection: 'row', alignItems: 'center', marginTop: 4 },
-  statusBadge: { flexDirection: 'row', alignItems: 'center' },
+  bubbleTime: { color: '#dcdcdc', fontSize: 10 },
+  metaRow: { flexDirection: 'row', alignItems: 'center', justifyContent: 'flex-end', marginTop: 4 },
+  statusBadge: { flexDirection: 'row', alignItems: 'center', marginLeft: 8 },
   statusText: { color: '#dcdcdc', fontSize: 10, marginLeft: 4 },
 
   inputBar: {
@@ -347,6 +405,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#007AFF', borderRadius: 12, paddingHorizontal: 14, paddingVertical: 10,
   },
   sendButtonDisabled: { backgroundColor: '#2a6fd0', opacity: 0.6 },
+  scrollDownButton: {
+    position: 'absolute', right: 16,
+    width: 36, height: 36, borderRadius: 18,
+    alignItems: 'center', justifyContent: 'center',
+    backgroundColor: '#2c2c2c', borderWidth: 1, borderColor: '#333333',
+    zIndex: 10,
+    shadowColor: '#000', shadowOpacity: 0.2, shadowRadius: 4, shadowOffset: { width: 0, height: 2 },
+  },
 });
 
 export default ChatScreen;
