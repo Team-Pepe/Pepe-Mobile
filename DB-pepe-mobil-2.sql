@@ -40,6 +40,9 @@ CREATE TABLE public.communities (
   theme_category character varying,
   image_url text,
   created_at timestamp without time zone DEFAULT CURRENT_TIMESTAMP,
+  join_code character varying UNIQUE,
+  privacy character varying DEFAULT 'private'::character varying CHECK (privacy::text = ANY (ARRAY['private'::character varying, 'public'::character varying]::text[])),
+  topics jsonb DEFAULT '[]'::jsonb,
   CONSTRAINT communities_pkey PRIMARY KEY (id)
 );
 CREATE TABLE public.community_members (

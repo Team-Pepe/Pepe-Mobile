@@ -56,6 +56,18 @@ class ConversationService {
     return data?.[0] || null;
   }
 
+  static async findGroupConversationByCommunity(communityId) {
+    if (!communityId) throw new Error('communityId requerido');
+    const { data, error } = await supabase
+      .from('conversations')
+      .select('*')
+      .eq('type', 'group')
+      .eq('community_id', communityId)
+      .maybeSingle();
+    if (error) throw error;
+    return data || null;
+  }
+
   static async addMember(conversationId, userId, role = 'member') {
     if (!conversationId || !userId) throw new Error('conversationId y userId requeridos');
     const { data: exists, error: existsErr } = await supabase

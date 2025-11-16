@@ -56,6 +56,22 @@ export class UserService {
     return map;
   }
 
+  static async listBasicUsers() {
+    const { data, error } = await supabase
+      .from('users')
+      .select('id, email, first_name, last_name')
+      .order('first_name', { ascending: true });
+    if (error) {
+      console.error('Error listing users:', error.message);
+      return [];
+    }
+    return (data || []).map((row) => ({
+      id: String(row.id),
+      name: `${(row.first_name || '').trim()} ${(row.last_name || '').trim()}`.trim() || row.email || 'Usuario',
+      email: row.email,
+    }));
+  }
+
   // Obtener perfil completo por email
   static async getUserProfileByEmail(email) {
     if (!email) return null;

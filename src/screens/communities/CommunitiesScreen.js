@@ -6,6 +6,7 @@ import ConversationService from '../../services/conversation.service';
 import ChatService from '../../services/chat.service';
 import MessageService from '../../services/message.service';
 import UserService from '../../services/user.service';
+import { supabase } from '../../lib/supabase';
 
 const CommunitiesScreen = ({ navigation }) => {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
@@ -13,6 +14,7 @@ const CommunitiesScreen = ({ navigation }) => {
   const [conversations, setConversations] = useState([]);
   const [search, setSearch] = useState('');
   const [filtered, setFiltered] = useState([]);
+  const [segment, setSegment] = useState('all');
 
   useEffect(() => {
     const load = async () => {
@@ -42,6 +44,16 @@ const CommunitiesScreen = ({ navigation }) => {
           title = partnerName;
         } else if (conv.type === 'group') {
           title = 'Grupo';
+          if (conv.community_id) {
+            try {
+              const { data: comm } = await supabase
+                .from('communities')
+                .select('name')
+                .eq('id', conv.community_id)
+                .maybeSingle();
+              if (comm?.name) title = comm.name;
+            } catch (e) {}
+          }
         }
         let lastMessage = '';
         let time = '';
@@ -54,8 +66,31 @@ const CommunitiesScreen = ({ navigation }) => {
           const mm = String(dt.getMinutes()).padStart(2, '0');
           time = `${hh}:${mm}`;
         }
-        items.push({ id: String(cid), title, lastMessage, time, unread: 0, conversationId: cid, partnerUserId, partnerName });
+        const compositeId = conv.type === 'group' ? `group:${cid}` : `direct:${cid}`;
+        items.push({ id: compositeId, title, lastMessage, time, unread: 0, conversationId: cid, partnerUserId, partnerName, type: conv.type, communityId: conv.community_id || null });
       }
+      try {
+        const { data: memberships } = await supabase
+          .from('community_members')
+          .select('community_id, communities:community_id(id, name)')
+          .eq('user_id', meId);
+        for (const m of memberships || []) {
+          const commId = m.community_id;
+          const commName = m.communities?.name || 'Grupo';
+          let existing = items.find((it) => it.type === 'group' && it.communityId === commId);
+          if (existing) continue;
+          let conv = null;
+          try {
+            conv = await ConversationService.findGroupConversationByCommunity(commId);
+          } catch (e) {
+            conv = null;
+          }
+          const conversationId = conv?.id || null;
+          const compositeId = conversationId ? `group:${conversationId}` : `group:community:${commId}`;
+          items.push({ id: compositeId, title: commName, lastMessage: '', time: '', unread: 0, conversationId, partnerUserId: null, partnerName: '', type: 'group', communityId: commId });
+        }
+      } catch (e) {}
+
       setConversations(items);
       setFiltered(items);
       setLoading(false);
@@ -65,18 +100,30 @@ const CommunitiesScreen = ({ navigation }) => {
 
   useEffect(() => {
     const q = search.toLowerCase();
-    const res = conversations.filter((c) => c.title.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q));
+    let res = conversations.filter((c) => c.title.toLowerCase().includes(q) || (c.lastMessage || '').toLowerCase().includes(q));
+    if (segment === 'direct') res = res.filter((c) => c.type === 'direct');
+    if (segment === 'group') res = res.filter((c) => c.type === 'group');
     setFiltered(res);
-  }, [search, conversations]);
+  }, [search, conversations, segment]);
 
   const renderItem = ({ item }) => (
     <TouchableOpacity
       style={styles.item}
-      onPress={() => {
+      onPress={async () => {
         if (item.partnerUserId) {
           navigation.navigate('Chat', { userId: item.partnerUserId, userName: item.partnerName });
-        } else {
+        } else if (item.conversationId) {
           navigation.navigate('Chat', { conversationId: item.conversationId, userName: item.title });
+        } else if (item.type === 'group' && item.communityId) {
+          try {
+            const conv = await ConversationService.findGroupConversationByCommunity(item.communityId);
+            if (conv?.id) {
+              navigation.navigate('Chat', { conversationId: conv.id, userName: item.title });
+            } else {
+              const created = await ConversationService.getOrCreateGroupConversationFromCommunity(item.communityId);
+              if (created?.id) navigation.navigate('Chat', { conversationId: created.id, userName: item.title });
+            }
+          } catch (e) {}
         }
       }}
     >
@@ -116,9 +163,21 @@ const CommunitiesScreen = ({ navigation }) => {
         </TouchableOpacity>
       </View>
 
-      <View style={styles.searchBar}>
-        <FontAwesome5 name="search" size={14} color="#bdbdbd" />
-        <TextInput style={styles.searchInput} placeholder="Buscar chats, grupos..." placeholderTextColor="#8a8a8a" value={search} onChangeText={setSearch} />
+  <View style={styles.searchBar}>
+    <FontAwesome5 name="search" size={14} color="#bdbdbd" />
+    <TextInput style={styles.searchInput} placeholder="Buscar chats, grupos..." placeholderTextColor="#8a8a8a" value={search} onChangeText={setSearch} />
+  </View>
+
+      <View style={styles.segmentRow}>
+        <TouchableOpacity style={[styles.segmentChip, segment === 'all' && styles.segmentChipActive]} onPress={() => setSegment('all')}>
+          <Text style={styles.segmentChipText}>Todos</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.segmentChip, segment === 'direct' && styles.segmentChipActive]} onPress={() => setSegment('direct')}>
+          <Text style={styles.segmentChipText}>Chats</Text>
+        </TouchableOpacity>
+        <TouchableOpacity style={[styles.segmentChip, segment === 'group' && styles.segmentChipActive]} onPress={() => setSegment('group')}>
+          <Text style={styles.segmentChipText}>Grupos</Text>
+        </TouchableOpacity>
       </View>
 
       {loading ? (
@@ -250,6 +309,17 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 14,
   },
+  segmentRow: {
+    flexDirection: 'row', gap: 8, marginHorizontal: 16, marginTop: 10,
+  },
+  segmentChip: {
+    backgroundColor: '#2c2c2c', borderWidth: 1, borderColor: '#333333',
+    borderRadius: 20, paddingVertical: 8, paddingHorizontal: 12,
+  },
+  segmentChipActive: {
+    backgroundColor: 'rgba(0,122,255,0.15)', borderColor: '#007AFF'
+  },
+  segmentChipText: { color: '#ffffff', fontSize: 12 },
   listContainer: {
     padding: 16,
   },
