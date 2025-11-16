@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
-import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, Image } from 'react-native';
+import { View, Text, StyleSheet, FlatList, TouchableOpacity, Alert, ActivityIndicator, Image, ScrollView, RefreshControl } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import ProductService from '../../services/product.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
+import { usePullRefresh } from '../../utils/pullRefresh';
 
 const MyProductsScreen = ({ navigation }) => {
   const [products, setProducts] = useState([]);
@@ -47,6 +48,8 @@ const MyProductsScreen = ({ navigation }) => {
   useEffect(() => {
     loadUserProducts();
   }, []);
+
+  const { refreshing, onRefresh } = usePullRefresh(loadUserProducts);
 
   const handleAddProduct = () => {
     navigation.navigate('SellProduct');
@@ -161,9 +164,10 @@ const MyProductsScreen = ({ navigation }) => {
           renderItem={renderProductItem}
           keyExtractor={item => item.id}
           contentContainerStyle={styles.listContent}
+          refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ffffff" colors={["#007AFF"]} />}
         />
       ) : (
-        <View style={styles.emptyContainer}>
+        <ScrollView contentContainerStyle={styles.emptyContainer} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ffffff" colors={["#007AFF"]} /> }>
           <FontAwesome5 name="box-open" size={60} color="#666666" />
           <Text style={styles.emptyText}>No tienes productos publicados</Text>
           <TouchableOpacity 
@@ -172,7 +176,7 @@ const MyProductsScreen = ({ navigation }) => {
           >
             <Text style={styles.buttonText}>Publicar mi primer producto</Text>
           </TouchableOpacity>
-        </View>
+        </ScrollView>
       )}
     </SafeAreaView>
   );

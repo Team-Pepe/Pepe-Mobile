@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, ActivityIndicator, RefreshControl } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import FavoritesService from '../../services/favorites.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
 import { removeIfFavorite } from '../../utils/favoriteGuard';
+import { usePullRefresh } from '../../utils/pullRefresh';
 
 const FavoritesScreen = ({ navigation }) => {
   const [favorites, setFavorites] = useState([]);
@@ -43,8 +44,10 @@ const FavoritesScreen = ({ navigation }) => {
     }
   };
 
+  const { refreshing, onRefresh } = usePullRefresh(loadFavorites);
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ffffff" colors={["#007AFF"]} /> }>
       <Text style={styles.sectionTitle}>¡Se que lo Quieres</Text>
       {loading ? (
         <Text style={styles.loadingText}>Cargando favoritos…</Text>
