@@ -57,6 +57,7 @@ const CommunitiesScreen = ({ navigation }) => {
         }
         let lastMessage = '';
         let time = '';
+        let sortTs = 0;
         const last = await MessageService.listMessages(cid, { limit: 1 });
         if (last && last.length > 0) {
           const m = last[0];
@@ -65,9 +66,15 @@ const CommunitiesScreen = ({ navigation }) => {
           const hh = String(dt.getHours()).padStart(2, '0');
           const mm = String(dt.getMinutes()).padStart(2, '0');
           time = `${hh}:${mm}`;
+          sortTs = dt.getTime();
         }
+        const lastReadAt = row.last_read_at || null;
+        let unread = 0;
+        try {
+          unread = await MessageService.countUnread(cid, meId, lastReadAt);
+        } catch (e) { unread = 0; }
         const compositeId = conv.type === 'group' ? `group:${cid}` : `direct:${cid}`;
-        items.push({ id: compositeId, title, lastMessage, time, unread: 0, conversationId: cid, partnerUserId, partnerName, type: conv.type, communityId: conv.community_id || null });
+        items.push({ id: compositeId, title, lastMessage, time, unread, conversationId: cid, partnerUserId, partnerName, type: conv.type, communityId: conv.community_id || null, sortTs });
       }
       try {
         const { data: memberships } = await supabase
@@ -87,12 +94,13 @@ const CommunitiesScreen = ({ navigation }) => {
           }
           const conversationId = conv?.id || null;
           const compositeId = conversationId ? `group:${conversationId}` : `group:community:${commId}`;
-          items.push({ id: compositeId, title: commName, lastMessage: '', time: '', unread: 0, conversationId, partnerUserId: null, partnerName: '', type: 'group', communityId: commId });
+          items.push({ id: compositeId, title: commName, lastMessage: '', time: '', unread: 0, conversationId, partnerUserId: null, partnerName: '', type: 'group', communityId: commId, sortTs: 0 });
         }
       } catch (e) {}
 
-      setConversations(items);
-      setFiltered(items);
+      const ordered = [...items].sort((a, b) => (b.sortTs || 0) - (a.sortTs || 0));
+      setConversations(ordered);
+      setFiltered(ordered);
       setLoading(false);
     };
     load();

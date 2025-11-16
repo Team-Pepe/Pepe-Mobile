@@ -527,10 +527,16 @@ const ProductDetailScreen = ({ route, navigation }) => {
         
         <TouchableOpacity
           style={styles.buyButton}
-          onPress={() => {
+          onPress={async () => {
             const sellerId = getSellerId();
             if (!sellerId) return;
-            const seller = buildSellerUser();
+            let seller = buildSellerUser();
+            if (!seller.name || seller.name === 'Vendedor') {
+              try {
+                const resolvedName = await UserService.getUserNameById(sellerId);
+                if (resolvedName) seller = { ...seller, name: resolvedName, username: String(resolvedName).toLowerCase().replace(/\s+/g, '') };
+              } catch {}
+            }
             navigation.navigate('Chat', { userId: sellerId, userName: seller.name, username: seller.username });
           }}
         >

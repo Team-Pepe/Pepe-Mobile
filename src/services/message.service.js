@@ -62,6 +62,19 @@ class MessageService {
     if (error) throw error;
     return data?.[0] || null;
   }
+
+  static async countUnread(conversationId, userId, since) {
+    if (!conversationId) throw new Error('conversationId requerido');
+    let q = supabase
+      .from('messages')
+      .select('id', { count: 'exact', head: true })
+      .eq('conversation_id', conversationId);
+    if (since) q = q.gt('created_at', since);
+    if (userId) q = q.neq('user_id', userId);
+    const { count, error } = await q;
+    if (error) throw error;
+    return count || 0;
+  }
 }
 
 export default MessageService;
