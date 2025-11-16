@@ -7,6 +7,7 @@ import ChatService from '../../services/chat.service';
 import MessageService from '../../services/message.service';
 import UserService from '../../services/user.service';
 import { supabase } from '../../lib/supabase';
+import { usePullRefresh } from '../../utils/pullRefresh';
 
 const CommunitiesScreen = ({ navigation }) => {
   const [showTypeSelector, setShowTypeSelector] = useState(false);
@@ -16,15 +17,14 @@ const CommunitiesScreen = ({ navigation }) => {
   const [filtered, setFiltered] = useState([]);
   const [segment, setSegment] = useState('all');
 
-  useEffect(() => {
-    const load = async () => {
-      const meId = await ChatService.currentUserId();
-      if (!meId) {
-        setConversations([]);
-        setFiltered([]);
-        setLoading(false);
-        return;
-      }
+  const load = async () => {
+    const meId = await ChatService.currentUserId();
+    if (!meId) {
+      setConversations([]);
+      setFiltered([]);
+      setLoading(false);
+      return;
+    }
       const rows = await ConversationService.listUserConversations(meId);
       const items = [];
       for (const row of rows) {
@@ -102,9 +102,13 @@ const CommunitiesScreen = ({ navigation }) => {
       setConversations(ordered);
       setFiltered(ordered);
       setLoading(false);
-    };
+  };
+
+  useEffect(() => {
     load();
   }, []);
+
+  const { refreshing, refreshControl } = usePullRefresh(load);
 
   useEffect(() => {
     const q = search.toLowerCase();
@@ -207,6 +211,7 @@ const CommunitiesScreen = ({ navigation }) => {
           keyExtractor={(item) => item.id}
           renderItem={renderItem}
           contentContainerStyle={styles.listContainer}
+          refreshControl={refreshControl}
           ListEmptyComponent={<Text style={styles.emptyText}>Aún no tienes conversaciones</Text>}
         />
       )}
