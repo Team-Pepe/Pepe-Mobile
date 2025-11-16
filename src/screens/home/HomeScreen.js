@@ -1,11 +1,12 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TextInput, ActivityIndicator } from 'react-native';
+import { View, Text, StyleSheet, ScrollView, TouchableOpacity, Image, Alert, TextInput, ActivityIndicator, RefreshControl } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { AuthService } from '../../services/auth.service';
 import RecommendationService from '../../services/recommendation.service';
 import ProductService from '../../services/product.service';
 import FilterService from '../../services/filter.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
+import { usePullRefresh } from '../../utils/pullRefresh';
 import FavoritesService from '../../services/favorites.service';
 
 const HomeScreen = ({ navigation }) => {
@@ -209,8 +210,49 @@ const HomeScreen = ({ navigation }) => {
     }
   }, [selectedCategoryId]);
 
+  const loadHome = async () => {
+    try {
+      let uid = null;
+      try {
+        const { user: currentUser } = await AuthService.getCurrentUser();
+        uid = currentUser?.id || null;
+      } catch {}
+      if (uid) {
+        try {
+          const recs = await RecommendationService.getRecommendedForUser(uid);
+          setRecommended(recs || []);
+        } catch {}
+      }
+      const q = searchQuery.trim();
+      if (q.length >= 2) {
+        try {
+          let res;
+          if (selectedCategoryId) {
+            res = await FilterService.searchByCategory(selectedCategoryId, q, { limit: 20 });
+          } else {
+            res = await RecommendationService.searchAll(q, { limit: 20 });
+          }
+          setSearchResults(res || []);
+        } catch {}
+      } else {
+        try {
+          if (selectedCategoryId) {
+            const res = await FilterService.listByCategory(selectedCategoryId, { limit: 20 });
+            setAllProducts(res || []);
+          } else {
+            const all = await RecommendationService.listAll({ limit: 20 });
+            setAllProducts(all || []);
+          }
+        } catch {}
+      }
+      await loadFavoriteIds();
+    } catch {}
+  };
+
+  const { refreshing, onRefresh } = usePullRefresh(loadHome);
+
   return (
-    <ScrollView style={styles.container}>
+    <ScrollView style={styles.container} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor="#ffffff" colors={["#007AFF"]} /> }>
       {/* Barra de búsqueda */}
       <View style={styles.searchBar}>
         <FontAwesome5 name="search" size={16} color="#666" />
