@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useState } from 'react';
 import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 'react-native';
 import ProductService from '../../services/product.service';
+import { normalizeName } from '../../services/category.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
 
 const SLOT_NAMES = {
@@ -41,7 +42,10 @@ const MyPCScreen = ({ navigation }) => {
         const cats = await ProductService.getCategories();
         setCategories(cats || []);
         const byName = (nameLikeArr) => {
-          const found = cats?.find((c) => nameLikeArr.some((s) => (c.name || '').toLowerCase().includes(s)));
+          const found = cats?.find((c) => {
+            const n = normalizeName(c.name);
+            return nameLikeArr.some((s) => n.includes(normalizeName(s)));
+          });
           return found?.id || null;
         };
         setCategoryIds({
@@ -50,7 +54,7 @@ const MyPCScreen = ({ navigation }) => {
           motherboard: byName(['motherboard', 'placa', 'mainboard']),
           ram: byName(['ram', 'memoria']),
           psu: byName(['psu', 'fuente', 'power']),
-          storage: byName(['almacenamiento', 'ssd', 'hdd', 'disco']),
+          storage: byName(['almacenamiento', 'storage', 'disco', 'ssd', 'hdd']),
           case: byName(['gabinete', 'case']),
           cooler: byName(['cooler', 'refrigeración', 'cooling']),
         });
@@ -68,14 +72,23 @@ const MyPCScreen = ({ navigation }) => {
   const fetchResults = async (slot) => {
     const q = (search[slot] || '').trim();
     const catId = categoryIds[slot];
-    if (!catId || q.length < 2) {
+    if (q.length < 2) {
       setResults((prev) => ({ ...prev, [slot]: [] }));
       return;
     }
     setLoading((prev) => ({ ...prev, [slot]: true }));
     try {
-      const res = await ProductService.getAllProducts({ category_id: catId, search: q });
-      setResults((prev) => ({ ...prev, [slot]: res || [] }));
+      if (catId) {
+        const res = await ProductService.getAllProducts({ category_id: catId, search: q });
+        setResults((prev) => ({ ...prev, [slot]: res || [] }));
+      } else if (slot === 'storage') {
+        const all = await ProductService.getAllProducts({ search: q });
+        const like = ['almacenamiento', 'storage', 'disco', 'ssd', 'hdd'];
+        const filtered = (all || []).filter((p) => like.some((s) => normalizeName(p?.categories?.name).includes(normalizeName(s))));
+        setResults((prev) => ({ ...prev, [slot]: filtered }));
+      } else {
+        setResults((prev) => ({ ...prev, [slot]: [] }));
+      }
     } catch (e) {
       console.error(`Error buscando ${slot}:`, e);
     } finally {
@@ -166,6 +179,11 @@ const MyPCScreen = ({ navigation }) => {
     const mbSata = toNum(specs.motherboard.sata_ports);
     if (storageIf.includes('m.2') && mbM2 !== null && mbM2 <= 0) warn('Motherboard sin slots M.2 para almacenamiento seleccionado');
     if (storageIf.includes('sata') && mbSata !== null && mbSata <= 0) warn('Motherboard sin puertos SATA disponibles');
+    const storageType = (specs.storage.type || '').toString().toLowerCase();
+    const bays35 = toNum(specs.case.bays_35);
+    const bays25 = toNum(specs.case.bays_25);
+    if (storageType.includes('hdd') && bays35 !== null && bays35 <= 0) warn('Gabinete sin bahías 3.5" para HDD seleccionado');
+    if (storageType.includes('ssd') && storageIf.includes('sata') && bays25 !== null && bays25 <= 0) warn('Gabinete sin bahías 2.5" para SSD SATA seleccionado');
 
     return issues;
   }, [specs]);
