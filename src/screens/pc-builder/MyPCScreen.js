@@ -147,7 +147,7 @@ const MyPCScreen = ({ navigation }) => {
     const misc = 30; // ventiladores, chipset, leds
     const estimate = cpuTdp + gpuTdp + ramW + storageW + misc;
     const recommended = Math.ceil(estimate * 1.5);
-    const psuW = toNum(specs.psu.wattage) ?? toNum(specs.psu.power) ?? 0;
+    const psuW = toNum(specs.psu.power_w) ?? toNum(specs.psu.power) ?? 0;
     const ok = psuW ? psuW >= recommended : false;
     return { estimate, recommended, psuW, ok };
   }, [specs]);
