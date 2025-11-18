@@ -3,6 +3,8 @@ import { View, Text, StyleSheet, TextInput, TouchableOpacity, ScrollView } from 
 import ProductService from '../../services/product.service';
 import { normalizeName } from '../../services/category.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
+import { eventBus } from '../../utils/eventBus';
+import { sumSelectedPrices } from '../../utils/pcTotal';
 
 const SLOT_NAMES = {
   cpu: 'CPU',
@@ -104,6 +106,23 @@ const MyPCScreen = ({ navigation }) => {
   useEffect(() => { fetchResults('storage'); }, [search.storage, categoryIds.storage]);
   useEffect(() => { fetchResults('case'); }, [search.case, categoryIds.case]);
   useEffect(() => { fetchResults('cooler'); }, [search.cooler, categoryIds.cooler]);
+
+  const resetAll = () => {
+    setSearch({ cpu: '', gpu: '', motherboard: '', ram: '', psu: '', storage: '', case: '', cooler: '' });
+    setResults({ cpu: [], gpu: [], motherboard: [], ram: [], psu: [], storage: [], case: [], cooler: [] });
+    setSelected({ cpu: null, gpu: null, motherboard: null, ram: null, psu: null, storage: null, case: null, cooler: null });
+    setSpecs({ cpu: {}, gpu: {}, motherboard: {}, ram: {}, psu: {}, storage: {}, case: {}, cooler: {} });
+  };
+
+  useEffect(() => {
+    const off = eventBus.on('RESET_MYPC', resetAll);
+    return () => off();
+  }, []);
+
+  const totalPrice = useMemo(() => sumSelectedPrices(selected), [selected]);
+  useEffect(() => {
+    eventBus.emit('MYPC_TOTAL', totalPrice);
+  }, [totalPrice]);
 
   const selectProduct = async (slot, product) => {
     setSelected((prev) => ({ ...prev, [slot]: product }));
