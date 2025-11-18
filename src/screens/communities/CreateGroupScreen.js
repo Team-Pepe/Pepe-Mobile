@@ -67,7 +67,7 @@ const CreateGroupScreen = ({ navigation }) => {
         <View style={{ width: 40 }} />
       </View>
 
-      <ScrollView style={styles.form} contentContainerStyle={{ paddingBottom: 140 }} keyboardShouldPersistTaps="handled">
+      <ScrollView style={styles.form} contentContainerStyle={{ paddingBottom: 140 }} keyboardShouldPersistTaps="handled" nestedScrollEnabled>
         {/* Avatar del grupo (placeholder UI) */}
         <Text style={styles.label}>Avatar del grupo</Text>
         <View style={styles.avatarRow}>
@@ -103,7 +103,7 @@ const CreateGroupScreen = ({ navigation }) => {
             multiline
           />
         </View>
-        {errors.description && <Text style={{ color: '#ff6b6b', fontSize: 12 }}>{errors.description}</Text>}
+        
 
         <Text style={[styles.label, { marginTop: 16 }]}>Privacidad</Text>
         <View style={styles.chips}>
@@ -167,13 +167,16 @@ const CreateGroupScreen = ({ navigation }) => {
             <Text style={styles.helper}>Cargando usuarios…</Text>
           ) : (
             <>
-              <FlatList
-                data={filteredUsers}
-                keyExtractor={(u) => u.id}
-                renderItem={({ item: u }) => {
+              <ScrollView
+                style={styles.userList}
+                contentContainerStyle={{ paddingBottom: 4 }}
+                keyboardShouldPersistTaps="handled"
+                nestedScrollEnabled
+              >
+                {filteredUsers.map((u) => {
                   const selected = selectedUserIds.includes(u.id);
                   return (
-                    <View style={styles.userRow}>
+                    <View key={u.id} style={styles.userRow}>
                       <View style={styles.userAvatar}>
                         <Text style={styles.userAvatarText}>{(u.name[0] || '?').toUpperCase()}</Text>
                       </View>
@@ -193,12 +196,8 @@ const CreateGroupScreen = ({ navigation }) => {
                       </TouchableOpacity>
                     </View>
                   );
-                }}
-                scrollEnabled={false}
-                style={styles.userList}
-                contentContainerStyle={{ paddingBottom: 4 }}
-                keyboardShouldPersistTaps="handled"
-              />
+                })}
+              </ScrollView>
               {selectedUserIds.length > 0 && (
                 <View style={styles.selectedWrap}>
                   {selectedUserIds.map((id) => {
