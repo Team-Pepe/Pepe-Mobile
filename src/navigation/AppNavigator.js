@@ -1,5 +1,5 @@
 import React from 'react';
-import { NavigationContainer } from '@react-navigation/native';
+import { NavigationContainer, DarkTheme } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { TouchableOpacity, Platform, View } from 'react-native';
@@ -141,7 +141,17 @@ const TabNavigator = () => {
 const AppNavigator = () => {
   return (
     <SafeAreaProvider>
-      <NavigationContainer>
+      <NavigationContainer theme={{
+        ...DarkTheme,
+        colors: {
+          ...DarkTheme.colors,
+          background: '#2c2c2c',
+          card: '#1f1f1f',
+          text: '#ffffff',
+          border: '#333333',
+          primary: '#007AFF',
+        },
+      }}>
         <Stack.Navigator
           initialRouteName="Login"
           screenOptions={{

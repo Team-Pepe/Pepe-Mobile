@@ -4,12 +4,12 @@ export default {
     slug: 'Pepe-Mobile',
     version: '1.0.0',
     orientation: 'portrait',
-    icon: './assets/icon.png',
-    userInterfaceStyle: 'light',
+    icon: './assets/PepePlace.png',
+    userInterfaceStyle: 'dark',
     splash: {
-      image: './assets/splash.png',
+      image: './assets/PepePlace.png',
       resizeMode: 'contain',
-      backgroundColor: '#ffffff'
+      backgroundColor: '#2c2c2c'
     },
     assetBundlePatterns: [
       '**/*'
@@ -19,8 +19,17 @@ export default {
     },
     android: {
       adaptiveIcon: {
-        foregroundImage: './assets/adaptive-icon.png',
-        backgroundColor: '#ffffff'
+        foregroundImage: './assets/PepePlace.png',
+        backgroundColor: '#2c2c2c'
+      },
+      navigationBar: {
+        backgroundColor: '#2c2c2c',
+        barStyle: 'light-content'
+      },
+      statusBar: {
+        backgroundColor: '#2c2c2c',
+        barStyle: 'light-content',
+        translucent: false
       }
     },
     web: {
