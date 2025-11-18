@@ -20,16 +20,7 @@
         "foregroundImage": "./assets/PepePlace.png",
         "backgroundColor": "#2c2c2c"
       },
-      "edgeToEdgeEnabled": true,
-      "navigationBar": {
-        "backgroundColor": "#2c2c2c",
-        "barStyle": "light-content"
-      },
-      "statusBar": {
-        "backgroundColor": "#2c2c2c",
-        "barStyle": "light-content",
-        "translucent": false
-      }
+      "edgeToEdgeEnabled": true
     },
     "web": {
       "favicon": "./assets/favicon.png"
