@@ -4,6 +4,7 @@ import Svg, { Circle, Line, Polygon, Text as SvgText } from 'react-native-svg';
 import { Picker } from '@react-native-picker/picker';
 import ProductService from '../../services/product.service';
 import { formatPriceWithSymbol } from '../../utils/formatPrice';
+import { eventBus } from '../../utils/eventBus';
 
 const VersusScreen = () => {
   const [categories, setCategories] = useState([]);
@@ -23,6 +24,22 @@ const VersusScreen = () => {
 
   const [loadingLeft, setLoadingLeft] = useState(false);
   const [loadingRight, setLoadingRight] = useState(false);
+
+  const resetAll = () => {
+    setLeftSearch('');
+    setRightSearch('');
+    setLeftResults([]);
+    setRightResults([]);
+    setLeftProduct(null);
+    setRightProduct(null);
+    setLeftSpecs({});
+    setRightSpecs({});
+  };
+
+  useEffect(() => {
+    const off = eventBus.on('RESET_VERSUS', resetAll);
+    return () => off();
+  }, []);
 
 
 

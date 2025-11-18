@@ -2,9 +2,12 @@ import React from 'react';
 import { NavigationContainer } from '@react-navigation/native';
 import { createStackNavigator } from '@react-navigation/stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { TouchableOpacity, Platform } from 'react-native';
+import { TouchableOpacity, Platform, View } from 'react-native';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
+import { eventBus } from '../utils/eventBus';
+import { HeaderRefreshButton } from '../components/HeaderRefreshButton';
+import { HeaderPCTotal } from '../components/HeaderPCTotal';
 
 import LoginScreen from '../screens/auth/LoginScreen';
 import RegisterScreen from '../screens/auth/RegisterScreen';
@@ -30,6 +33,7 @@ import JoinGroupScreen from '../screens/communities/JoinGroupScreen';
 
 const Stack = createStackNavigator();
 const Tab = createBottomTabNavigator();
+
 
 // Componente para el TabNavigator (menú inferior)
 const TabNavigator = () => {
@@ -105,6 +109,9 @@ const TabNavigator = () => {
         component={VersusScreen}
         options={{
           title: 'Versus',
+          headerRight: () => (
+            <HeaderRefreshButton onPress={() => eventBus.emit('RESET_VERSUS')} />
+          ),
         }}
       />
       <Tab.Screen 
@@ -112,6 +119,12 @@ const TabNavigator = () => {
         component={MyPCScreen}
         options={{
           title: 'Mi PC',
+          headerRight: () => (
+            <View style={{ flexDirection: 'row', alignItems: 'center' }}>
+              <HeaderPCTotal />
+              <HeaderRefreshButton onPress={() => eventBus.emit('RESET_MYPC')} />
+            </View>
+          ),
         }}
       />
       <Tab.Screen 
