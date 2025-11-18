@@ -1,5 +1,24 @@
 import React, { useState } from 'react';
 import { View, Text, TextInput, StyleSheet } from 'react-native';
+import { Picker } from '@react-native-picker/picker';
+
+// Opciones de socket (mismo listado que en CpuSpecifications)
+const socketOptions = [
+  { label: 'Selecciona un socket', value: '' },
+  { label: 'LGA 1151', value: 'LGA 1151' },
+  { label: 'LGA 1200', value: 'LGA 1200' },
+  { label: 'LGA 1700', value: 'LGA 1700' },
+  { label: 'LGA 2066', value: 'LGA 2066' },
+  { label: 'AM4', value: 'AM4' },
+  { label: 'AM5', value: 'AM5' },
+  { label: 'TR4', value: 'TR4' },
+  { label: 'sTRX4', value: 'sTRX4' },
+  { label: 'LGA 4094', value: 'LGA 4094' },
+  { label: 'PGA 988', value: 'PGA 988' },
+  { label: 'PGA FM2+', value: 'PGA FM2+' },
+  { label: 'BGA', value: 'BGA' },
+  { label: 'Otro', value: 'Otro' }
+];
 
 const MotherboardSpecifications = ({ onChange }) => {
   const [specifications, setSpecifications] = useState({
@@ -26,31 +45,49 @@ const MotherboardSpecifications = ({ onChange }) => {
   return (
     <View style={styles.container}>
       <Text style={styles.title}>Especificaciones de Placa Base</Text>
-      
-      <View style={styles.row}>
-        <TextInput
-          style={[styles.input, styles.halfInput]}
-          placeholder="Socket (AM4/LGA1700)"
-          placeholderTextColor="#999"
-          value={specifications.socket}
-          onChangeText={(value) => handleChange('socket', value)}
-        />
-        <TextInput
-          style={[styles.input, styles.halfInput]}
-          placeholder="Chipset"
-          placeholderTextColor="#999"
-          value={specifications.chipset}
-          onChangeText={(value) => handleChange('chipset', value)}
-        />
+      <View style={styles.pickerWrapper}>
+        <Text style={styles.pickerLabel}>Socket</Text>
+        <Picker
+          selectedValue={specifications.socket}
+          onValueChange={(value) => handleChange('socket', value)}
+          style={styles.picker}
+          dropdownIconColor="#007AFF"
+        >
+          {socketOptions.map((option, index) => (
+            <Picker.Item
+              key={index}
+              label={option.label}
+              value={option.value}
+              color={option.value === '' ? '#999' : '#ffffff'}
+              style={{ backgroundColor: '#2c2c2c' }}
+            />
+          ))}
+        </Picker>
       </View>
 
       <TextInput
         style={styles.input}
-        placeholder="Factor de forma (ATX/Micro-ATX/Mini-ITX)"
+        placeholder="Chipset"
         placeholderTextColor="#999"
-        value={specifications.form_factor}
-        onChangeText={(value) => handleChange('form_factor', value)}
+        value={specifications.chipset}
+        onChangeText={(value) => handleChange('chipset', value)}
       />
+
+      <View style={styles.pickerWrapper}>
+        <Text style={styles.pickerLabel}>Factor de forma</Text>
+        <Picker
+          selectedValue={specifications.form_factor}
+          onValueChange={(value) => handleChange('form_factor', value)}
+          style={styles.picker}
+          dropdownIconColor="#007AFF"
+        >
+          <Picker.Item label="Selecciona factor de forma" value="" color="#999" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="ATX" value="ATX" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Micro-ATX" value="Micro-ATX" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Mini-ITX" value="Mini-ITX" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+          <Picker.Item label="Otro" value="Otro" color="#ffffff" style={{ backgroundColor: '#2c2c2c' }} />
+        </Picker>
+      </View>
 
       <View style={styles.row}>
         <TextInput
@@ -150,6 +187,23 @@ const styles = StyleSheet.create({
   },
   halfInput: {
     width: '48%',
+  },
+  pickerWrapper: {
+    marginBottom: 12,
+  },
+  pickerLabel: {
+    color: '#ffffff',
+    fontSize: 14,
+    marginBottom: 6,
+    fontWeight: '500',
+  },
+  picker: {
+    backgroundColor: '#2a2a2a',
+    color: '#ffffff',
+    height: 50,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: '#4a4a4a',
   },
 });
 
