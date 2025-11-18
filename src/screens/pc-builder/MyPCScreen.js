@@ -135,7 +135,13 @@ const MyPCScreen = ({ navigation }) => {
   // Cálculo de consumo energético
   const power = useMemo(() => {
     const cpuTdp = toNum(specs.cpu.tdp) ?? 0;
-    const gpuTdp = toNum(specs.gpu.tdp) ?? toNum(specs.gpu.power) ?? 0;
+    let gpuTdp = toNum(specs.gpu.tdp);
+    if (gpuTdp == null || gpuTdp === 0) {
+      gpuTdp = toNum(specs.gpu.power);
+    }
+    if (gpuTdp == null || gpuTdp === 0) {
+      gpuTdp = 180;
+    }
     const ramW = specs.ram && (toNum(specs.ram.modules) || toNum(specs.ram.capacity_gb)) ? 5 : 0; // aprox.
     const storageW = specs.storage && Object.keys(specs.storage).length ? (String(specs.storage.type || '').toLowerCase().includes('hdd') ? 9 : 5) : 0;
     const misc = 30; // ventiladores, chipset, leds
