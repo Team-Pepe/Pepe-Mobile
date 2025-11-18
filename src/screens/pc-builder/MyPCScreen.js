@@ -108,7 +108,7 @@ const MyPCScreen = ({ navigation }) => {
   const selectProduct = async (slot, product) => {
     setSelected((prev) => ({ ...prev, [slot]: product }));
     setResults((prev) => ({ ...prev, [slot]: [] }));
-    setSearch((prev) => ({ ...prev, [slot]: product?.name || '' }));
+    setSearch((prev) => ({ ...prev, [slot]: '' })); // Limpiar el campo de búsqueda al seleccionar
     setSpecs((prev) => ({ ...prev, [slot]: {} }));
     try {
       const categoryName = product?.categories?.name || '';
