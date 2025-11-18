@@ -312,3 +312,374 @@ CREATE TABLE public.users (
   birth_date date,
   CONSTRAINT users_pkey PRIMARY KEY (id)
 );
+ALTER TABLE public.conversations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.conversation_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.communities ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.community_members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS conversations_select_member ON public.conversations;
+DROP POLICY IF EXISTS conversations_insert_any_authenticated ON public.conversations;
+DROP POLICY IF EXISTS conversations_update_member ON public.conversations;
+DROP POLICY IF EXISTS conversations_delete_member ON public.conversations;
+DROP POLICY IF EXISTS conversations_select_for_members ON public.conversations;
+DROP POLICY IF EXISTS conversations_select_group ON public.conversations;
+DROP POLICY IF EXISTS conversations_select_if_member ON public.conversations;
+
+CREATE POLICY conversations_select_member
+ON public.conversations FOR SELECT TO authenticated
+USING (
+  (
+    public.conversations.type = 'group'
+    AND EXISTS (
+      SELECT 1
+      FROM public.community_members cmm
+      WHERE cmm.community_id = public.conversations.community_id
+        AND cmm.user_id = (
+          SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+        )
+    )
+  )
+  OR (
+    public.conversations.type = 'direct'
+    AND (
+      public.conversations.direct_key LIKE (
+        (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text || ':%'
+      )
+      OR public.conversations.direct_key LIKE (
+        '%:' || (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text
+      )
+    )
+  )
+);
+
+CREATE POLICY conversations_insert_any_authenticated
+ON public.conversations FOR INSERT TO authenticated
+WITH CHECK ( true );
+
+CREATE POLICY conversations_update_member
+ON public.conversations FOR UPDATE TO authenticated
+USING (
+  public.conversations.type = 'group'
+  AND EXISTS (
+    SELECT 1
+    FROM public.community_members cmm
+    WHERE cmm.community_id = public.conversations.community_id
+      AND cmm.user_id = (
+        SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+      )
+  )
+)
+WITH CHECK (
+  public.conversations.type = 'group'
+  AND EXISTS (
+    SELECT 1
+    FROM public.community_members cmm
+    WHERE cmm.community_id = public.conversations.community_id
+      AND cmm.user_id = (
+        SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+      )
+  )
+);
+
+CREATE POLICY conversations_delete_member
+ON public.conversations FOR DELETE TO authenticated
+USING (
+  public.conversations.type = 'group'
+  AND EXISTS (
+    SELECT 1
+    FROM public.community_members cmm
+    WHERE cmm.community_id = public.conversations.community_id
+      AND cmm.user_id = (
+        SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+      )
+  )
+);
+
+DROP POLICY IF EXISTS conversation_members_select_self ON public.conversation_members;
+DROP POLICY IF EXISTS conversation_members_insert_any_authenticated ON public.conversation_members;
+DROP POLICY IF EXISTS conversation_members_update_self ON public.conversation_members;
+DROP POLICY IF EXISTS conversation_members_delete_self ON public.conversation_members;
+
+CREATE POLICY conversation_members_select_self
+ON public.conversation_members FOR SELECT TO authenticated
+USING (
+  public.conversation_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+);
+
+CREATE POLICY conversation_members_insert_any_authenticated
+ON public.conversation_members FOR INSERT TO authenticated
+WITH CHECK (
+  public.conversation_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+  OR EXISTS (
+    SELECT 1
+    FROM public.conversations c
+    WHERE c.id = public.conversation_members.conversation_id
+      AND c.type = 'direct'
+      AND (
+        c.direct_key LIKE (
+          (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text || ':%'
+        )
+        OR c.direct_key LIKE (
+          '%:' || (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text
+        )
+      )
+  )
+  OR EXISTS (
+    SELECT 1
+    FROM public.conversations c
+    JOIN public.community_members cmm ON cmm.community_id = c.community_id
+    WHERE c.id = public.conversation_members.conversation_id
+      AND c.type = 'group'
+      AND cmm.user_id = (
+        SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+      )
+  )
+);
+
+CREATE POLICY conversation_members_update_self
+ON public.conversation_members FOR UPDATE TO authenticated
+USING (
+  public.conversation_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+)
+WITH CHECK (
+  public.conversation_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+);
+
+CREATE POLICY conversation_members_delete_self
+ON public.conversation_members FOR DELETE TO authenticated
+USING (
+  public.conversation_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+);
+
+DROP POLICY IF EXISTS messages_select_member ON public.messages;
+DROP POLICY IF EXISTS messages_insert_author_member ON public.messages;
+DROP POLICY IF EXISTS messages_update_author_member ON public.messages;
+DROP POLICY IF EXISTS messages_delete_member ON public.messages;
+
+CREATE POLICY messages_select_member
+ON public.messages FOR SELECT TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.conversation_members cm
+    WHERE cm.conversation_id = public.messages.conversation_id
+      AND cm.user_id = (
+        SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+      )
+  )
+  OR (
+    EXISTS (
+      SELECT 1
+      FROM public.conversations c
+      JOIN public.community_members cmm ON cmm.community_id = c.community_id
+      WHERE c.id = public.messages.conversation_id
+        AND c.type = 'group'
+        AND cmm.user_id = (
+          SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+        )
+    )
+  )
+  OR (
+    EXISTS (
+      SELECT 1
+      FROM public.conversations c
+      WHERE c.id = public.messages.conversation_id
+        AND c.type = 'direct'
+        AND (
+          c.direct_key LIKE (
+            (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text || ':%'
+          )
+          OR c.direct_key LIKE (
+            '%:' || (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text
+          )
+        )
+    )
+  )
+);
+
+CREATE POLICY messages_insert_author_member
+ON public.messages FOR INSERT TO authenticated
+WITH CHECK (
+  public.messages.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+  AND (
+    EXISTS (
+      SELECT 1
+      FROM public.conversation_members cm
+      WHERE cm.conversation_id = public.messages.conversation_id
+        AND cm.user_id = public.messages.user_id
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM public.conversations c
+      WHERE c.id = public.messages.conversation_id
+        AND c.type = 'direct'
+        AND (
+          c.direct_key LIKE (
+            (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text || ':%'
+          )
+          OR c.direct_key LIKE (
+            '%:' || (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text
+          )
+        )
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM public.conversations c
+      JOIN public.community_members cmm ON cmm.community_id = c.community_id
+      WHERE c.id = public.messages.conversation_id
+        AND c.type = 'group'
+        AND cmm.user_id = public.messages.user_id
+    )
+  )
+);
+
+CREATE POLICY messages_update_author_member
+ON public.messages FOR UPDATE TO authenticated
+USING (
+  public.messages.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+  AND (
+    EXISTS (
+      SELECT 1
+      FROM public.conversation_members cm
+      WHERE cm.conversation_id = public.messages.conversation_id
+        AND cm.user_id = (
+          SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+        )
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM public.conversations c
+      JOIN public.community_members cmm ON cmm.community_id = c.community_id
+      WHERE c.id = public.messages.conversation_id
+        AND c.type = 'group'
+        AND cmm.user_id = (
+          SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+        )
+    )
+    OR EXISTS (
+      SELECT 1
+      FROM public.conversations c
+      WHERE c.id = public.messages.conversation_id
+        AND c.type = 'direct'
+        AND (
+          c.direct_key LIKE (
+            (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text || ':%'
+          )
+          OR c.direct_key LIKE (
+            '%:' || (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text
+          )
+        )
+    )
+  )
+)
+WITH CHECK (
+  public.messages.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+);
+
+CREATE POLICY messages_delete_member
+ON public.messages FOR DELETE TO authenticated
+USING (
+  EXISTS (
+    SELECT 1
+    FROM public.conversation_members cm
+    WHERE cm.conversation_id = public.messages.conversation_id
+      AND cm.user_id = (
+        SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+      )
+  )
+  OR EXISTS (
+    SELECT 1
+    FROM public.conversations c
+    JOIN public.community_members cmm ON cmm.community_id = c.community_id
+    WHERE c.id = public.messages.conversation_id
+      AND c.type = 'group'
+      AND cmm.user_id = (
+        SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+      )
+  )
+  OR EXISTS (
+    SELECT 1
+    FROM public.conversations c
+    WHERE c.id = public.messages.conversation_id
+      AND c.type = 'direct'
+      AND (
+        c.direct_key LIKE (
+          (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text || ':%'
+        )
+        OR c.direct_key LIKE (
+          '%:' || (SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email')::text
+        )
+      )
+  )
+);
+
+DROP POLICY IF EXISTS users_select_authenticated ON public.users;
+CREATE POLICY users_select_authenticated
+ON public.users FOR SELECT TO authenticated
+USING ( true );
+
+DROP POLICY IF EXISTS communities_select_authenticated ON public.communities;
+CREATE POLICY communities_select_authenticated
+ON public.communities FOR SELECT TO authenticated
+USING ( true );
+
+DROP POLICY IF EXISTS communities_insert_any_authenticated ON public.communities;
+CREATE POLICY communities_insert_any_authenticated
+ON public.communities FOR INSERT TO authenticated
+WITH CHECK ( true );
+
+DROP POLICY IF EXISTS community_members_select_self ON public.community_members;
+DROP POLICY IF EXISTS community_members_insert_any_authenticated ON public.community_members;
+DROP POLICY IF EXISTS community_members_update_self ON public.community_members;
+DROP POLICY IF EXISTS community_members_delete_self ON public.community_members;
+
+CREATE POLICY community_members_select_self
+ON public.community_members FOR SELECT TO authenticated
+USING (
+  public.community_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+);
+
+CREATE POLICY community_members_insert_any_authenticated
+ON public.community_members FOR INSERT TO authenticated
+WITH CHECK ( true );
+
+CREATE POLICY community_members_update_self
+ON public.community_members FOR UPDATE TO authenticated
+USING (
+  public.community_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+)
+WITH CHECK (
+  public.community_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+);
+
+CREATE POLICY community_members_delete_self
+ON public.community_members FOR DELETE TO authenticated
+USING (
+  public.community_members.user_id = (
+    SELECT u.id FROM public.users u WHERE u.email = auth.jwt() ->> 'email'
+  )
+);

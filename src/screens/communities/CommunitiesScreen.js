@@ -18,14 +18,24 @@ const CommunitiesScreen = ({ navigation }) => {
   const [segment, setSegment] = useState('all');
 
   const load = async () => {
+    console.log('🔎 Entrando a load() de CommunitiesScreen');
     const meId = await ChatService.currentUserId();
+    console.log('🔍 meId resuelto =', meId);
     if (!meId) {
+      console.error('❌ No se pudo resolver meId; probablemente falta perfil en public.users o RLS bloquea');
       setConversations([]);
       setFiltered([]);
       setLoading(false);
       return;
     }
-      const rows = await ConversationService.listUserConversations(meId);
+      let rows = [];
+      try {
+        rows = await ConversationService.listUserConversations(meId);
+      } catch (e) {
+        console.error('❌ Error listando conversaciones del usuario:', e);
+        rows = [];
+      }
+      console.log('✅ Conversaciones encontradas =', rows.length);
       const items = [];
       for (const row of rows) {
         const conv = row.conversations || {};
@@ -58,7 +68,13 @@ const CommunitiesScreen = ({ navigation }) => {
         let lastMessage = '';
         let time = '';
         let sortTs = 0;
-        const last = await MessageService.listMessages(cid, { limit: 1 });
+        let last = [];
+        try {
+          last = await MessageService.listMessages(cid, { limit: 1 });
+        } catch (e) {
+          console.error('❌ Error obteniendo último mensaje de conversación', cid, e);
+          last = [];
+        }
         if (last && last.length > 0) {
           const m = last[0];
           lastMessage = m.content;
@@ -72,15 +88,21 @@ const CommunitiesScreen = ({ navigation }) => {
         let unread = 0;
         try {
           unread = await MessageService.countUnread(cid, meId, lastReadAt);
-        } catch (e) { unread = 0; }
+        } catch (e) {
+          console.error('❌ Error contando no leídos de conversación', cid, e);
+          unread = 0;
+        }
         const compositeId = conv.type === 'group' ? `group:${cid}` : `direct:${cid}`;
         items.push({ id: compositeId, title, lastMessage, time, unread, conversationId: cid, partnerUserId, partnerName, type: conv.type, communityId: conv.community_id || null, sortTs });
       }
       try {
-        const { data: memberships } = await supabase
+        const { data: memberships, error: memErr } = await supabase
           .from('community_members')
           .select('community_id, communities:community_id(id, name)')
           .eq('user_id', meId);
+        if (memErr) {
+          console.error('❌ Error listando community_members para usuario:', memErr);
+        }
         for (const m of memberships || []) {
           const commId = m.community_id;
           const commName = m.communities?.name || 'Grupo';
@@ -96,7 +118,9 @@ const CommunitiesScreen = ({ navigation }) => {
           const compositeId = conversationId ? `group:${conversationId}` : `group:community:${commId}`;
           items.push({ id: compositeId, title: commName, lastMessage: '', time: '', unread: 0, conversationId, partnerUserId: null, partnerName: '', type: 'group', communityId: commId, sortTs: 0 });
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error('❌ Error cargando grupos del usuario:', e);
+      }
 
       const ordered = [...items].sort((a, b) => (b.sortTs || 0) - (a.sortTs || 0));
       setConversations(ordered);

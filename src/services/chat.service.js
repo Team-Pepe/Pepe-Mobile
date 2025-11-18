@@ -28,8 +28,21 @@ class ChatService {
 
   static async currentUserId() {
     const { user, error: authError } = await AuthService.getCurrentUser();
-    if (authError || !user) return null;
-    return UserService.getUserIdByEmail(user.email);
+    if (authError) {
+      console.error('❌ Auth error en currentUserId:', authError);
+      return null;
+    }
+    if (!user) {
+      console.error('❌ No hay usuario autenticado en currentUserId');
+      return null;
+    }
+    console.log('🔍 currentUserId: email autenticado =', user.email);
+    const uid = await UserService.getUserIdByEmail(user.email);
+    console.log('🔍 currentUserId: user_id resuelto en public.users =', uid);
+    if (!uid) {
+      console.error('❌ No se encontró perfil en public.users para ese email');
+    }
+    return uid;
   }
 }
 

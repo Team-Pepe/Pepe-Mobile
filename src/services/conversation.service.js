@@ -12,6 +12,7 @@ class ConversationService {
     const a = Math.min(currentUserId, targetUserId);
     const b = Math.max(currentUserId, targetUserId);
     const directKey = `${a}:${b}`;
+    console.log('🔍 getOrCreateDirectConversation: direct_key =', directKey);
     const { data: existing, error: findErr } = await supabase
       .from('conversations')
       .select('*')
@@ -30,11 +31,17 @@ class ConversationService {
     const { error: addErr1 } = await supabase
       .from('conversation_members')
       .insert([{ conversation_id: conversation.id, user_id: currentUserId, role: 'member' }]);
-    if (addErr1) throw addErr1;
+    if (addErr1) {
+      console.error('❌ Error insertando tu membresía en conversación:', addErr1);
+      throw addErr1;
+    }
     const { error: addErr2 } = await supabase
       .from('conversation_members')
       .insert([{ conversation_id: conversation.id, user_id: targetUserId, role: 'member' }]);
-    if (addErr2) throw addErr2;
+    if (addErr2) {
+      console.error('❌ Error insertando membresía del otro usuario:', addErr2);
+      throw addErr2;
+    }
     return conversation;
   }
 
@@ -98,13 +105,61 @@ class ConversationService {
 
   static async listUserConversations(userId) {
     if (!userId) throw new Error('userId requerido');
+    console.log('🔍 listUserConversations: user_id =', userId);
     const { data, error } = await supabase
       .from('conversation_members')
       .select('conversation_id, conversations:conversation_id(*), last_read_at')
       .eq('user_id', userId)
       .order('joined_at', { ascending: false });
-    if (error) throw error;
-    return data || [];
+    if (error) {
+      console.error('❌ Error listUserConversations:', error);
+      throw error;
+    }
+    let rows = data || [];
+    console.log('✅ listUserConversations: filas membership =', rows.length);
+    try {
+      const orClause = `direct_key.like.${userId}:%,direct_key.like.%:${userId}`;
+      const { data: directConvs, error: directErr } = await supabase
+        .from('conversations')
+        .select('id,type,community_id,direct_key')
+        .eq('type', 'direct')
+        .or(orClause);
+      if (directErr) throw directErr;
+      console.log('🔍 directConvs fallback por direct_key =', (directConvs || []).length);
+      const existingIds = new Set(rows.map((r) => r.conversation_id));
+      for (const c of directConvs || []) {
+        if (!existingIds.has(c.id)) {
+          rows.push({ conversation_id: c.id, conversations: c, last_read_at: null });
+        }
+      }
+    } catch (e) {
+      console.error('❌ Error listando direct conversations por direct_key:', e);
+    }
+    try {
+      const { data: myMsgs, error: msgErr } = await supabase
+        .from('messages')
+        .select('conversation_id')
+        .eq('user_id', userId);
+      if (msgErr) throw msgErr;
+      const msgConvIds = Array.from(new Set((myMsgs || []).map((m) => m.conversation_id).filter(Boolean)));
+      console.log('🔍 fallback por mensajes: convIds =', msgConvIds.length);
+      const existingIds2 = new Set(rows.map((r) => r.conversation_id));
+      const toFetch = msgConvIds.filter((id) => !existingIds2.has(id));
+      if (toFetch.length) {
+        const { data: convsByMsgs, error: convErr } = await supabase
+          .from('conversations')
+          .select('id,type,community_id,direct_key')
+          .in('id', toFetch);
+        if (convErr) throw convErr;
+        for (const c of convsByMsgs || []) {
+          rows.push({ conversation_id: c.id, conversations: c, last_read_at: null });
+        }
+      }
+    } catch (e) {
+      console.error('❌ Error agregando conversaciones desde mensajes del usuario:', e);
+    }
+    console.log('✅ listUserConversations: filas total =', rows.length);
+    return rows;
   }
 
   static async listMembers(conversationId) {

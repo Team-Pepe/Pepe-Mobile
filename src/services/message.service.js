@@ -13,7 +13,11 @@ class MessageService {
       .limit(limit);
     if (before) q = q.lt('created_at', before);
     const { data, error } = await q;
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error listMessages:', { conversationId, error });
+      throw error;
+    }
+    console.log('✅ listMessages:', { conversationId, count: (data || []).length });
     return (data || []).reverse();
   }
 
@@ -22,11 +26,15 @@ class MessageService {
     if (authError || !user) throw new Error('Usuario no autenticado');
     const userId = await UserService.getUserIdByEmail(user.email);
     if (!userId) throw new Error('No se pudo resolver user_id');
+    console.log('🔍 sendMessage:', { conversationId, userId });
     const { data, error } = await supabase
       .from('messages')
       .insert([{ conversation_id: conversationId, user_id: userId, content, attachments }])
       .select();
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error sendMessage:', error);
+      throw error;
+    }
     return data?.[0] || null;
   }
 
@@ -72,7 +80,11 @@ class MessageService {
     if (since) q = q.gt('created_at', since);
     if (userId) q = q.neq('user_id', userId);
     const { count, error } = await q;
-    if (error) throw error;
+    if (error) {
+      console.error('❌ Error countUnread:', { conversationId, userId, error });
+      throw error;
+    }
+    console.log('✅ countUnread:', { conversationId, userId, count });
     return count || 0;
   }
 }
