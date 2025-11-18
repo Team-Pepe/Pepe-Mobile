@@ -24,6 +24,7 @@ import UserReviewsScreen from '../screens/profile/UserReviewsScreen';
 import UserPickerScreen from '../screens/communities/UserPickerScreen';
 import ChatScreen from '../screens/communities/ChatScreen';
 import GroupAccessScreen from '../screens/communities/GroupAccessScreen';
+import GroupCreatedScreen from '../screens/communities/GroupCreatedScreen';
 import CreateGroupScreen from '../screens/communities/CreateGroupScreen';
 import JoinGroupScreen from '../screens/communities/JoinGroupScreen';
 
@@ -230,6 +231,11 @@ const AppNavigator = () => {
         <Stack.Screen
           name="CreateGroup"
           component={CreateGroupScreen}
+          options={{ headerShown: false }}
+        />
+        <Stack.Screen
+          name="GroupCreated"
+          component={GroupCreatedScreen}
           options={{ headerShown: false }}
         />
         <Stack.Screen

@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, TextInput, FlatList, ScrollView, Modal, ActivityIndicator } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { FontAwesome5 } from '@expo/vector-icons';
 import { Share } from 'react-native';
@@ -30,7 +30,7 @@ const CreateGroupScreen = ({ navigation }) => {
     const e = {};
     if (!name.trim()) e.name = 'Ingresa un nombre';
     if (!['private','public'].includes(privacy)) e.privacy = 'Privacidad inválida';
-    if ((description || '').trim().length < 10) e.description = 'Min. 10 caracteres';
+    if ((description || '').trim().length < 0) e.description = 'Min. 0 caracteres';
     return e;
   };
   const canCreate = Object.keys(validate()).length === 0;
@@ -220,45 +220,7 @@ const CreateGroupScreen = ({ navigation }) => {
           )}
         </View>
 
-        {createdCode ? (
-          <View>
-            <Text style={styles.helper}>Grupo creado. Código de ingreso: {createdCode}</Text>
-            <View style={{ flexDirection: 'row', gap: 8, marginTop: 8 }}>
-              <TouchableOpacity
-                style={[styles.chip, { backgroundColor: '#2c2c2c' }]}
-                onPress={async () => {
-                  await Clipboard.setStringAsync(createdCode);
-                  setCopied(true);
-                  setTimeout(() => setCopied(false), 2000);
-                }}
-              >
-                <Text style={styles.chipText}>Copiar código</Text>
-              </TouchableOpacity>
-              <TouchableOpacity
-                style={[styles.chip, { backgroundColor: '#2c2c2c' }]}
-                onPress={async () => {
-                  await Share.share({ message: `Únete a ${name}: código ${createdCode}` });
-                }}
-              >
-                <Text style={styles.chipText}>Compartir</Text>
-              </TouchableOpacity>
-            </View>
-            {copied && <Text style={[styles.helper, { color: '#34C759', marginTop: 6 }]}>Código copiado</Text>}
-            {createdConvId && (
-              <View style={{ marginTop: 10 }}>
-                <TouchableOpacity
-                  style={[styles.primaryButton, { backgroundColor: '#34C759' }]}
-                  onPress={() => navigation.navigate('Chat', { conversationId: createdConvId, userName: name || 'Grupo' })}
-                >
-                  <FontAwesome5 name="comments" size={14} color="#ffffff" />
-                  <Text style={styles.primaryButtonText}>Ir al chat</Text>
-                </TouchableOpacity>
-              </View>
-            )}
-          </View>
-        ) : (
-          <Text style={styles.helper}>Completa los campos para crear tu grupo</Text>
-        )}
+        <Text style={styles.helper}>Completa los campos para crear tu grupo</Text>
         {errors.form && <Text style={[styles.helper, { color: '#ff6b6b' }]}>{errors.form}</Text>}
       </ScrollView>
 
@@ -288,14 +250,13 @@ const CreateGroupScreen = ({ navigation }) => {
               console.log('currentUserId:', meId);
               if (meId) await CommunityService.addMember(community.id, meId, 'admin');
               const conv = await ConversationService.getOrCreateGroupConversationFromCommunity(community.id);
-              if (conv) setCreatedConvId(conv.id);
               if (conv && meId) await ConversationService.addMember(conv.id, meId, 'admin');
               for (const id of selectedUserIds) {
                 if (meId && String(meId) === String(id)) continue;
                 await CommunityService.addMember(community.id, parseInt(id), 'member');
                 if (conv) await ConversationService.addMember(conv.id, parseInt(id), 'member');
               }
-              setCreatedCode(code);
+              navigation.replace('GroupCreated', { community, code, conversationId: conv?.id || null });
             } catch (e) {
               console.error('CreateGroup error:', e);
               setErrors({ form: e?.message || 'Error creando grupo' });
@@ -308,6 +269,13 @@ const CreateGroupScreen = ({ navigation }) => {
           <Text style={styles.primaryButtonText}>{creating ? 'Creando…' : 'Crear'}</Text>
         </TouchableOpacity>
       </View>
+      <Modal visible={creating} transparent animationType="fade">
+        <View style={styles.modalOverlay} />
+        <View style={styles.modalCenter}>
+          <ActivityIndicator color="#ffffff" size="small" />
+          <Text style={styles.loadingText}>Creando grupo…</Text>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 };
@@ -390,6 +358,9 @@ const styles = StyleSheet.create({
   },
   primaryButtonDisabled: { backgroundColor: '#2a6fd0', opacity: 0.6 },
   primaryButtonText: { color: '#ffffff', fontSize: 14, fontWeight: 'bold' },
+  modalOverlay: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, backgroundColor: 'rgba(0,0,0,0.5)' },
+  modalCenter: { position: 'absolute', left: 0, right: 0, top: 0, bottom: 0, alignItems: 'center', justifyContent: 'center' },
+  loadingText: { color: '#ffffff', fontSize: 12, marginTop: 8 },
 });
 
 export default CreateGroupScreen;

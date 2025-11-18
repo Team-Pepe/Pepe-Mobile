@@ -45,12 +45,17 @@ jest.mock('../services/user.service', () => ({
 }));
 
 describe('CreateGroupScreen', () => {
-  test('validates fields and shows success with join code', async () => {
-    const { getByText, getByPlaceholderText, queryByText } = render(<CreateGroupScreen navigation={{ goBack: jest.fn() }} />);
+  test('navega a GroupCreated tras crear', async () => {
+    const navigation = { goBack: jest.fn(), replace: jest.fn() };
+    const { getByText, getByPlaceholderText } = render(<CreateGroupScreen navigation={navigation} />);
     fireEvent.changeText(getByPlaceholderText('Ej. Ofertas Laptops'), 'Grupo Test');
     fireEvent.changeText(getByPlaceholderText('Cuenta de qué trata el grupo'), 'Descripción válida para el grupo');
     fireEvent.press(getByText('Crear'));
-    await waitFor(() => expect(queryByText(/Grupo creado\. Código de ingreso:/)).toBeTruthy());
+    await waitFor(() => expect(navigation.replace).toHaveBeenCalled());
+    expect(navigation.replace.mock.calls[0][0]).toBe('GroupCreated');
+    expect(navigation.replace.mock.calls[0][1]).toEqual(expect.objectContaining({
+      community: expect.objectContaining({ name: 'Grupo Test' }),
+    }));
   });
 });
 
